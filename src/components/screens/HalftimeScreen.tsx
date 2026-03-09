@@ -41,8 +41,8 @@ export default function HalftimeScreen(): JSX.Element {
   const [swapInPlayer, setSwapInPlayer] = useState<Player | null>(null);
   const [selectedTactic, setSelectedTactic] = useState<Tactic | null>(null);
 
-  /** Outfield players currently in the home lineup (indices 0–4) */
-  const homOutfield = homeLineup.slice(0, 5);
+  /** Outfield players currently in the home lineup (indices 0–5) */
+  const homOutfield = homeLineup.slice(0, 6);
 
   /** Players available to swap in: not already in home lineup */
   const homeLineupIds = new Set(homeLineup.map((s) => s.player.id));

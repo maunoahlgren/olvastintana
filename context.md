@@ -1,7 +1,7 @@
 # CONTEXT.md — Olvastin Tana FC: The Game
 # Full project context for Claude Code.
 # Updated after every significant decision or completed phase.
-# Last updated: 2026-03-09 — Phase 1.5 complete (AI opponent), 227 tests passing
+# Last updated: 2026-03-09 — v0.3.1 lineup rule fix: 6 outfield + 1 GK (7 total per side)
 
 ---
 
@@ -87,7 +87,7 @@ Two modes:
 ## 🎮 Game Rules Summary
 
 ### Format
-- Park football: 5 outfield players + 1 goalkeeper per side
+- Park football: 6 outfield players + 1 goalkeeper per side (7 total)
 - 44 minutes: two halves of 22 minutes each
 - Card duels simulate key match moments
 
@@ -119,7 +119,7 @@ Two modes:
 
 ### Match Structure
 1. Trivia question → correct = first card auto-wins, wrong = opponent picks player to get -1 all stats
-2. Manager picks: 5 players + keeper, tactics, dirty move (Derby Night)
+2. Manager picks: 6 outfield players + keeper, tactics, dirty move (Derby Night)
 3. Dirty moves revealed simultaneously
 4. First half duels
 5. Halftime: swap one player OR change tactics (not both)

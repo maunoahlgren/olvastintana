@@ -69,10 +69,11 @@ function makePlayer(
 }
 
 /**
- * Test squad: 6 outfield players of varying quality + 1 GK.
+ * Test squad: 7 outfield players of varying quality + 1 GK.
  *
- * Totals: p1=30, p2=24, p3=18, p4=12, p6=12, p5=6
+ * Totals: p1=30, p2=24, p3=18, p4=12, p6=12, p5=6, p7=5
  * p6 has unusually high technique (6) for testing hardAiLineup vs 'aggressive'
+ * p7 is the lowest-stat player — excluded when selecting top 6
  */
 const TEST_SQUAD: Player[] = [
   makePlayer('p1', ['MF'], { pace: 5, technique: 5, power: 5, iq: 5, stamina: 5, chaos: 5 }), // 30
@@ -81,6 +82,7 @@ const TEST_SQUAD: Player[] = [
   makePlayer('p4', ['FW'], { pace: 2, technique: 2, power: 2, iq: 2, stamina: 2, chaos: 2 }), // 12
   makePlayer('p5', ['MF'], { pace: 1, technique: 1, power: 1, iq: 1, stamina: 1, chaos: 1 }), //  6
   makePlayer('p6', ['FW'], { pace: 2, technique: 6, power: 1, iq: 1, stamina: 1, chaos: 1 }), // 12 — high technique
+  makePlayer('p7', ['MF'], { pace: 1, technique: 1, power: 1, iq: 1, stamina: 1, chaos: 0 }), //  5 — lowest stat player
   makePlayer('gk1', ['GK'], { pace: 2, technique: 2, power: 4, iq: 4, stamina: 4, chaos: 1 }),
 ];
 
@@ -264,9 +266,9 @@ describe('hardAiCard', () => {
 // ---------------------------------------------------------------------------
 
 describe('easyAiLineup', () => {
-  it('returns exactly 5 outfield player IDs', () => {
+  it('returns exactly 6 outfield player IDs', () => {
     const lineup = easyAiLineup(TEST_SQUAD);
-    expect(lineup.outfield).toHaveLength(5);
+    expect(lineup.outfield).toHaveLength(6);
     for (const id of lineup.outfield) {
       const p = TEST_SQUAD.find((x) => x.id === id)!;
       expect(p.position).not.toContain('GK');
@@ -298,9 +300,9 @@ describe('easyAiLineup', () => {
 // ---------------------------------------------------------------------------
 
 describe('normalAiLineup', () => {
-  it('returns exactly 5 outfield player IDs', () => {
+  it('returns exactly 6 outfield player IDs', () => {
     const lineup = normalAiLineup(TEST_SQUAD, []);
-    expect(lineup.outfield).toHaveLength(5);
+    expect(lineup.outfield).toHaveLength(6);
   });
 
   it('includes the highest-stat players (p1=30, p2=24)', () => {
@@ -309,9 +311,9 @@ describe('normalAiLineup', () => {
     expect(lineup.outfield).toContain('p2');
   });
 
-  it('excludes the lowest-stat outfield player (p5=6)', () => {
+  it('excludes the lowest-stat outfield player (p7=5)', () => {
     const lineup = normalAiLineup(TEST_SQUAD, []);
-    expect(lineup.outfield).not.toContain('p5');
+    expect(lineup.outfield).not.toContain('p7');
   });
 
   it('returns the first available goalkeeper', () => {
@@ -325,10 +327,10 @@ describe('normalAiLineup', () => {
 // ---------------------------------------------------------------------------
 
 describe('hardAiLineup', () => {
-  it('returns exactly 5 outfield player IDs', () => {
-    expect(hardAiLineup(TEST_SQUAD, [], 'aggressive').outfield).toHaveLength(5);
-    expect(hardAiLineup(TEST_SQUAD, [], 'defensive').outfield).toHaveLength(5);
-    expect(hardAiLineup(TEST_SQUAD, [], 'creative').outfield).toHaveLength(5);
+  it('returns exactly 6 outfield player IDs', () => {
+    expect(hardAiLineup(TEST_SQUAD, [], 'aggressive').outfield).toHaveLength(6);
+    expect(hardAiLineup(TEST_SQUAD, [], 'defensive').outfield).toHaveLength(6);
+    expect(hardAiLineup(TEST_SQUAD, [], 'creative').outfield).toHaveLength(6);
   });
 
   it('returns the goalkeeper ID', () => {
@@ -353,6 +355,7 @@ describe('hardAiLineup', () => {
       makePlayer('a', ['FW'], {}),
       makePlayer('b', ['MF'], {}),
       makePlayer('c', ['FW'], {}),
+      makePlayer('d', ['MF'], {}),
       makePlayer('gk', ['GK'], {}),
     ];
     const lineup = hardAiLineup(squad, [], 'defensive');
@@ -367,6 +370,7 @@ describe('hardAiLineup', () => {
       makePlayer('a', ['FW'], {}),
       makePlayer('b', ['MF'], {}),
       makePlayer('c', ['FW'], {}),
+      makePlayer('d', ['MF'], {}),
       makePlayer('gk', ['GK'], {}),
     ];
     const lineup = hardAiLineup(squad, [], 'creative');
@@ -469,10 +473,10 @@ describe('pickAiCard', () => {
 
 describe('pickAiLineup', () => {
   it.each(['easy', 'normal', 'hard'] as const)(
-    '%s → returns 5 outfield + 1 GK',
+    '%s → returns 6 outfield + 1 GK',
     (difficulty) => {
       const lineup = pickAiLineup(difficulty, TEST_SQUAD, [], 'aggressive');
-      expect(lineup.outfield).toHaveLength(5);
+      expect(lineup.outfield).toHaveLength(6);
       expect(lineup.goalkeeper).toBeTruthy();
     },
   );

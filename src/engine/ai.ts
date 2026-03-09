@@ -227,7 +227,7 @@ export function hardAiCard(gameState: AiGameState, cardHistory: CardChoice[]): C
 // ─── Lineup decision functions ─────────────────────────────────────────────────
 
 /**
- * Easy AI lineup selection — randomly shuffle outfield, take first 5.
+ * Easy AI lineup selection — randomly shuffle outfield, take first 6.
  *
  * @param squad - Full available player pool
  * @returns AiLineup with random outfield and first available GK
@@ -247,20 +247,20 @@ export function easyAiLineup(squad: Player[]): AiLineup {
   }
 
   return {
-    outfield: shuffled.slice(0, 5).map((p) => p.id),
+    outfield: shuffled.slice(0, 6).map((p) => p.id),
     goalkeeper: goalkeepers[0]?.id ?? '',
   };
 }
 
 /**
- * Normal AI lineup selection — picks the 5 outfield players with highest total stats.
+ * Normal AI lineup selection — picks the 6 outfield players with highest total stats.
  *
  * @param squad - Full available player pool
  * @param _playerLineup - Human player's lineup IDs (unused at Normal, reserved for future)
  * @returns AiLineup with stat-optimal outfield and first available GK
  *
  * @example
- * normalAiLineup(players, ['alanen', 'mauno']) // → top 5 by stats
+ * normalAiLineup(players, ['alanen', 'mauno']) // → top 6 by stats
  */
 export function normalAiLineup(squad: Player[], _playerLineup: string[]): AiLineup {
   const outfield = squad.filter((p) => !p.position.includes('GK'));
@@ -269,13 +269,13 @@ export function normalAiLineup(squad: Player[], _playerLineup: string[]): AiLine
   const sorted = [...outfield].sort((a, b) => totalStats(b) - totalStats(a));
 
   return {
-    outfield: sorted.slice(0, 5).map((p) => p.id),
+    outfield: sorted.slice(0, 6).map((p) => p.id),
     goalkeeper: goalkeepers[0]?.id ?? '',
   };
 }
 
 /**
- * Hard AI lineup selection — picks the 5 outfield players who maximise advantage
+ * Hard AI lineup selection — picks the 6 outfield players who maximise advantage
  * against the player's chosen tactic.
  *
  * Counter-stat mapping:
@@ -316,7 +316,7 @@ export function hardAiLineup(
   });
 
   return {
-    outfield: sorted.slice(0, 5).map((p) => p.id),
+    outfield: sorted.slice(0, 6).map((p) => p.id),
     goalkeeper: goalkeepers[0]?.id ?? '',
   };
 }

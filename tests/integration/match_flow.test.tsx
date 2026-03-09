@@ -36,12 +36,12 @@ const gkPlayer = allPlayers.find((p) => p.position.includes('GK'))!;
 // ---------------------------------------------------------------------------
 
 /**
- * Select 5 outfield + 1 GK from whichever grid is currently visible.
+ * Select 6 outfield + 1 GK from whichever grid is currently visible.
  */
 function pickFullLineup(): void {
   const outfieldGrid = screen.getByTestId('outfield-grid');
   const cards = outfieldGrid.querySelectorAll('[data-testid^="player-card-"]');
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 6; i++) {
     fireEvent.click(cards[i]);
   }
   fireEvent.click(screen.getByTestId(`player-card-${gkPlayer.id}`));

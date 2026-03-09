@@ -91,7 +91,7 @@ export default function DuelScreen(): JSX.Element {
   const defenderSide = attackerSide === 'home' ? 'away' : 'home';
 
   /** Slot index for this duel's players (outfield players cycle through positions) */
-  const outfieldSlot = duelIndex % 5;
+  const outfieldSlot = duelIndex % 6;
   const attackerLineup = attackerSide === 'home' ? homeLineup : awayLineup;
   const defenderLineup = defenderSide === 'home' ? homeLineup : awayLineup;
 

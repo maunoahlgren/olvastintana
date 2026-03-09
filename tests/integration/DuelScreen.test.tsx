@@ -34,9 +34,9 @@ function setupMatch(possession: 'home' | 'away' = 'home') {
     awayGoals: 0,
     triviaBoostActive: false,
   });
-  // Set lineups — 5 outfield + gk
-  useSquadStore.getState().setLineup('home', [...outfield.slice(0, 5), gk]);
-  useSquadStore.getState().setLineup('away', [...outfield.slice(0, 5), gk]);
+  // Set lineups — 6 outfield + gk
+  useSquadStore.getState().setLineup('home', [...outfield.slice(0, 6), gk]);
+  useSquadStore.getState().setLineup('away', [...outfield.slice(0, 6), gk]);
 }
 
 /** Play through one duel: attacker picks atkCard, defender picks defCard */

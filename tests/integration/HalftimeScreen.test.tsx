@@ -33,8 +33,8 @@ function setupHalftime() {
   }
   // Now in HALFTIME
   useSquadStore.getState().reset();
-  useSquadStore.getState().setLineup('home', [...outfield.slice(0, 5), gk]);
-  useSquadStore.getState().setLineup('away', [...outfield.slice(0, 5), gk]);
+  useSquadStore.getState().setLineup('home', [...outfield.slice(0, 6), gk]);
+  useSquadStore.getState().setLineup('away', [...outfield.slice(0, 6), gk]);
 }
 
 describe('HalftimeScreen', () => {
@@ -110,7 +110,7 @@ describe('HalftimeScreen', () => {
 
     const swapInCandidate = allPlayers.find(
       (p) =>
-        !outfield.slice(0, 5).some((op) => op.id === p.id) &&
+        !outfield.slice(0, 6).some((op) => op.id === p.id) &&
         p.id !== gk.id &&
         p.position.some((pos) => pos === 'MF' || pos === 'FW'),
     );
