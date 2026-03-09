@@ -5,6 +5,25 @@ Format: `## [version] — date` with Added / Changed / Fixed sections.
 
 ---
 
+## [0.3.1] — 2026-03-09
+
+### Fixed
+- **Critical rule correction: lineup is 6 outfield + 1 GK (7 total), not 5+1**
+  - `LineupScreen` — validation updated to require exactly 6 outfield; counter display `/5` → `/6`; max selection cap 5 → 6; file-header comment updated
+  - `DuelScreen` — `duelIndex % 5` → `duelIndex % 6` (cycles through 6 outfield slots)
+  - `HalftimeScreen` — `homeLineup.slice(0, 5)` → `slice(0, 6)` for swap candidate list
+  - `ai.ts` — all three lineup functions (`easyAiLineup`, `normalAiLineup`, `hardAiLineup`) changed from `slice(0, 5)` → `slice(0, 6)`; JSDoc comments updated to reflect 6 outfield
+  - `en.json` / `fi.json` — `select_5_outfield` string values updated from 5 → 6
+- **All test fixtures updated to 6 outfield + 1 GK lineups**
+  - `DuelScreen.test.tsx`, `ai_match.test.tsx`, `HalftimeScreen.test.tsx` — lineup setup `slice(0, 5)` → `slice(0, 6)`
+  - `HalftimeScreen.test.tsx` — swap-candidate filter `slice(0, 5)` → `slice(0, 6)`
+  - `LineupScreen.test.tsx` — `selectFullLineup()` clicks 6 cards; lineup length assertion 6 → 7 (6+GK); description updated
+  - `match_flow.test.tsx` — `pickFullLineup()` clicks 6 cards
+  - `ai.test.ts` — `TEST_SQUAD` gains `p7` (total=5) as the new lowest-stat player; all `toHaveLength(5)` → `toHaveLength(6)`; exclusion assertion `not.toContain('p5')` → `not.toContain('p7')`; custom power/pace squads gain a 7th outfield player
+- All 227 tests still pass
+
+---
+
 ## [0.3.0] — 2026-03-09
 
 ### Added

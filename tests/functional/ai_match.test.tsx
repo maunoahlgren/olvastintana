@@ -62,8 +62,8 @@ function setupAiMatch(
     awayGoals: 0,
     triviaBoostActive: false,
   });
-  useSquadStore.getState().setLineup('home', [...outfield.slice(0, 5), gk]);
-  useSquadStore.getState().setLineup('away', [...outfield.slice(0, 5), gk]);
+  useSquadStore.getState().setLineup('home', [...outfield.slice(0, 6), gk]);
+  useSquadStore.getState().setLineup('away', [...outfield.slice(0, 6), gk]);
 }
 
 /**

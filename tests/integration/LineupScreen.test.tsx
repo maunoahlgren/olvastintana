@@ -20,12 +20,12 @@ const gkPlayer = (playersData as { id: string; position: string[] }[]).find((p) 
   p.position.includes('GK'),
 )!;
 
-/** Select 5 outfield players and the GK */
+/** Select 6 outfield players and the GK */
 function selectFullLineup() {
-  // Click first 5 outfield players
+  // Click first 6 outfield players
   const outfieldGrid = screen.getByTestId('outfield-grid');
   const cards = outfieldGrid.querySelectorAll('[data-testid^="player-card-"]');
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 6; i++) {
     fireEvent.click(cards[i]);
   }
   // Click the GK
@@ -50,8 +50,8 @@ describe('LineupScreen', () => {
   it('renders outfield player grid', () => {
     renderWithProviders(<LineupScreen />);
     expect(screen.getByTestId('outfield-grid')).toBeInTheDocument();
-    // Should show at least 5 outfield players (alanen, mehtonen, etc.)
-    expect(outfieldPlayers.length).toBeGreaterThanOrEqual(5);
+    // Should show at least 6 outfield players (alanen, mehtonen, etc.)
+    expect(outfieldPlayers.length).toBeGreaterThanOrEqual(6);
   });
 
   it('renders goalkeeper grid', () => {
@@ -65,7 +65,7 @@ describe('LineupScreen', () => {
     expect(screen.getByTestId('confirm-lineup-btn')).toBeDisabled();
   });
 
-  it('confirm button enabled when 5 outfield + 1 GK selected', () => {
+  it('confirm button enabled when 6 outfield + 1 GK selected', () => {
     renderWithProviders(<LineupScreen />);
     selectFullLineup();
     expect(screen.getByTestId('confirm-lineup-btn')).not.toBeDisabled();
@@ -93,7 +93,7 @@ describe('LineupScreen', () => {
     renderWithProviders(<LineupScreen />);
     selectFullLineup();
     fireEvent.click(screen.getByTestId('confirm-lineup-btn'));
-    expect(useSquadStore.getState().homeLineup).toHaveLength(6);
+    expect(useSquadStore.getState().homeLineup).toHaveLength(7);
   });
 
   it('shows trivia penalty notice when triviaResult is wrong', () => {

@@ -4,7 +4,7 @@
  * away lineup is automatically selected by the AI.
  *
  * Rules:
- * - Select exactly 5 outfield players (MF / FW)
+ * - Select exactly 6 outfield players (MF / FW)
  * - Select exactly 1 goalkeeper (GK)
  * - If triviaResult === 'wrong', additionally pick one home player to receive -1 stats
  * - Once home confirms, AI selects away lineup (AI mode) or away picks manually (two-player)
@@ -70,11 +70,11 @@ export default function LineupScreen(): JSX.Element {
   const gk = isHome ? homeGk : awayGk;
   const setGk = isHome ? setHomeGk : setAwayGk;
 
-  /** Toggle an outfield player selection (max 5) */
+  /** Toggle an outfield player selection (max 6) */
   function toggleOutfield(player: Player) {
     if (outfield.some((p) => p.id === player.id)) {
       setOutfield(outfield.filter((p) => p.id !== player.id));
-    } else if (outfield.length < 5) {
+    } else if (outfield.length < 6) {
       setOutfield([...outfield, player]);
     }
   }
@@ -84,7 +84,7 @@ export default function LineupScreen(): JSX.Element {
     setGk(gk?.id === player.id ? null : player);
   }
 
-  const outfieldComplete = outfield.length === 5;
+  const outfieldComplete = outfield.length === 6;
   const gkComplete = gk !== null;
   const homeNeedsPenalty = isHome && triviaResult === 'wrong';
   const penaltyComplete = !homeNeedsPenalty || homePenaltyPlayer !== null;
@@ -164,7 +164,7 @@ export default function LineupScreen(): JSX.Element {
       {/* Outfield section */}
       <section>
         <div className="text-sm font-bold uppercase tracking-widest text-[#F5F0E8]/60 mb-3">
-          {t('lineup.outfield')} ({outfield.length}/5)
+          {t('lineup.outfield')} ({outfield.length}/6)
         </div>
         <div
           data-testid="outfield-grid"
