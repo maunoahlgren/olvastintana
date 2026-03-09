@@ -1,31 +1,72 @@
 /**
  * @file App.tsx
- * Application root. Shows the club title and language toggle.
- * Acts as the screen router — will grow as phases are built out.
+ * Application root and screen router.
+ *
+ * Reads `matchStore.phase` and renders the appropriate screen for the current
+ * stage of a solo match:
+ *
+ *   TITLE → TRIVIA → LINEUP → FIRST_HALF → HALFTIME → SECOND_HALF → RESULT
+ *
+ * The LanguageToggle is rendered as a persistent overlay on every screen that
+ * does not embed its own toggle (i.e. everything except TitleScreen).
  */
 
-import { useTranslation } from 'react-i18next';
 import './i18n/index.ts';
+import { useMatchStore } from './store/matchStore';
+import { MATCH_PHASE } from './engine/match';
+import TitleScreen from './components/screens/TitleScreen';
+import TriviaScreen from './components/screens/TriviaScreen';
+import LineupScreen from './components/screens/LineupScreen';
+import DuelScreen from './components/screens/DuelScreen';
+import HalftimeScreen from './components/screens/HalftimeScreen';
+import ResultScreen from './components/screens/ResultScreen';
 import LanguageToggle from './components/ui/LanguageToggle';
 
+/**
+ * App — top-level router component.
+ *
+ * Renders a single screen based on the current match phase. A floating
+ * LanguageToggle is shown on all screens except TITLE (which has its own).
+ *
+ * @returns The active screen element
+ */
 export default function App(): JSX.Element {
-  const { t } = useTranslation();
+  const phase = useMatchStore((s) => s.phase);
+
+  /** Map each phase to its screen component */
+  function renderScreen(): JSX.Element {
+    switch (phase) {
+      case MATCH_PHASE.TITLE:
+        // TitleScreen embeds its own LanguageToggle
+        return <TitleScreen />;
+      case MATCH_PHASE.TRIVIA:
+        return <TriviaScreen />;
+      case MATCH_PHASE.LINEUP:
+        return <LineupScreen />;
+      case MATCH_PHASE.FIRST_HALF:
+      case MATCH_PHASE.SECOND_HALF:
+        return <DuelScreen />;
+      case MATCH_PHASE.HALFTIME:
+        return <HalftimeScreen />;
+      case MATCH_PHASE.RESULT:
+        return <ResultScreen />;
+      default:
+        return <TitleScreen />;
+    }
+  }
+
+  const isTitleScreen = phase === MATCH_PHASE.TITLE;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#1A1A1A] text-[#F5F0E8]">
-      <header className="w-full flex justify-end p-4 absolute top-0">
-        <LanguageToggle />
-      </header>
+    <div className="relative min-h-screen bg-[#1A1A1A] text-[#F5F0E8]" data-testid="app-root">
+      {/* Floating language toggle — hidden on title since it renders its own */}
+      {!isTitleScreen && (
+        <div className="absolute top-4 right-4 z-50">
+          <LanguageToggle />
+        </div>
+      )}
 
-      <main className="flex flex-col items-center gap-4 text-center px-6">
-        <div className="text-8xl font-black tracking-tight leading-none text-[#FFE600]">
-          {t('app.title')}
-        </div>
-        <div className="text-xl font-semibold tracking-widest uppercase text-[#F5F0E8]/60">
-          {t('app.tagline')}
-        </div>
-        <div className="mt-8 text-sm text-[#F5F0E8]/40">2005 – 2025</div>
-      </main>
+      {renderScreen()}
     </div>
   );
 }

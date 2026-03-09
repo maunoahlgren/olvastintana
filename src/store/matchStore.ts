@@ -3,7 +3,10 @@
  * Zustand store for match state.
  *
  * Tracks the active match phase, score, possession, duel index,
- * halftime actions, and active card effects.
+ * halftime actions, trivia result, and active card effects.
+ *
+ * Phase flow:
+ *   TITLE → TRIVIA → LINEUP → FIRST_HALF → HALFTIME → SECOND_HALF → RESULT
  */
 
 import { create } from 'zustand';
@@ -31,9 +34,22 @@ interface MatchState {
   homeTactic: Tactic | null;
   awayTactic: Tactic | null;
   effects: { home: ActiveEffect[]; away: ActiveEffect[] };
+  /** Result of the pre-match trivia question */
+  triviaResult: 'correct' | 'wrong' | null;
+  /** True when the home side's first card of the match auto-wins (trivia correct) */
+  triviaBoostActive: boolean;
 }
 
 interface MatchActions {
+  /** TITLE → TRIVIA: coin flip to decide first-half kickoff side */
+  beginSoloMatch: () => void;
+  /** Trivia answered correctly: activate first-duel boost, advance to LINEUP */
+  triviaCorrect: () => void;
+  /** Trivia answered incorrectly: skip boost, advance to LINEUP */
+  triviaWrong: () => void;
+  /** LINEUP → FIRST_HALF */
+  startFirstHalf: () => void;
+  /** Legacy: kept for backward compat — goes straight to LINEUP with a coin flip */
   startMatch: () => void;
   scoreGoal: (side: Side) => void;
   advanceDuel: () => void;
@@ -48,7 +64,7 @@ interface MatchActions {
 }
 
 const initialState: MatchState = {
-  phase: MATCH_PHASE.TRIVIA,
+  phase: MATCH_PHASE.TITLE,
   half: 1,
   duelIndex: 0,
   homeGoals: 0,
@@ -59,10 +75,34 @@ const initialState: MatchState = {
   homeTactic: null,
   awayTactic: null,
   effects: { home: [], away: [] },
+  triviaResult: null,
+  triviaBoostActive: false,
 };
 
 export const useMatchStore = create<MatchState & MatchActions>((set, get) => ({
   ...initialState,
+
+  beginSoloMatch() {
+    const kick = coinFlip();
+    set({
+      ...initialState,
+      phase: MATCH_PHASE.TRIVIA,
+      possession: kick,
+      firstHalfKickoff: kick,
+    });
+  },
+
+  triviaCorrect() {
+    set({ triviaResult: 'correct', triviaBoostActive: true, phase: MATCH_PHASE.LINEUP });
+  },
+
+  triviaWrong() {
+    set({ triviaResult: 'wrong', triviaBoostActive: false, phase: MATCH_PHASE.LINEUP });
+  },
+
+  startFirstHalf() {
+    set({ phase: MATCH_PHASE.FIRST_HALF });
+  },
 
   startMatch() {
     const kick = coinFlip();
@@ -82,12 +122,14 @@ export const useMatchStore = create<MatchState & MatchActions>((set, get) => ({
   },
 
   advanceDuel() {
-    const { duelIndex, half } = get();
+    const { duelIndex, half, triviaBoostActive } = get();
     const next = duelIndex + 1;
+    // Trivia boost expires after the first duel of the match
+    const boostClear = triviaBoostActive ? { triviaBoostActive: false } : {};
     if (next >= DUELS_PER_HALF) {
-      set({ phase: half === 1 ? MATCH_PHASE.HALFTIME : MATCH_PHASE.RESULT, duelIndex: 0 });
+      set({ phase: half === 1 ? MATCH_PHASE.HALFTIME : MATCH_PHASE.RESULT, duelIndex: 0, ...boostClear });
     } else {
-      set({ duelIndex: next });
+      set({ duelIndex: next, ...boostClear });
     }
   },
 

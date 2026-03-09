@@ -1,7 +1,7 @@
 # CONTEXT.md — Olvastin Tana FC: The Game
 # Full project context for Claude Code.
 # Updated after every significant decision or completed phase.
-# Last updated: March 2025
+# Last updated: 2026-03-09 — Phase 1 complete
 
 ---
 
@@ -307,15 +307,15 @@ Tero, Jari, Kurkela, Kukko, Nissinen, Saravo, Kari, Ari
 ## 🏆 Current Build Status
 
 ### ✅ Phase 1 — Foundation (Solo Mode MVP)
-**Status: NOT STARTED**
+**Status: COMPLETE (v0.2.0 — 2026-03-09)**
 Goals:
-- Project scaffold (React + Vite + Tailwind + i18n)
-- players.json loaded and displayed
-- Basic duel resolution engine
-- Complete match flow: trivia → lineup → duels → halftime → result
-- Goalkeeper save mechanic
-- Finnish/English toggle
-- Unit + functional + integration tests for all of the above
+- ✅ Project scaffold (React + Vite + Tailwind + i18n)
+- ✅ players.json loaded and displayed
+- ✅ Basic duel resolution engine
+- ✅ Complete match flow: trivia → lineup → duels → halftime → result
+- ✅ Goalkeeper save mechanic
+- ✅ Finnish/English toggle
+- ✅ Unit + functional + integration tests for all of the above (148 tests passing)
 
 ### ⏳ Phase 2 — Derby Night Local (NOT STARTED)
 ### ⏳ Phase 3 — Live Multiplayer + Sattuma (NOT STARTED)

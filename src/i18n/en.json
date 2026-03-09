@@ -43,7 +43,13 @@
     "win": "Victory!",
     "loss": "Defeat",
     "draw": "Draw",
-    "halftime": "Halftime"
+    "halftime": "Halftime",
+    "final_score": "Final Score",
+    "season_points": "Season Points",
+    "points_earned": "points earned",
+    "play_again": "Play Again",
+    "home_team": "Home",
+    "away_team": "Away"
   },
   "ability_types": {
     "reactive": "Reactive",
@@ -60,7 +66,81 @@
   },
   "possession": {
     "your_ball": "Your ball",
-    "their_ball": "Their ball"
+    "their_ball": "Their ball",
+    "home_attack": "Home attacks",
+    "away_attack": "Away attacks"
   },
-  "language": "Language"
+  "language": "Language",
+  "title": {
+    "start_solo": "Start Solo Match",
+    "version": "20th Anniversary Edition"
+  },
+  "trivia": {
+    "question_label": "Question",
+    "your_answer": "Your answer...",
+    "submit_answer": "Submit Answer",
+    "correct_feedback": "Correct! Home's first card automatically wins.",
+    "wrong_feedback": "Wrong! Select a player to receive -1 to all stats.",
+    "reveal_answer": "Reveal Answer",
+    "boost_active": "Trivia boost active — first card auto-wins",
+    "continue_to_lineup": "Continue to Lineup",
+    "correct_button": "Correct",
+    "wrong_button": "Wrong",
+    "the_answer_was": "The answer was:"
+  },
+  "lineup": {
+    "pick_your_team": "Pick Your Team",
+    "select_5_outfield": "Select 5 outfield players",
+    "select_goalkeeper": "Select goalkeeper",
+    "selected": "Selected",
+    "confirm_lineup": "Confirm Lineup",
+    "outfield": "Outfield Players",
+    "goalkeeper": "Goalkeeper",
+    "apply_penalty": "Apply -1 penalty to:",
+    "penalty_info": "You answered wrong — pick one player to lose -1 to all stats.",
+    "positions": "Positions"
+  },
+  "duel": {
+    "duel_label": "Duel",
+    "half": "Half",
+    "of": "of",
+    "home_picks": "Home, pick your card",
+    "away_picks": "Away, pick your card",
+    "pass_device": "Pass the device to",
+    "tap_to_continue": "Tap when ready",
+    "attacker_wins": "Attacker wins!",
+    "defender_wins": "Defender holds!",
+    "draw_result": "Draw — no change",
+    "goal_scored": "GOAL!",
+    "shot_saved": "Saved!",
+    "choose_card": "Choose your card:",
+    "trivia_boost_active": "Trivia boost — automatic win!",
+    "possession_label": "Possession",
+    "home_team": "Home",
+    "away_team": "Away",
+    "continue": "Continue"
+  },
+  "halftime": {
+    "title": "Half Time",
+    "score_label": "Score",
+    "choose_action": "Choose one action:",
+    "swap_player": "Swap a Player",
+    "change_tactics": "Change Tactics",
+    "no_action": "Skip — No Action",
+    "action_used": "Action used",
+    "start_second_half": "Start Second Half",
+    "tactic_aggressive": "Aggressive",
+    "tactic_defensive": "Defensive",
+    "tactic_creative": "Creative",
+    "tactic_label": "Select Tactic:",
+    "swap_label": "Swap out:",
+    "swap_in_label": "Swap in:",
+    "confirm_swap": "Confirm Swap",
+    "confirm_tactic": "Confirm Tactic"
+  },
+  "tactic": {
+    "aggressive": "Aggressive",
+    "defensive": "Defensive",
+    "creative": "Creative"
+  }
 }
