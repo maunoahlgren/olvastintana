@@ -1,9 +1,10 @@
 [
   {
     "id": "founding_year",
-    "questionEN": "In what year was Olvastin Tana FC founded?",
-    "questionFI": "Minä vuonna Olvastin Tana FC perustettiin?",
+    "question_en": "In what year was Olvastin Tana FC founded?",
+    "question_fi": "Minä vuonna Olvastin Tana FC perustettiin?",
     "answer": "2005",
+    "wrong_answers": ["2003", "2007", "2001"],
     "category": "history"
   }
 ]

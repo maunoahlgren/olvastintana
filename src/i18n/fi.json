@@ -43,7 +43,13 @@
     "win": "Voitto!",
     "loss": "Tappio",
     "draw": "Tasapeli",
-    "halftime": "Puoliaika"
+    "halftime": "Puoliaika",
+    "final_score": "Lopputulos",
+    "season_points": "Sarjapisteet",
+    "points_earned": "pistettä ansaittu",
+    "play_again": "Pelaa uudelleen",
+    "home_team": "Koti",
+    "away_team": "Vieras"
   },
   "ability_types": {
     "reactive": "Reaktiivinen",
@@ -60,7 +66,81 @@
   },
   "possession": {
     "your_ball": "Sinun pallo",
-    "their_ball": "Heidän pallo"
+    "their_ball": "Heidän pallo",
+    "home_attack": "Koti hyökkää",
+    "away_attack": "Vieras hyökkää"
   },
-  "language": "Kieli"
+  "language": "Kieli",
+  "title": {
+    "start_solo": "Aloita yksinpeli",
+    "version": "20. juhlavuosiversio"
+  },
+  "trivia": {
+    "question_label": "Kysymys",
+    "your_answer": "Vastauksesi...",
+    "submit_answer": "Lähetä vastaus",
+    "correct_feedback": "Oikein! Kodin ensimmäinen kortti voittaa automaattisesti.",
+    "wrong_feedback": "Väärin! Valitse pelaaja, joka saa -1 kaikkiin tilastoihin.",
+    "reveal_answer": "Paljasta vastaus",
+    "boost_active": "Tietovisa-tehostus aktiivinen — ensimmäinen kortti voittaa automaattisesti",
+    "continue_to_lineup": "Jatka kokoonpanoon",
+    "correct_button": "Oikein",
+    "wrong_button": "Väärin",
+    "the_answer_was": "Vastaus oli:"
+  },
+  "lineup": {
+    "pick_your_team": "Valitse joukkueesi",
+    "select_5_outfield": "Valitse 5 kenttäpelaajaa",
+    "select_goalkeeper": "Valitse maalivahti",
+    "selected": "Valittu",
+    "confirm_lineup": "Vahvista kokoonpano",
+    "outfield": "Kenttäpelaajat",
+    "goalkeeper": "Maalivahti",
+    "apply_penalty": "Sovella -1 rangaistus:",
+    "penalty_info": "Vastauksesi oli väärin — valitse pelaaja joka menettää tilastoja.",
+    "positions": "Pelipaikat"
+  },
+  "duel": {
+    "duel_label": "Dueli",
+    "half": "Jakso",
+    "of": "/",
+    "home_picks": "Koti, valitse korttisi",
+    "away_picks": "Vieras, valitse korttisi",
+    "pass_device": "Anna laite joukkueelle",
+    "tap_to_continue": "Napauta kun valmis",
+    "attacker_wins": "Hyökkääjä voittaa!",
+    "defender_wins": "Puolustaja pitää!",
+    "draw_result": "Tasapeli — ei muutosta",
+    "goal_scored": "MAALI!",
+    "shot_saved": "Torjunta!",
+    "choose_card": "Valitse korttisi:",
+    "trivia_boost_active": "Tietovisa-tehostus — automaattinen voitto!",
+    "possession_label": "Hallinta",
+    "home_team": "Koti",
+    "away_team": "Vieras",
+    "continue": "Jatka"
+  },
+  "halftime": {
+    "title": "Puoliaika",
+    "score_label": "Tulos",
+    "choose_action": "Valitse yksi toiminto:",
+    "swap_player": "Vaihda pelaaja",
+    "change_tactics": "Vaihda taktiikka",
+    "no_action": "Ohita — ei toimintoa",
+    "action_used": "Toiminto käytetty",
+    "start_second_half": "Aloita toinen jakso",
+    "tactic_aggressive": "Aggressiivinen",
+    "tactic_defensive": "Puolustava",
+    "tactic_creative": "Luova",
+    "tactic_label": "Valitse taktiikka:",
+    "swap_label": "Vaihda ulos:",
+    "swap_in_label": "Vaihda sisään:",
+    "confirm_swap": "Vahvista vaihto",
+    "confirm_tactic": "Vahvista taktiikka"
+  },
+  "tactic": {
+    "aggressive": "Aggressiivinen",
+    "defensive": "Puolustava",
+    "creative": "Luova"
+  }
 }

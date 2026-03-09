@@ -11,6 +11,7 @@ export const DUELS_PER_HALF = 5;
 
 /** Match phase state machine */
 export const MATCH_PHASE = {
+  TITLE: 'title',
   TRIVIA: 'trivia',
   LINEUP: 'lineup',
   FIRST_HALF: 'first_half',
