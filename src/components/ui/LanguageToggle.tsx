@@ -1,19 +1,19 @@
 import { useTranslation } from 'react-i18next';
-import { useSessionStore } from '../../store/sessionStore';
+import { useSessionStore, type Language } from '../../store/sessionStore';
 
-export default function LanguageToggle() {
+export default function LanguageToggle(): JSX.Element {
   const { i18n } = useTranslation();
   const { language, setLanguage } = useSessionStore();
 
   function toggle() {
-    const next = language === 'en' ? 'fi' : 'en';
+    const next: Language = language === 'fi' ? 'en' : 'fi';
     setLanguage(next);
     i18n.changeLanguage(next);
   }
 
   return (
     <button onClick={toggle} className="text-sm font-bold uppercase tracking-widest">
-      {language === 'en' ? 'FI' : 'EN'}
+      {language === 'fi' ? 'EN' : 'FI'}
     </button>
   );
 }

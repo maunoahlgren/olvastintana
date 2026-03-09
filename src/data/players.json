@@ -2,113 +2,124 @@
   {
     "id": "alanen",
     "name": "Alanen",
-    "positions": ["MF", "FW"],
-    "stats": { "pace": 3, "technique": 4, "power": 3, "iq": 5, "stamina": 3, "chaos": 4 },
+    "position": ["MF", "FW"],
+    "stats": { "pace": 4, "technique": 5, "power": 4, "iq": 6, "stamina": 4, "chaos": 3 },
     "ability": {
-      "id": "hot_streak",
       "type": "boost",
-      "nameEN": "Hot Streak",
-      "nameFI": "Tulisarja",
-      "descEN": "Can randomly explode for 6 points. On a roll, he cannot be stopped.",
-      "descFI": "Voi räjähtää satunnaisesti 6 pisteeseen. Vauhdissa häntä ei voi pysäyttää."
+      "id": "hot_streak",
+      "name_en": "Hot Streak",
+      "name_fi": "Tulisarja",
+      "description_en": "Can randomly explode for 6 points. On a roll, cannot be stopped.",
+      "description_fi": "Voi räjähtää satunnaisesti 6 pisteeseen. Vauhdissa ei voi pysäyttää."
     }
   },
   {
     "id": "mehtonen",
     "name": "Mehtonen",
-    "positions": ["MF", "FW"],
-    "stats": { "pace": 3, "technique": 3, "power": 3, "iq": 3, "stamina": 4, "chaos": 2 },
+    "position": ["MF", "FW"],
+    "stats": { "pace": 4, "technique": 4, "power": 4, "iq": 4, "stamina": 5, "chaos": 2 },
     "ability": {
-      "id": "box_to_box",
       "type": "boost",
-      "nameEN": "Box to Box",
-      "nameFI": "Edestakaisin",
-      "descEN": "Counts as both a midfielder and forward in the same duel.",
-      "descFI": "Lasketaan sekä keskikenttäpelaajana että hyökkääjänä samassa duelissa."
+      "id": "box_to_box",
+      "name_en": "Box to Box",
+      "name_fi": "Edestakaisin",
+      "description_en": "Counts as both midfielder and forward in the same duel.",
+      "description_fi": "Lasketaan sekä keskikenttäpelaajana että hyökkääjänä samassa duelissa."
     }
   },
   {
     "id": "mattila",
     "name": "Mattila",
-    "positions": ["MF", "FW"],
-    "stats": { "pace": 3, "technique": 2, "power": 5, "iq": 2, "stamina": 4, "chaos": 5 },
+    "position": ["MF", "FW"],
+    "stats": { "pace": 3, "technique": 3, "power": 6, "iq": 3, "stamina": 4, "chaos": 5 },
     "ability": {
-      "id": "any_body_part",
       "type": "boost",
-      "nameEN": "Any Body Part",
-      "nameFI": "Mikä tahansa ruumiinosa",
-      "descEN": "Goals count regardless of how ugly. Ear, ass, belly — it all counts.",
-      "descFI": "Maalit lasketaan riippumatta siitä miten ruma se on. Korva, peppu, vatsa — kaikki käy."
+      "id": "any_body_part",
+      "name_en": "Any Body Part",
+      "name_fi": "Mikä tahansa ruumiinosa",
+      "description_en": "Goals count regardless of how ugly.",
+      "description_fi": "Maalit lasketaan riippumatta siitä miten ruma se on."
     }
   },
   {
     "id": "mauno",
     "name": "Mauno",
-    "positions": ["FW", "MF"],
-    "stats": { "pace": 5, "technique": 3, "power": 3, "iq": 3, "stamina": 5, "chaos": 5 },
+    "position": ["FW", "MF"],
+    "stats": { "pace": 6, "technique": 3, "power": 3, "iq": 3, "stamina": 5, "chaos": 6 },
     "ability": {
-      "id": "try_hard_mode",
       "type": "chaos",
-      "nameEN": "Try-Hard Mode",
-      "nameFI": "Yrittäjä-moodi",
-      "descEN": "When Mauno wins a duel, draw a Sattuma card. Could be glorious. Could be a disaster.",
-      "descFI": "Kun Mauno voittaa duelin, nosta Sattuma-kortti. Voi olla loistava tai katastrofaalinen."
+      "id": "try_hard_mode",
+      "name_en": "Try-Hard Mode",
+      "name_fi": "Yrittäjä-moodi",
+      "description_en": "When Mauno wins a duel, draw a Sattuma card. Could be glorious. Could be a disaster.",
+      "description_fi": "Kun Mauno voittaa duelin, nosta Sattuma-kortti. Voi olla loistava tai katastrofaalinen.",
+      "trigger": "on_duel_win",
+      "effect": "draw_sattuma"
     }
   },
   {
     "id": "iiro",
     "name": "Iiro",
-    "positions": ["MF", "FW"],
-    "stats": { "pace": 4, "technique": 4, "power": 3, "iq": 3, "stamina": 4, "chaos": 3 },
+    "position": ["MF", "FW"],
+    "stats": { "pace": 5, "technique": 5, "power": 4, "iq": 4, "stamina": 5, "chaos": 4 },
     "ability": {
-      "id": "ninja",
       "type": "chaos",
-      "nameEN": "Ninja",
-      "nameFI": "Ninja",
-      "descEN": "Unexpected moves, can launch the ball from anywhere. Martial arts background.",
-      "descFI": "Odottamattomat siirrot, voi laukaista pallon mistä tahansa. Kamppailutausta."
+      "id": "ninja",
+      "name_en": "Ninja",
+      "name_fi": "Ninja",
+      "description_en": "Unexpected moves, can launch the ball from anywhere.",
+      "description_fi": "Odottamattomat siirrot, voi laukaista pallon mistä tahansa."
     }
   },
   {
     "id": "estola",
     "name": "Estola",
-    "positions": ["MF", "FW"],
-    "stats": { "pace": 3, "technique": 4, "power": 3, "iq": 5, "stamina": 3, "chaos": 2 },
+    "position": ["MF", "FW"],
+    "stats": { "pace": 3, "technique": 5, "power": 4, "iq": 6, "stamina": 3, "chaos": 2 },
     "ability": {
-      "id": "estis",
       "type": "reactive",
-      "nameEN": "Estis",
-      "nameFI": "Estis",
-      "descEN": "After seeing the opponent's card, choose to play either Press or Shot in response.",
-      "descFI": "Nähtyään vastustajan kortin, valitsee pelaako Riistoa vai Laukausta vastaukseksi."
+      "id": "estis",
+      "name_en": "Estis",
+      "name_fi": "Estis",
+      "description_en": "After seeing the opponent's card, choose to play either Press or Shot in response.",
+      "description_fi": "Nähtyään vastustajan kortin, valitsee pelaako Riistoa vai Laukausta vastaukseksi.",
+      "trigger": "after_opponent_reveal",
+      "effect": "choose_press_or_shot"
     }
   },
   {
     "id": "jyrki",
     "name": "Jyrki",
-    "positions": ["MF"],
-    "stats": { "pace": 3, "technique": 3, "power": 4, "iq": 3, "stamina": 5, "chaos": 2 },
+    "position": ["MF"],
+    "stats": { "pace": 3, "technique": 3, "power": 4, "iq": 4, "stamina": 6, "chaos": 2 },
     "ability": {
-      "id": "pressure_44",
       "type": "restriction",
-      "nameEN": "44 minuutin paine",
-      "nameFI": "44 minuutin paine",
-      "descEN": "After Jyrki wins a duel, the opponent cannot play a Feint card in the next duel.",
-      "descFI": "Kun Jyrki voittaa duelin, vastustaja ei voi pelata Harhautus-korttia seuraavassa duelissa."
+      "id": "44_minuutin_paine",
+      "name_en": "44 Minutes of Pressure",
+      "name_fi": "44 minuutin paine",
+      "description_en": "After Jyrki wins a duel, the opponent cannot play Feint in the next duel.",
+      "description_fi": "Kun Jyrki voittaa duelin, vastustaja ei voi pelata Harhautusta seuraavassa duelissa.",
+      "trigger": "on_duel_win",
+      "effect": "block_feint_next_duel",
+      "duration": 1
     }
   },
   {
     "id": "tommi",
     "name": "Tommi",
-    "positions": ["GK"],
-    "stats": { "pace": 2, "technique": 3, "power": 4, "iq": 4, "stamina": 4, "chaos": 1 },
+    "position": ["GK"],
+    "stats": { "pace": 3, "technique": 3, "power": 4, "iq": 4, "stamina": 4, "chaos": 1 },
     "ability": {
-      "id": "brick_wall",
       "type": "boost",
-      "nameEN": "Brick Wall",
-      "nameFI": "Kivimuuri",
-      "descEN": "Once per half, automatically blocks a shot. Resets at halftime.",
-      "descFI": "Kerran per jakso torjuu automaattisesti laukauksen. Nollautuu puoliajalla."
+      "id": "brick_wall",
+      "name_en": "Brick Wall",
+      "name_fi": "Kivimuuri",
+      "description_en": "Once per half, automatically blocks a shot. Resets at halftime.",
+      "description_fi": "Kerran per jakso torjuu automaattisesti laukauksen. Palautuu puoliajalla.",
+      "trigger": "on_shot_attempt",
+      "effect": "auto_save",
+      "uses_per_half": 1,
+      "resets_at_halftime": true
     }
   }
 ]

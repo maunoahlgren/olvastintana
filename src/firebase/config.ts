@@ -1,6 +1,8 @@
 /**
- * Firebase configuration — placeholder for Phase 3 multiplayer
+ * @file firebase/config.ts
+ * Firebase configuration — placeholder for Phase 3 multiplayer.
  * Fill in with real Firebase project credentials before Phase 3.
+ * See /docs/FIREBASE.md for setup instructions.
  */
 
 // import { initializeApp } from 'firebase/app';

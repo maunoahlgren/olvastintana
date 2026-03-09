@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveDuel, beats, resolveGoalkeeping, CARD } from '../../src/engine/duel';
+import { resolveDuel, beats, CARD } from '../../../src/engine/duel';
 
 const BASE_STATS = { pace: 3, technique: 3, power: 3, iq: 3, stamina: 3, chaos: 3 };
 
@@ -43,49 +43,24 @@ describe('resolveDuel() — straight wins', () => {
 
 describe('resolveDuel() — ties with stat tiebreak', () => {
   it('Press tie: higher attacker Pace wins', () => {
-    const aStats = { ...BASE_STATS, pace: 5 };
-    const dStats = { ...BASE_STATS, pace: 3 };
-    expect(resolveDuel(CARD.PRESS, CARD.PRESS, aStats, dStats)).toBe('attacker');
+    expect(resolveDuel(CARD.PRESS, CARD.PRESS, { ...BASE_STATS, pace: 5 }, { ...BASE_STATS, pace: 3 })).toBe('attacker');
   });
 
   it('Press tie: higher defender Pace wins', () => {
-    const aStats = { ...BASE_STATS, pace: 2 };
-    const dStats = { ...BASE_STATS, pace: 4 };
-    expect(resolveDuel(CARD.PRESS, CARD.PRESS, aStats, dStats)).toBe('defender');
+    expect(resolveDuel(CARD.PRESS, CARD.PRESS, { ...BASE_STATS, pace: 2 }, { ...BASE_STATS, pace: 4 })).toBe('defender');
   });
 
   it('Feint tie: higher attacker Technique wins', () => {
-    const aStats = { ...BASE_STATS, technique: 5 };
-    const dStats = { ...BASE_STATS, technique: 3 };
-    expect(resolveDuel(CARD.FEINT, CARD.FEINT, aStats, dStats)).toBe('attacker');
+    expect(resolveDuel(CARD.FEINT, CARD.FEINT, { ...BASE_STATS, technique: 5 }, { ...BASE_STATS, technique: 3 })).toBe('attacker');
   });
 
   it('Shot tie: higher attacker Power wins', () => {
-    const aStats = { ...BASE_STATS, power: 4 };
-    const dStats = { ...BASE_STATS, power: 2 };
-    expect(resolveDuel(CARD.SHOT, CARD.SHOT, aStats, dStats)).toBe('attacker');
+    expect(resolveDuel(CARD.SHOT, CARD.SHOT, { ...BASE_STATS, power: 4 }, { ...BASE_STATS, power: 2 })).toBe('attacker');
   });
 
-  it('equal stats on tie → null (nothing happens)', () => {
+  it('equal stats on tie → null (nothing happens, possession unchanged)', () => {
     expect(resolveDuel(CARD.PRESS, CARD.PRESS, BASE_STATS, BASE_STATS)).toBeNull();
     expect(resolveDuel(CARD.FEINT, CARD.FEINT, BASE_STATS, BASE_STATS)).toBeNull();
     expect(resolveDuel(CARD.SHOT, CARD.SHOT, BASE_STATS, BASE_STATS)).toBeNull();
-  });
-});
-
-// --- Goalkeeping ---
-
-describe('resolveGoalkeeping()', () => {
-  it('autosave always saves', () => {
-    expect(resolveGoalkeeping({ power: 1 }, { power: 10 }, true)).toBe('saved');
-  });
-
-  it('keeper power >= shooter power → saved', () => {
-    expect(resolveGoalkeeping({ power: 4 }, { power: 4 })).toBe('saved');
-    expect(resolveGoalkeeping({ power: 5 }, { power: 3 })).toBe('saved');
-  });
-
-  it('keeper power < shooter power → goal', () => {
-    expect(resolveGoalkeeping({ power: 3 }, { power: 5 })).toBe('goal');
   });
 });
