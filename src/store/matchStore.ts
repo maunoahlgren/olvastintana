@@ -12,6 +12,7 @@
 import { create } from 'zustand';
 import { MATCH_PHASE, DUELS_PER_HALF, type MatchPhase, type Tactic } from '../engine/match';
 import { coinFlip, secondHalfKickoff, type Side } from '../engine/possession';
+import type { CardChoice } from '../engine/ai';
 
 /** An active effect applied to one side (from abilities or Sattuma) */
 export interface ActiveEffect {
@@ -38,6 +39,11 @@ interface MatchState {
   triviaResult: 'correct' | 'wrong' | null;
   /** True when the home side's first card of the match auto-wins (trivia correct) */
   triviaBoostActive: boolean;
+  /**
+   * Rolling history of the last 3 cards played by the human player (home side).
+   * Used by the Hard AI to identify and counter the player's tendencies.
+   */
+  playerCardHistory: CardChoice[];
 }
 
 interface MatchActions {
@@ -57,6 +63,11 @@ interface MatchActions {
   setPossession: (side: Side) => void;
   useHalftimeAction: () => void;
   setTactic: (side: Side, tactic: Tactic) => void;
+  /**
+   * Append a card to the human player's (home) card history.
+   * Keeps only the most recent 3 entries.
+   */
+  recordPlayerCard: (card: CardChoice) => void;
   addEffect: (side: Side, effect: ActiveEffect) => void;
   expireEffect: (side: Side, effectId: string) => void;
   clearHalftimeEffects: (side: Side) => void;
@@ -77,6 +88,7 @@ const initialState: MatchState = {
   effects: { home: [], away: [] },
   triviaResult: null,
   triviaBoostActive: false,
+  playerCardHistory: [],
 };
 
 export const useMatchStore = create<MatchState & MatchActions>((set, get) => ({
@@ -154,6 +166,12 @@ export const useMatchStore = create<MatchState & MatchActions>((set, get) => ({
 
   setTactic(side, tactic) {
     set(side === 'home' ? { homeTactic: tactic } : { awayTactic: tactic });
+  },
+
+  recordPlayerCard(card) {
+    set((s) => ({
+      playerCardHistory: [...s.playerCardHistory, card].slice(-3),
+    }));
   },
 
   addEffect(side, effect) {

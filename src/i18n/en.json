@@ -142,5 +142,16 @@
     "aggressive": "Aggressive",
     "defensive": "Defensive",
     "creative": "Creative"
+  },
+  "difficulty": {
+    "select": "Select Difficulty",
+    "easy": "Easy",
+    "easy_desc": "Random AI — great for learning",
+    "normal": "Normal",
+    "normal_desc": "Tactical AI — reads the game",
+    "hard": "Hard",
+    "hard_desc": "Smart AI — counters your every move",
+    "ai_attacking": "AI is attacking — choose your defence",
+    "ai_thinking": "AI is picking..."
   }
 }

@@ -1,21 +1,29 @@
 /**
  * @file LineupScreen.tsx
- * Lineup selection screen — both home and away managers pick their squads.
+ * Lineup selection screen — home manager picks their squad; in AI mode the
+ * away lineup is automatically selected by the AI.
  *
  * Rules:
  * - Select exactly 5 outfield players (MF / FW)
  * - Select exactly 1 goalkeeper (GK)
- * - If triviaResult === 'wrong', additionally pick one player to receive -1 stats
- * - Once both lineups confirmed, startFirstHalf() moves to FIRST_HALF
+ * - If triviaResult === 'wrong', additionally pick one home player to receive -1 stats
+ * - Once home confirms, AI selects away lineup (AI mode) or away picks manually (two-player)
+ * - startFirstHalf() moves to FIRST_HALF
  *
- * In Phase 1 solo mode the same screen is used for both sides sequentially.
- * Step 1: Home picks lineup  →  Step 2: Away picks lineup  →  confirm
+ * AI mode (aiDifficulty !== null):
+ *   After home confirms, pickAiLineup() is called based on difficulty.
+ *   The away picking step is skipped entirely — the AI's selection is not shown.
+ *
+ * Two-player mode (aiDifficulty === null):
+ *   Original pass-and-play flow: home picks → pass device → away picks.
  */
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMatchStore } from '../../store/matchStore';
 import { useSquadStore, type Player } from '../../store/squadStore';
+import { useSessionStore } from '../../store/sessionStore';
+import { pickAiLineup } from '../../engine/ai';
 import PlayerCard from '../ui/PlayerCard';
 import playersData from '../../data/players.json';
 
@@ -27,7 +35,7 @@ const GOALKEEPERS = ALL_PLAYERS.filter((p) => p.position.includes('GK'));
 type PickStep = 'home' | 'away';
 
 /**
- * LineupScreen — squad selection for both sides.
+ * LineupScreen — squad selection.
  *
  * @returns The lineup screen element
  */
@@ -36,9 +44,13 @@ export default function LineupScreen(): JSX.Element {
 
   // Individual selectors to avoid infinite re-render from object identity changes
   const triviaResult = useMatchStore((s) => s.triviaResult);
+  const homeTactic = useMatchStore((s) => s.homeTactic);
   const startFirstHalf = useMatchStore((s) => s.startFirstHalf);
   const setLineup = useSquadStore((s) => s.setLineup);
   const applyStatModifier = useSquadStore((s) => s.applyStatModifier);
+  const aiDifficulty = useSessionStore((s) => s.aiDifficulty);
+
+  const isAiMatch = aiDifficulty !== null;
 
   const [step, setStep] = useState<PickStep>('home');
 
@@ -47,7 +59,7 @@ export default function LineupScreen(): JSX.Element {
   const [homeGk, setHomeGk] = useState<Player | null>(null);
   const [homePenaltyPlayer, setHomePenaltyPlayer] = useState<Player | null>(null);
 
-  // --- Away lineup state ---
+  // --- Away lineup state (two-player only) ---
   const [awayOutfield, setAwayOutfield] = useState<Player[]>([]);
   const [awayGk, setAwayGk] = useState<Player | null>(null);
 
@@ -97,7 +109,26 @@ export default function LineupScreen(): JSX.Element {
     }
 
     if (isHome) {
-      setStep('away');
+      if (isAiMatch) {
+        // AI mode: auto-select away lineup and start immediately
+        const homeLineupIds = [...homeOutfield, gk].map((p) => p.id);
+        const aiResult = pickAiLineup(
+          aiDifficulty,
+          ALL_PLAYERS,
+          homeLineupIds,
+          homeTactic ?? 'aggressive',
+        );
+        // Convert AI lineup IDs back to Player objects
+        const awayPlayers = [
+          ...aiResult.outfield.map((id) => ALL_PLAYERS.find((p) => p.id === id)).filter(Boolean),
+          ALL_PLAYERS.find((p) => p.id === aiResult.goalkeeper),
+        ].filter((p): p is Player => p !== undefined);
+        setLineup('away', awayPlayers);
+        startFirstHalf();
+      } else {
+        // Two-player mode: proceed to away picks
+        setStep('away');
+      }
     } else {
       startFirstHalf();
     }

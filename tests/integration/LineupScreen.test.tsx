@@ -9,6 +9,7 @@ import { renderWithProviders } from '../utils/renderWithProviders';
 import LineupScreen from '../../src/components/screens/LineupScreen';
 import { useMatchStore } from '../../src/store/matchStore';
 import { useSquadStore } from '../../src/store/squadStore';
+import { useSessionStore } from '../../src/store/sessionStore';
 import { MATCH_PHASE } from '../../src/engine/match';
 import playersData from '../../src/data/players.json';
 
@@ -36,6 +37,8 @@ describe('LineupScreen', () => {
     useMatchStore.getState().reset();
     useMatchStore.getState().beginSoloMatch();
     useSquadStore.getState().reset();
+    // Force two-player mode so the away lineup step is presented manually
+    useSessionStore.getState().setAiDifficulty(null);
   });
 
   it('renders the lineup header', () => {

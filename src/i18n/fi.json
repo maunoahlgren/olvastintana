@@ -142,5 +142,16 @@
     "aggressive": "Aggressiivinen",
     "defensive": "Puolustava",
     "creative": "Luova"
+  },
+  "difficulty": {
+    "select": "Valitse vaikeustaso",
+    "easy": "Helppo",
+    "easy_desc": "Satunnainen tekoäly — hyvä oppimiseen",
+    "normal": "Normaali",
+    "normal_desc": "Taktinen tekoäly — lukee pelin",
+    "hard": "Vaikea",
+    "hard_desc": "Älykäs tekoäly — vastaa kaikkeen",
+    "ai_attacking": "Tekoäly hyökkää — valitse puolustuksesi",
+    "ai_thinking": "Tekoäly valitsee..."
   }
 }

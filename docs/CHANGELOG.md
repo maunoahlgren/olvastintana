@@ -5,6 +5,43 @@ Format: `## [version] — date` with Added / Changed / Fixed sections.
 
 ---
 
+## [0.3.0] — 2026-03-09
+
+### Added
+- Phase 1.5: AI opponent for solo mode at three difficulty levels
+  - `src/engine/ai.ts` — 9 pure AI decision functions + 3 dispatcher helpers
+    - `easyAiCard` — uniformly random card pick
+    - `normalAiCard` — weighted random; prefers Shot when in possession or losing late; counters Press with Feint
+    - `hardAiCard` — counter-based on player's last 3 cards; IQ-driven mistake rate (`(6-iq)/12`); possession override to Shot
+    - `easyAiLineup` — random Fisher-Yates shuffle, takes first 5 outfield
+    - `normalAiLineup` — picks 5 outfield players by highest total stats
+    - `hardAiLineup` — picks players by counter-stat (Technique vs Aggressive, Power vs Defensive, Pace vs Creative)
+    - `easyAiTactics` — random tactic
+    - `normalAiTactics` — Defensive when ahead, Aggressive when behind, random on draw
+    - `hardAiTactics` — counters player's tactic (Aggressive→Creative, Defensive→Aggressive, Creative→Defensive)
+    - `pickAiCard`, `pickAiLineup`, `pickAiTactics` — dispatcher convenience functions
+  - `sessionStore`: `aiDifficulty: AiDifficulty | null` state (default `'normal'`), `setAiDifficulty()` action
+  - `matchStore`: `playerCardHistory: CardChoice[]` state, `recordPlayerCard()` action (rolling last-3 window)
+  - `TitleScreen`: difficulty selector (Easy / Normal / Hard) with emoji indicators and descriptions
+  - `LineupScreen`: AI mode auto-selects away lineup via `pickAiLineup()` and starts FIRST_HALF immediately
+  - `DuelScreen`: AI mode `human_pick` state — no cover screen, human picks card, AI resolves instantly
+- i18n: `difficulty.*` keys added to both `en.json` and `fi.json`
+  - `select`, `easy`, `easy_desc`, `normal`, `normal_desc`, `hard`, `hard_desc`, `ai_attacking`, `ai_thinking`
+- **48 unit tests** in `tests/unit/engine/ai.test.ts`
+- **20 functional tests** in `tests/functional/ai_match.test.tsx`
+- **11 new integration tests** in `tests/integration/TitleScreen.test.tsx` (difficulty selector)
+- Total: **227 passing tests** (up from 148)
+
+### Changed
+- `TitleScreen` — difficulty selector replaces plain start button; `setAiDifficulty()` called before `beginSoloMatch()`
+- `LineupScreen` — AI mode skips the away-side manual pick; two-player mode unchanged
+- `DuelScreen` — `initialUiPhase` is `'human_pick'` in AI mode; no cover screen; `recordPlayerCard()` called on every human pick
+
+### Fixed
+- All existing tests broken by `sessionStore.aiDifficulty` defaulting to `'normal'` — added `setAiDifficulty(null)` to `beforeEach` in `DuelScreen.test.tsx`, `LineupScreen.test.tsx`, and `match_flow.test.tsx`
+
+---
+
 ## [0.2.0] — 2026-03-09
 
 ### Added

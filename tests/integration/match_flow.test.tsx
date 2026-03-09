@@ -16,6 +16,7 @@ import { renderWithProviders } from '../utils/renderWithProviders';
 import App from '../../src/App';
 import { useMatchStore } from '../../src/store/matchStore';
 import { useSquadStore } from '../../src/store/squadStore';
+import { useSessionStore } from '../../src/store/sessionStore';
 import { MATCH_PHASE } from '../../src/engine/match';
 import playersData from '../../src/data/players.json';
 
@@ -94,6 +95,8 @@ describe('Full solo match flow (App routing)', () => {
   beforeEach(() => {
     useMatchStore.getState().reset();
     useSquadStore.getState().reset();
+    // Force two-player mode so the cover screen is present in playOneDuel()
+    useSessionStore.getState().setAiDifficulty(null);
   });
 
   // ── TITLE SCREEN ──────────────────────────────────────────────────────────

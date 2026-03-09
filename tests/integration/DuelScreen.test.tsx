@@ -9,6 +9,7 @@ import { renderWithProviders } from '../utils/renderWithProviders';
 import DuelScreen from '../../src/components/screens/DuelScreen';
 import { useMatchStore } from '../../src/store/matchStore';
 import { useSquadStore } from '../../src/store/squadStore';
+import { useSessionStore } from '../../src/store/sessionStore';
 import { MATCH_PHASE } from '../../src/engine/match';
 import playersData from '../../src/data/players.json';
 import type { Player } from '../../src/store/squadStore';
@@ -17,9 +18,11 @@ const allPlayers = playersData as Player[];
 const outfield = allPlayers.filter((p) => p.position.some((pos) => pos === 'MF' || pos === 'FW'));
 const gk = allPlayers.find((p) => p.position.includes('GK'))!;
 
-/** Set up a minimal match state in FIRST_HALF with lineups set */
+/** Set up a minimal match state in FIRST_HALF with lineups set (two-player mode) */
 function setupMatch(possession: 'home' | 'away' = 'home') {
   useMatchStore.getState().reset();
+  // Force two-player mode so the cover screen is present
+  useSessionStore.getState().setAiDifficulty(null);
   // Manually push to FIRST_HALF with possession set
   useMatchStore.setState({
     phase: MATCH_PHASE.FIRST_HALF,

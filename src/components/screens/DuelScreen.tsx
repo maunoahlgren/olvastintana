@@ -1,33 +1,45 @@
 /**
  * @file DuelScreen.tsx
- * The main duel gameplay screen for Phase 1.
+ * The main duel gameplay screen, supporting both two-player and AI modes.
  *
- * UI state machine (local):
- *   attacker_pick → cover → defender_pick → show_result
+ * ── Two-player mode (aiDifficulty === null) ──────────────────────────────────
+ * UI state machine: attacker_pick → cover → defender_pick → show_result
  *
- * Flow per duel:
- * 1. Possession holder (attacker) picks a card
- * 2. Cover screen — players pass the device to the other side
- * 3. Defender picks a card
- * 4. Duel resolves:
- *    - If attacker wins with Shot → goalkeeper save check → goal or saved
- *    - Possession updates via resolvePossession()
- * 5. Show result, then advanceDuel()
+ * ── AI mode (aiDifficulty !== null) ─────────────────────────────────────────
+ * Human always controls the Home (left) side. Away side is the AI.
+ * UI state machine: human_pick → show_result
  *
- * Special case: triviaBoostActive → first duel auto-wins for home (no card pick needed).
+ *   If home has possession (human is attacker):
+ *     1. Human picks attacker card
+ *     2. AI auto-picks defender card
+ *     3. Resolve → show result
+ *
+ *   If away has possession (AI is attacker):
+ *     1. Human sees "AI is attacking" prompt and picks their defender card
+ *     2. AI attacker card is auto-generated simultaneously
+ *     3. Resolve → show result
+ *
+ * In AI mode the cover screen is skipped — no second human needs to be shielded.
+ * The human's card is always recorded in matchStore.playerCardHistory for Hard AI.
  */
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMatchStore } from '../../store/matchStore';
 import { useSquadStore } from '../../store/squadStore';
+import { useSessionStore } from '../../store/sessionStore';
 import { resolveDuel, CARD, type Card } from '../../engine/duel';
 import { resolvePossession } from '../../engine/possession';
 import { resolveGoalkeeping, resetBrickWall, type BrickWallState } from '../../engine/goalkeeper';
+import { pickAiCard, DUELS_PER_HALF, type CardChoice } from '../../engine/ai';
 import CardButton from '../ui/CardButton';
 import ScoreBoard from '../ui/ScoreBoard';
 
-type DuelUiPhase = 'attacker_pick' | 'cover' | 'defender_pick' | 'show_result';
+/** Phase names for two-player mode */
+type TwoPlayerUiPhase = 'attacker_pick' | 'cover' | 'defender_pick' | 'show_result';
+/** Phase names for AI mode */
+type AiUiPhase = 'human_pick' | 'show_result';
+type DuelUiPhase = TwoPlayerUiPhase | AiUiPhase;
 
 interface DuelResult {
   winner: 'attacker' | 'defender' | null;
@@ -38,6 +50,7 @@ interface DuelResult {
 
 /**
  * DuelScreen — handles card selection, duel resolution, and possession for both halves.
+ *
  * Brick Wall state uses local component state so it resets naturally when the
  * component unmounts at halftime and remounts for the second half.
  *
@@ -46,27 +59,34 @@ interface DuelResult {
 export default function DuelScreen(): JSX.Element {
   const { t } = useTranslation();
 
-  // Store selectors — individual to avoid infinite re-renders
+  // ── Store selectors (individual to avoid infinite re-renders) ──────────────
   const half = useMatchStore((s) => s.half);
   const duelIndex = useMatchStore((s) => s.duelIndex);
   const homeGoals = useMatchStore((s) => s.homeGoals);
   const awayGoals = useMatchStore((s) => s.awayGoals);
   const possession = useMatchStore((s) => s.possession);
   const triviaBoostActive = useMatchStore((s) => s.triviaBoostActive);
+  const playerCardHistory = useMatchStore((s) => s.playerCardHistory);
   const scoreGoal = useMatchStore((s) => s.scoreGoal);
   const advanceDuel = useMatchStore((s) => s.advanceDuel);
   const setPossession = useMatchStore((s) => s.setPossession);
+  const recordPlayerCard = useMatchStore((s) => s.recordPlayerCard);
   const homeLineup = useSquadStore((s) => s.homeLineup);
   const awayLineup = useSquadStore((s) => s.awayLineup);
+  const aiDifficulty = useSessionStore((s) => s.aiDifficulty);
 
-  // Local duel UI state
-  const [uiPhase, setUiPhase] = useState<DuelUiPhase>('attacker_pick');
+  const isAiMatch = aiDifficulty !== null;
+
+  // ── Local UI state ─────────────────────────────────────────────────────────
+  const initialUiPhase: DuelUiPhase = isAiMatch ? 'human_pick' : 'attacker_pick';
+  const [uiPhase, setUiPhase] = useState<DuelUiPhase>(initialUiPhase);
   const [attackerCard, setAttackerCard] = useState<Card | null>(null);
   const [duelResult, setDuelResult] = useState<DuelResult | null>(null);
 
   // Brick Wall resets when this component remounts (at halftime the screen unmounts)
   const [brickWall, setBrickWall] = useState<BrickWallState>(resetBrickWall);
 
+  // ── Derived values ─────────────────────────────────────────────────────────
   const attackerSide = possession ?? 'home';
   const defenderSide = attackerSide === 'home' ? 'away' : 'home';
 
@@ -95,6 +115,44 @@ export default function DuelScreen(): JSX.Element {
     ? { ...goalkeeperSlot.player.stats, ...goalkeeperSlot.statModifier }
     : { pace: 3, technique: 3, power: 4, iq: 4, stamina: 4, chaos: 1 };
 
+  // In AI mode, the human is always the home side
+  const humanIsAttacker = isAiMatch ? attackerSide === 'home' : true;
+
+  // ── AI card picker helper ───────────────────────────────────────────────────
+
+  /**
+   * Ask the AI to pick a card given the current game state.
+   * The active AI player's IQ is taken from whichever away slot is playing.
+   *
+   * @returns A Card value chosen by the AI
+   */
+  function getAiCard(): Card {
+    const aiSlot = awayLineup[outfieldSlot];
+    const activeIq = aiSlot?.player.stats.iq ?? 4;
+
+    const lastPlayerCard =
+      playerCardHistory.length > 0
+        ? playerCardHistory[playerCardHistory.length - 1]
+        : undefined;
+
+    return pickAiCard(
+      aiDifficulty!,
+      {
+        possession: possession ?? 'home',
+        homeGoals,
+        awayGoals,
+        duelIndex,
+        half,
+        duelsPerHalf: DUELS_PER_HALF,
+        lastPlayerCard,
+        activePlayerIq: activeIq,
+      },
+      playerCardHistory,
+    ) as Card;
+  }
+
+  // ── Duel resolution ────────────────────────────────────────────────────────
+
   /**
    * Resolve the duel after both cards are chosen.
    * Handles trivia boost, possession, goalkeeper save, and scoring.
@@ -103,7 +161,6 @@ export default function DuelScreen(): JSX.Element {
    * @param defCard - Card played by the defender
    */
   function resolveCurrent(atkCard: Card, defCard: Card) {
-    // Trivia boost: home's first card auto-wins
     const triviaBoostUsed = triviaBoostActive && attackerSide === 'home';
     const winner: 'attacker' | 'defender' | null = triviaBoostUsed
       ? 'attacker'
@@ -119,14 +176,12 @@ export default function DuelScreen(): JSX.Element {
     let goalScored = false;
 
     if (goalAttempt) {
-      // Check if keeper has Brick Wall ability and it hasn't been used this half
       const keeperHasBrickWall =
         goalkeeperSlot?.player.ability.id === 'brick_wall' && !brickWall.usedThisHalf;
 
       const saveResult = resolveGoalkeeping(keeperStats, attackerStats, keeperHasBrickWall);
 
       if (saveResult === 'saved') {
-        // If Brick Wall triggered, mark it as used
         if (keeperHasBrickWall) {
           setBrickWall({ usedThisHalf: true });
         }
@@ -141,30 +196,52 @@ export default function DuelScreen(): JSX.Element {
     setUiPhase('show_result');
   }
 
-  /** Attacker picks card → go to cover screen */
+  // ── Two-player handlers ────────────────────────────────────────────────────
+
+  /** Attacker picks card → go to cover screen (two-player mode) */
   function handleAttackerPick(card: Card) {
     setAttackerCard(card);
     setUiPhase('cover');
   }
 
-  /** From cover screen — show defender pick */
+  /** From cover screen — show defender pick (two-player mode) */
   function handleCoverContinue() {
     setUiPhase('defender_pick');
   }
 
-  /** Defender picks card → resolve */
+  /** Defender picks card → resolve (two-player mode) */
   function handleDefenderPick(card: Card) {
     resolveCurrent(attackerCard!, card);
   }
 
-  /** Advance to next duel after showing result */
+  // ── AI mode handler ────────────────────────────────────────────────────────
+
+  /**
+   * Human picks their card in AI mode (as either attacker or defender).
+   * The AI's card is determined simultaneously.
+   * The human's card is recorded in playerCardHistory for Hard AI.
+   *
+   * @param humanCard - Card chosen by the human player
+   */
+  function handleHumanPickAi(humanCard: Card) {
+    recordPlayerCard(humanCard as CardChoice);
+    const aiCard = getAiCard();
+    const atkCard = humanIsAttacker ? humanCard : aiCard;
+    const defCard = humanIsAttacker ? aiCard : humanCard;
+    resolveCurrent(atkCard, defCard);
+  }
+
+  // ── Continue after result ──────────────────────────────────────────────────
+
+  /** Advance to the next duel after showing the result */
   function handleContinue() {
     setAttackerCard(null);
     setDuelResult(null);
-    setUiPhase('attacker_pick');
+    setUiPhase(isAiMatch ? 'human_pick' : 'attacker_pick');
     advanceDuel();
   }
 
+  // ── Display names ──────────────────────────────────────────────────────────
   const attackerName = t(attackerSide === 'home' ? 'duel.home_team' : 'duel.away_team');
   const defenderName = t(defenderSide === 'home' ? 'duel.home_team' : 'duel.away_team');
 
@@ -196,7 +273,7 @@ export default function DuelScreen(): JSX.Element {
         </div>
       )}
 
-      {/* ─── Phase: Attacker picks ─── */}
+      {/* ─── Two-player: Attacker picks ─── */}
       {uiPhase === 'attacker_pick' && (
         <div className="flex flex-col items-center gap-4 w-full max-w-sm">
           <p
@@ -213,7 +290,7 @@ export default function DuelScreen(): JSX.Element {
         </div>
       )}
 
-      {/* ─── Phase: Cover screen ─── */}
+      {/* ─── Two-player: Cover screen ─── */}
       {uiPhase === 'cover' && (
         <div className="flex flex-col items-center gap-6 text-center max-w-sm">
           <p className="text-base font-bold text-[#F5F0E8]/70">
@@ -229,7 +306,7 @@ export default function DuelScreen(): JSX.Element {
         </div>
       )}
 
-      {/* ─── Phase: Defender picks ─── */}
+      {/* ─── Two-player: Defender picks ─── */}
       {uiPhase === 'defender_pick' && (
         <div className="flex flex-col items-center gap-4 w-full max-w-sm">
           <p
@@ -246,7 +323,26 @@ export default function DuelScreen(): JSX.Element {
         </div>
       )}
 
-      {/* ─── Phase: Show result ─── */}
+      {/* ─── AI mode: Human picks (attacker or defender) ─── */}
+      {uiPhase === 'human_pick' && (
+        <div className="flex flex-col items-center gap-4 w-full max-w-sm">
+          <p
+            data-testid="attacker-pick-prompt"
+            className="text-lg font-bold text-[#F5F0E8]"
+          >
+            {humanIsAttacker
+              ? `${t('duel.home_team')}, ${t('duel.choose_card')}`
+              : t('difficulty.ai_attacking')}
+          </p>
+          <div className="flex gap-4 justify-center">
+            <CardButton card={CARD.PRESS} onClick={() => handleHumanPickAi(CARD.PRESS)} />
+            <CardButton card={CARD.FEINT} onClick={() => handleHumanPickAi(CARD.FEINT)} />
+            <CardButton card={CARD.SHOT} onClick={() => handleHumanPickAi(CARD.SHOT)} />
+          </div>
+        </div>
+      )}
+
+      {/* ─── Show result (both modes) ─── */}
       {uiPhase === 'show_result' && duelResult && (
         <div
           data-testid="duel-result-panel"
