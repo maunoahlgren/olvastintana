@@ -1,7 +1,7 @@
 # CONTEXT.md — Olvastin Tana FC: The Game
 # Full project context for Claude Code.
 # Updated after every significant decision or completed phase.
-# Last updated: March 2025
+# Last updated: March 2025 — Phase 1 in progress, engine complete, UI remaining
 
 ---
 
@@ -306,16 +306,49 @@ Tero, Jari, Kurkela, Kukko, Nissinen, Saravo, Kari, Ari
 
 ## 🏆 Current Build Status
 
-### ✅ Phase 1 — Foundation (Solo Mode MVP)
-**Status: NOT STARTED**
-Goals:
-- Project scaffold (React + Vite + Tailwind + i18n)
-- players.json loaded and displayed
-- Basic duel resolution engine
-- Complete match flow: trivia → lineup → duels → halftime → result
-- Goalkeeper save mechanic
-- Finnish/English toggle
-- Unit + functional + integration tests for all of the above
+### 🔄 Phase 1 — Foundation (Solo Mode MVP)
+**Status: IN PROGRESS**
+**Repo:** github.com/maunoahlgren/olvastintana
+**Dev server:** :5173 (dev) and :4173 (preview) — configured in `.claude/launch.json`
+
+#### ✅ Done
+- Project scaffold: React + Vite + TypeScript strict + Tailwind CSS v4
+- **Game engine** (pure TypeScript, fully decoupled from React):
+  - `duel.ts` — card triangle (Press/Feint/Shot) + stat tiebreak resolution
+  - `goalkeeper.ts` — save attempt logic + Kivimuuri state per half
+  - `possession.ts` — possession transitions, coin flip, kickoff rules
+  - `abilities.ts` — ability handlers: Hot Streak, Try-Hard Mode, 44 minuutin paine, Estis, stamina penalty
+  - `sattuma.ts` — weighted deck builder (40/35/25%) + card draw
+  - `match.ts` — phase constants, match points (W=3/D=1/L=0), halftime options
+- **Zustand stores:**
+  - `matchStore.ts` — phase, score, possession, duel index, effects, tactics
+  - `squadStore.ts` — lineups, stat modifiers, suspensions
+  - `sessionStore.ts` — game mode, language, Firebase room (stub)
+  - `seasonStore.ts` — standings, points, W/D/L tracking
+- **Data files:**
+  - `players.json` — 8 players with stats and full ability definitions
+  - `sattuma.json` — 12 Sattuma cards across 3 tiers
+  - `trivia.json` — placeholder, ready to fill
+- **i18n** — Finnish default, English toggle, all UI keys translated in both languages
+- **Title screen** — club colours (#1A1A1A / #FFE600) with language toggle
+- **54 passing tests:**
+  - `tests/unit/engine/` — duel, goalkeeper, possession, abilities, sattuma
+  - `tests/functional/` — match points + scaffold for future flow tests
+- **Docs** — CHANGELOG, PLAYERS, TRIVIA, ARCHITECTURE, FIREBASE all in `/docs/`
+
+#### ⏳ Still needed to complete Phase 1
+Build these in order — each depends on the previous:
+
+1. **PlayerCard component** — name, position, stats bar, ability badge
+2. **LineupScreen** — pick 5 outfield + GK, validate (no dupes, must have GK), confirm
+3. **TriviaScreen** — show question, two options, reveal correct/wrong, apply boost or penalty, advance
+4. **CardButton component** — styled Riisto / Harhautus / Laukaus selector
+5. **ScoreBoard component** — persistent: half indicator, goals, possession marker
+6. **DuelScreen** — card selection, secret reveal, call duel engine, show result, update ScoreBoard
+7. **HalftimeScreen** — show score, offer swap one player OR change tactics (not both), confirm
+8. **ResultScreen** — final score, winner banner, match stats, play again button
+9. **App routing** — wire all screens via matchStore phase (phase drives which screen renders)
+10. **Integration tests** — React Testing Library, full flow TriviaScreen → ResultScreen
 
 ### ⏳ Phase 2 — Derby Night Local (NOT STARTED)
 ### ⏳ Phase 3 — Live Multiplayer + Sattuma (NOT STARTED)
