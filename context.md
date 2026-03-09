@@ -1,7 +1,7 @@
 # CONTEXT.md — Olvastin Tana FC: The Game
 # Full project context for Claude Code.
 # Updated after every significant decision or completed phase.
-# Last updated: 2026-03-09 — Phase 1 complete
+# Last updated: 2026-03-09 — Phase 1 complete, AI opponent added before Phase 2
 
 ---
 
@@ -45,6 +45,7 @@ Two modes:
     dirtyMoves.ts       ← Dirty move logic
     match.ts            ← Full match orchestration
     season.ts           ← Season tracking
+    ai.ts               ← Computer opponent logic (NEW — see Phase 1.5)
   /store
     matchStore.ts       ← Zustand match state
     squadStore.ts       ← Zustand squad state
@@ -329,7 +330,89 @@ Tero, Jari, Kurkela, Kukko, Nissinen, Saravo, Kari, Ari
 - **App.tsx** — phase-driven screen router
 - **148 passing tests:** unit (engine), functional (match), integration (all screens + full flow)
 
+---
+
+### 🔄 Phase 1.5 — AI Opponent
+**Status: TO BUILD NOW — before Phase 2**
+
+Solo mode currently requires the player to control both sides manually. A computer opponent must be added so solo mode is actually playable against something.
+
+#### New file: `/src/engine/ai.ts`
+Pure TypeScript functions only. Fully decoupled from React. Three difficulty levels:
+
+**🟢 Helppo (Easy)**
+- Picks cards randomly (equal 33% chance each)
+- No awareness of game state
+- Good for learning the game
+
+**🟡 Normaali (Normal)**
+- Weighted random based on game state:
+  - Has possession → higher weight on Laukaus (Shot)
+  - Losing with fewer than 2 duels left in half → higher weight on Laukaus
+  - Opponent just played Riisto → higher weight on Harhautus
+  - Otherwise balanced weights
+- Picks lineup based on highest combined stats
+- Picks tactics randomly
+
+**🔴 Vaikea (Hard)**
+- Reads full game state:
+  - Tracks which cards the player has played in the last 3 duels
+  - Counters the player's most frequent recent card
+  - If possession: plays Shot unless player likely to counter with Press
+  - Picks lineup to maximise stat advantage over player's chosen lineup
+  - Picks tactics to counter player's chosen tactics
+  - Uses IQ stat of active player to add occasional intentional mistakes (not perfectly predictable)
+
+#### AI function signatures
+```typescript
+type CardChoice = 'press' | 'feint' | 'shot'
+type Tactic = 'aggressive' | 'defensive' | 'creative'
+
+// Card decisions
+function easyAiCard(): CardChoice
+function normalAiCard(gameState: GameState): CardChoice
+function hardAiCard(gameState: GameState, cardHistory: CardChoice[]): CardChoice
+
+// Lineup decisions
+function easyAiLineup(squad: Player[]): { outfield: string[], goalkeeper: string }
+function normalAiLineup(squad: Player[], playerLineup: string[]): { outfield: string[], goalkeeper: string }
+function hardAiLineup(squad: Player[], playerLineup: string[], playerTactic: Tactic): { outfield: string[], goalkeeper: string }
+
+// Tactics decisions
+function easyAiTactics(): Tactic
+function normalAiTactics(gameState: GameState): Tactic
+function hardAiTactics(gameState: GameState, playerTactic: Tactic): Tactic
+```
+
+#### UI changes needed
+- Add difficulty selector to TitleScreen (or a new DifficultyScreen after title)
+- Store selected difficulty in sessionStore
+- DuelScreen reads difficulty from sessionStore, calls correct AI function for opponent's card
+- LineupScreen: AI auto-selects its own lineup based on difficulty, not shown to player
+- i18n keys to add: `difficulty_easy`, `difficulty_normal`, `difficulty_hard`, `difficulty_select` (EN + FI)
+
+#### Tests required
+- `/tests/unit/engine/ai.test.ts` — unit tests for all 9 functions:
+  - Easy: always returns a valid card / lineup / tactic
+  - Normal: possession state increases Shot weight, losing late increases Shot weight
+  - Hard: counters player's most frequent recent card correctly
+- `/tests/functional/ai_match.test.ts` — full match simulation at all 3 difficulties completes without errors
+
+---
+
 ### ⏳ Phase 2 — Derby Night Local (NOT STARTED)
+**Depends on:** Phase 1.5 complete and playtested
+
+#### What Phase 2 adds
+- 2–6 managers taking turns on one device (pass-and-play)
+- Manager avatar selection — each player picks a real club member as their avatar
+- Secret submission screen — content hidden until player confirms
+- Simultaneous dirty move reveal — all submitted → all revealed at once
+- Trivia shown before each match
+- Bet Slip settlement at full time
+- Derby Night lobby screen — room setup, manager avatars
+- Derby Night result screen — leaderboard across all managers
+
 ### ⏳ Phase 3 — Live Multiplayer + Sattuma (NOT STARTED)
 ### ⏳ Phase 4 — Season Mode + Polish (NOT STARTED)
 
