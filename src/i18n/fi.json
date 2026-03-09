@@ -1,0 +1,66 @@
+{
+  "app": {
+    "title": "Olvastin Tana FC",
+    "tagline": "20 Vuotta kaunista kaaosta"
+  },
+  "screens": {
+    "title": "Aloitus",
+    "lineup": "Kokoonpano",
+    "trivia": "Tietovisa",
+    "duel": "Dueli",
+    "halftime": "Puoliaika",
+    "result": "Tulos"
+  },
+  "cards": {
+    "press": "Riisto",
+    "feint": "Harhautus",
+    "shot": "Laukaus",
+    "press_fi": "Riisto",
+    "feint_fi": "Harhautus",
+    "shot_fi": "Laukaus"
+  },
+  "modes": {
+    "solo": "Yksinpeli",
+    "derby_night": "Derby Night"
+  },
+  "actions": {
+    "confirm": "Vahvista",
+    "continue": "Jatka",
+    "swap": "Vaihda pelaaja",
+    "change_tactics": "Vaihda taktiikka",
+    "start_match": "Aloita ottelu",
+    "play_card": "Pelaa kortti"
+  },
+  "stats": {
+    "pace": "Nopeus",
+    "technique": "Tekniikka",
+    "power": "Voima",
+    "iq": "ÄO",
+    "stamina": "Kestävyys",
+    "chaos": "Kaaos"
+  },
+  "result": {
+    "win": "Voitto!",
+    "loss": "Tappio",
+    "draw": "Tasapeli",
+    "halftime": "Puoliaika"
+  },
+  "ability_types": {
+    "reactive": "Reaktiivinen",
+    "restriction": "Rajoitus",
+    "boost": "Tehostus",
+    "chaos": "Kaaos",
+    "dominant": "Dominoiva"
+  },
+  "sattuma": {
+    "draw": "Nosta Sattuma",
+    "hyva": "Hyvä Sattuma",
+    "paha": "Paha Sattuma",
+    "hyvin_paha": "Hyvin Paha Sattuma"
+  },
+  "possession": {
+    "your_ball": "Sinun pallo",
+    "their_ball": "Heidän pallo"
+  },
+  "language": "Kieli"
+}

@@ -1,0 +1,66 @@
+{
+  "app": {
+    "title": "Olvastin Tana FC",
+    "tagline": "20 Years of Beautiful Chaos"
+  },
+  "screens": {
+    "title": "Title",
+    "lineup": "Lineup",
+    "trivia": "Trivia",
+    "duel": "Duel",
+    "halftime": "Halftime",
+    "result": "Result"
+  },
+  "cards": {
+    "press": "Press",
+    "feint": "Feint",
+    "shot": "Shot",
+    "press_fi": "Riisto",
+    "feint_fi": "Harhautus",
+    "shot_fi": "Laukaus"
+  },
+  "modes": {
+    "solo": "Solo",
+    "derby_night": "Derby Night"
+  },
+  "actions": {
+    "confirm": "Confirm",
+    "continue": "Continue",
+    "swap": "Swap Player",
+    "change_tactics": "Change Tactics",
+    "start_match": "Start Match",
+    "play_card": "Play Card"
+  },
+  "stats": {
+    "pace": "Pace",
+    "technique": "Technique",
+    "power": "Power",
+    "iq": "IQ",
+    "stamina": "Stamina",
+    "chaos": "Chaos"
+  },
+  "result": {
+    "win": "Victory!",
+    "loss": "Defeat",
+    "draw": "Draw",
+    "halftime": "Halftime"
+  },
+  "ability_types": {
+    "reactive": "Reactive",
+    "restriction": "Restriction",
+    "boost": "Boost",
+    "chaos": "Chaos",
+    "dominant": "Dominant"
+  },
+  "sattuma": {
+    "draw": "Draw Sattuma",
+    "hyva": "Good Fortune",
+    "paha": "Bad Fortune",
+    "hyvin_paha": "Very Bad Fortune"
+  },
+  "possession": {
+    "your_ball": "Your ball",
+    "their_ball": "Their ball"
+  },
+  "language": "Language"
+}

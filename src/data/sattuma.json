@@ -1,0 +1,15 @@
+[
+  { "id": "tailwind", "tier": "hyva", "nameEN": "Tailwind", "nameFI": "Tuulee selkätuulta", "descEN": "Your next Shot card automatically wins.", "descFI": "Seuraava Laukaus-korttisi voittaa automaattisesti." },
+  { "id": "ref_away", "tier": "hyva", "nameEN": "Ref Looked Away", "nameFI": "Ref katsoo muualle", "descEN": "Your dirty move this round cannot be blocked.", "descFI": "Likaista siirtoasi ei voi torjua tällä kierroksella." },
+  { "id": "magic_pass", "tier": "hyva", "nameEN": "Magic Pass", "nameFI": "Maaginen syöttö", "descEN": "You gain possession regardless of the duel result.", "descFI": "Saat pallonhallinnan riippumatta duelin tuloksesta." },
+  { "id": "doubles", "tier": "hyva", "nameEN": "Doubles", "nameFI": "Tuplat", "descEN": "Your next goal counts as two.", "descFI": "Seuraava maalisi lasketaan kahtena." },
+  { "id": "slippery", "tier": "paha", "nameEN": "Slippery Pitch", "nameFI": "Liukas kenttä", "descEN": "Your Feint cards don't work for the rest of this half.", "descFI": "Harhautus-korttisi eivät toimi loppujakson ajan." },
+  { "id": "ref_saw", "tier": "paha", "nameEN": "Ref Saw Everything", "nameFI": "Ref näki kaiken", "descEN": "Your dirty move this round is cancelled and revealed.", "descFI": "Likainen siirtosi peruuntuu ja paljastetaan kaikille." },
+  { "id": "cramp", "tier": "paha", "nameEN": "Cramp", "nameFI": "Krampit", "descEN": "Your lowest Stamina player sits out the next duel.", "descFI": "Matalin Kestävyys -pelaajasi jää sivuun seuraavasta duelista." },
+  { "id": "late_again", "tier": "paha", "nameEN": "Late Again", "nameFI": "Myöhässä taas", "descEN": "You automatically lose the first duel of the next half.", "descFI": "Häviät automaattisesti seuraavan jakson ensimmäisen duelin." },
+  { "id": "red_card", "tier": "hyvin_paha", "nameEN": "Red Card", "nameFI": "Punainen kortti", "descEN": "Your best player is suspended for the rest of the half.", "descFI": "Paras pelaajasi on suspensoitu loppujakson ajan." },
+  { "id": "keeper_injured", "tier": "hyvin_paha", "nameEN": "Keeper Injured", "nameFI": "Maalivahti loukkautui", "descEN": "Your goalkeeper's save ability is disabled for this match.", "descFI": "Maalivahdin torjuntakyky on poistettu käytöstä." },
+  { "id": "they_saw", "tier": "hyvin_paha", "nameEN": "They Saw Your Hand", "nameFI": "Vastustaja näki korttisi", "descEN": "Your opponent sees your next three cards before choosing theirs.", "descFI": "Vastustajasi näkee seuraavat kolme korttiasi." },
+  { "id": "own_goal", "tier": "hyvin_paha", "nameEN": "Own Goal", "nameFI": "Oma maali", "descEN": "Your opponent scores a free goal. No duel, no save attempt.", "descFI": "Vastustajasi saa ilmaismaalin. Ei dueliä, ei torjuntaa." },
+  { "id": "markkanen", "tier": "hyvin_paha", "nameEN": "Markkanen's Surprise", "nameFI": "Markkasen erikoinen", "descEN": "The second half kickoff goes to the wrong team. Markkanen strikes again.", "descFI": "Toisen jakson aloituspotku menee väärällä joukkueelle. Markkanen iskee taas." }
+]
