@@ -1,125 +1,772 @@
 [
   {
-    "id": "alanen",
-    "name": "Alanen",
-    "position": ["MF", "FW"],
-    "stats": { "pace": 4, "technique": 5, "power": 4, "iq": 6, "stamina": 4, "chaos": 3 },
+    "id": "olli_mehtonen",
+    "name": "Olli Mehtonen",
+    "number": 20,
+    "tier": "regular",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 4,
+      "laukaus": 6,
+      "harhautus": 7,
+      "torjunta": 7,
+      "stamina": 1
+    },
     "ability": {
-      "type": "boost",
-      "id": "hot_streak",
-      "name_en": "Hot Streak",
-      "name_fi": "Tulisarja",
-      "description_en": "Can randomly explode for 6 points. On a roll, cannot be stopped.",
-      "description_fi": "Voi räjähtää satunnaisesti 6 pisteeseen. Vauhdissa ei voi pysäyttää."
+      "description_fi": "Kapteeni - jos voitat tämän duelin, nosta seuraavan pelaamasi kortin statseja +2",
+      "description_en": null
     }
   },
   {
-    "id": "mehtonen",
-    "name": "Mehtonen",
-    "position": ["MF", "FW"],
-    "stats": { "pace": 4, "technique": 4, "power": 4, "iq": 4, "stamina": 5, "chaos": 2 },
+    "id": "mauno_ahlgren",
+    "name": "Mauno Ahlgren",
+    "number": 15,
+    "tier": "regular",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 6,
+      "laukaus": 5,
+      "harhautus": 7,
+      "torjunta": 5,
+      "stamina": 2
+    },
     "ability": {
-      "type": "boost",
-      "id": "box_to_box",
-      "name_en": "Box to Box",
-      "name_fi": "Edestakaisin",
-      "description_en": "Counts as both midfielder and forward in the same duel.",
-      "description_fi": "Lasketaan sekä keskikenttäpelaajana että hyökkääjänä samassa duelissa."
+      "description_fi": "Kaaoksen lähettiläs - kun voitat tämän duelin, nosta sattumakortti",
+      "description_en": null
     }
   },
   {
-    "id": "mattila",
-    "name": "Mattila",
-    "position": ["MF", "FW"],
-    "stats": { "pace": 3, "technique": 3, "power": 6, "iq": 3, "stamina": 4, "chaos": 5 },
+    "id": "tero_backman",
+    "name": "Tero Backman",
+    "number": 17,
+    "tier": "regular",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 10,
+      "laukaus": 3,
+      "harhautus": 7,
+      "torjunta": 4,
+      "stamina": 1
+    },
     "ability": {
-      "type": "boost",
-      "id": "any_body_part",
-      "name_en": "Any Body Part",
-      "name_fi": "Mikä tahansa ruumiinosa",
-      "description_en": "Goals count regardless of how ugly.",
-      "description_fi": "Maalit lasketaan riippumatta siitä miten ruma se on."
+      "description_fi": "Fasilitaattori - kun voitat tämän duelin, nosta toimintakortti",
+      "description_en": null
     }
   },
   {
-    "id": "mauno",
-    "name": "Mauno",
-    "position": ["FW", "MF"],
-    "stats": { "pace": 6, "technique": 3, "power": 3, "iq": 3, "stamina": 5, "chaos": 6 },
+    "id": "kimmo_mattila",
+    "name": "Kimmo Mattila",
+    "number": 14,
+    "tier": "regular",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 6,
+      "laukaus": 8,
+      "harhautus": 3,
+      "torjunta": 6,
+      "stamina": 2
+    },
     "ability": {
-      "type": "chaos",
-      "id": "try_hard_mode",
-      "name_en": "Try-Hard Mode",
-      "name_fi": "Yrittäjä-moodi",
-      "description_en": "When Mauno wins a duel, draw a Sattuma card. Could be glorious. Could be a disaster.",
-      "description_fi": "Kun Mauno voittaa duelin, nosta Sattuma-kortti. Voi olla loistava tai katastrofaalinen.",
-      "trigger": "on_duel_win",
-      "effect": "draw_sattuma"
+      "description_fi": "Matigol - jos voitat tämän duelin ja pallo on sinun hallussa, teet suoraan maalin (skippaa torjuntacheckki)",
+      "description_en": null
     }
   },
   {
-    "id": "iiro",
-    "name": "Iiro",
-    "position": ["MF", "FW"],
-    "stats": { "pace": 5, "technique": 5, "power": 4, "iq": 4, "stamina": 5, "chaos": 4 },
+    "id": "iiro_makela",
+    "name": "Iiro Mäkelä",
+    "number": 13,
+    "tier": "regular",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 7,
+      "laukaus": 4,
+      "harhautus": 5,
+      "torjunta": 7,
+      "stamina": 2
+    },
     "ability": {
-      "type": "chaos",
-      "id": "ninja",
-      "name_en": "Ninja",
-      "name_fi": "Ninja",
-      "description_en": "Unexpected moves, can launch the ball from anywhere.",
-      "description_fi": "Odottamattomat siirrot, voi laukaista pallon mistä tahansa."
+      "description_fi": "Ninja - kun voitat tämän duelin, yritä maalintekoa vaikkei pallo olisi sinun hallussa (pallo pysyy sinun hallussa jos maalinteko ei onnistu)",
+      "description_en": null
     }
   },
   {
-    "id": "estola",
-    "name": "Estola",
-    "position": ["MF", "FW"],
-    "stats": { "pace": 3, "technique": 5, "power": 4, "iq": 6, "stamina": 3, "chaos": 2 },
+    "id": "jukka_estola",
+    "name": "Jukka Estola",
+    "number": 88,
+    "tier": "regular",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 9,
+      "laukaus": 9,
+      "harhautus": 2,
+      "torjunta": 3,
+      "stamina": 2
+    },
     "ability": {
-      "type": "reactive",
-      "id": "estis",
-      "name_en": "Estis",
-      "name_fi": "Estis",
-      "description_en": "After seeing the opponent's card, choose to play either Press or Shot in response.",
-      "description_fi": "Nähtyään vastustajan kortin, valitsee pelaako Riistoa vai Laukausta vastaukseksi.",
-      "trigger": "after_opponent_reveal",
-      "effect": "choose_press_or_shot"
+      "description_fi": "Jos pelaat Riisto-kortin, voit muuttaa sen laukaukseksi nähtyäsi vastustajan kortin. ",
+      "description_en": null
     }
   },
   {
-    "id": "jyrki",
-    "name": "Jyrki",
-    "position": ["MF"],
-    "stats": { "pace": 3, "technique": 3, "power": 4, "iq": 4, "stamina": 6, "chaos": 2 },
+    "id": "petri_alanen",
+    "name": "Petri Alanen",
+    "number": 83,
+    "tier": "regular",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 3,
+      "laukaus": 8,
+      "harhautus": 9,
+      "torjunta": 4,
+      "stamina": 1
+    },
     "ability": {
-      "type": "restriction",
-      "id": "44_minuutin_paine",
-      "name_en": "44 Minutes of Pressure",
-      "name_fi": "44 minuutin paine",
-      "description_en": "After Jyrki wins a duel, the opponent cannot play Feint in the next duel.",
-      "description_fi": "Kun Jyrki voittaa duelin, vastustaja ei voi pelata Harhautusta seuraavassa duelissa.",
-      "trigger": "on_duel_win",
-      "effect": "block_feint_next_duel",
-      "duration": 1
+      "description_fi": "Jos pelaat Laukaus-kortin, voit muuttaa sen harhautukseksi nähtyäsi vastustajan kortin",
+      "description_en": null
     }
   },
   {
-    "id": "tommi",
-    "name": "Tommi",
-    "position": ["GK"],
-    "stats": { "pace": 3, "technique": 3, "power": 4, "iq": 4, "stamina": 4, "chaos": 1 },
+    "id": "olli_nissinen",
+    "name": "Olli Nissinen",
+    "number": 61,
+    "tier": "regular",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 7,
+      "laukaus": 8,
+      "harhautus": 6,
+      "torjunta": 3,
+      "stamina": 1
+    },
     "ability": {
-      "type": "boost",
-      "id": "brick_wall",
-      "name_en": "Brick Wall",
-      "name_fi": "Kivimuuri",
-      "description_en": "Once per half, automatically blocks a shot. Resets at halftime.",
-      "description_fi": "Kerran per jakso torjuu automaattisesti laukauksen. Palautuu puoliajalla.",
-      "trigger": "on_shot_attempt",
-      "effect": "auto_save",
-      "uses_per_half": 1,
-      "resets_at_halftime": true
+      "description_fi": "Jos teet maalin, nosta sattumakortti",
+      "description_en": null
+    }
+  },
+  {
+    "id": "jyrki_orjasniemi",
+    "name": "Jyrki Orjasniemi",
+    "number": 5,
+    "tier": "regular",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 10,
+      "laukaus": 5,
+      "harhautus": 3,
+      "torjunta": 5,
+      "stamina": 2
+    },
+    "ability": {
+      "description_fi": "44 minuutin paine - jos voitat tämän duelin, vastustaja ei voi pelata harhautusta seuraavassa duelissa",
+      "description_en": null
+    }
+  },
+  {
+    "id": "jari_savela",
+    "name": "Jari Savela",
+    "number": 8,
+    "tier": "regular",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 4,
+      "laukaus": 10,
+      "harhautus": 4,
+      "torjunta": 5,
+      "stamina": 2
+    },
+    "ability": {
+      "description_fi": "Dominoiva - jos voitat tämän duelin, peru vastustajan seuraavan kortin erikoiskyky",
+      "description_en": null
+    }
+  },
+  {
+    "id": "aki_tuokko",
+    "name": "Aki Tuokko",
+    "number": 50,
+    "tier": "regular",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 5,
+      "laukaus": 6,
+      "harhautus": 8,
+      "torjunta": 4,
+      "stamina": 2
+    },
+    "ability": {
+      "description_fi": "Yllätyksellinen - jos voitat tämän duelin, laske vastustajan seuraavan kortin statseja -2",
+      "description_en": null
+    }
+  },
+  {
+    "id": "olli_kurkela",
+    "name": "Olli Kurkela",
+    "number": 21,
+    "tier": "regular",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 7,
+      "laukaus": 5,
+      "harhautus": 7,
+      "torjunta": 4,
+      "stamina": 2
+    },
+    "ability": {
+      "description_fi": "Laitanousu - jos voitat tämän duelin, vastustaja ei voi pelata riistoa seuraavassa duelissa",
+      "description_en": null
+    }
+  },
+  {
+    "id": "antti_haritonov",
+    "name": "Antti Haritonov",
+    "number": 19,
+    "tier": "regular",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 2,
+      "laukaus": 8,
+      "harhautus": 10,
+      "torjunta": 3,
+      "stamina": 2
+    },
+    "ability": {
+      "description_fi": "Jos pelaat Harhautus-kortin, voit muuttaa sen riistoksi nähtyäsi vastustajan kortin",
+      "description_en": null
+    }
+  },
+  {
+    "id": "ossi_nieminen",
+    "name": "Ossi Nieminen",
+    "number": 60,
+    "tier": "regular",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 9,
+      "laukaus": 7,
+      "harhautus": 4,
+      "torjunta": 4,
+      "stamina": 1
+    },
+    "ability": {
+      "description_fi": "Tuplablokki - jos voitat tämän duelin, vastustaja ei voi pelata laukausta seuraavassa duelissa",
+      "description_en": null
+    }
+  },
+  {
+    "id": "kari_virtanen",
+    "name": "Kari Virtanen",
+    "number": 10,
+    "tier": "regular",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 9,
+      "laukaus": 6,
+      "harhautus": 5,
+      "torjunta": 4,
+      "stamina": 1
+    },
+    "ability": {
+      "description_fi": "Kokenut - jos riistät tällä kortilla pallon, nosta toimintakortti",
+      "description_en": null
+    }
+  },
+  {
+    "id": "mikko_ruokoranta",
+    "name": "Mikko Ruokoranta",
+    "number": 2,
+    "tier": "regular",
+    "position": [
+      "GK"
+    ],
+    "stats": {
+      "riisto": 5,
+      "laukaus": 5,
+      "harhautus": 4,
+      "torjunta": 9,
+      "stamina": 2
+    },
+    "ability": {
+      "description_fi": "Jos torjut maaliyrityksen, nosta sattumakortti",
+      "description_en": null
+    }
+  },
+  {
+    "id": "kimmo_lustila",
+    "name": "Kimmo Lustila",
+    "number": 7,
+    "tier": "legend",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 3,
+      "laukaus": 7,
+      "harhautus": 9,
+      "torjunta": 2,
+      "stamina": 1
+    },
+    "ability": {
+      "description_fi": "Maaginen kosketus - voitat tasapelit kaikissa tarkasteluissa",
+      "description_en": null
+    }
+  },
+  {
+    "id": "tommi_helminen",
+    "name": "Tommi Helminen",
+    "number": 1,
+    "tier": "legend",
+    "position": [
+      "GK"
+    ],
+    "stats": {
+      "riisto": 5,
+      "laukaus": 2,
+      "harhautus": 3,
+      "torjunta": 10,
+      "stamina": 2
+    },
+    "ability": {
+      "description_fi": "Muuri - Torju maaliyritys automaattisesti (huolimatta erikoiskyvyistä)",
+      "description_en": null
+    }
+  },
+  {
+    "id": "kukko",
+    "name": "Kukko",
+    "number": 4,
+    "tier": "legend",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 2,
+      "laukaus": 10,
+      "harhautus": 5,
+      "torjunta": 4,
+      "stamina": 1
+    },
+    "ability": {
+      "description_fi": "Maaliyrityksen jälkeen nosta sattumakortti",
+      "description_en": null
+    }
+  },
+  {
+    "id": "juho_saravo",
+    "name": "Juho Saravo",
+    "number": 9,
+    "tier": "legend",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 8,
+      "laukaus": 5,
+      "harhautus": 3,
+      "torjunta": 5,
+      "stamina": 1
+    },
+    "ability": {
+      "description_fi": "Jos epäonnistut maaliyrityksessä, nosta seuraavan kortin statseja +2",
+      "description_en": null
+    },
+    "anecdotes": [
+      "Läheltä ylös"
+    ]
+  },
+  {
+    "id": "tomi_poukka",
+    "name": "Tomi Poukka",
+    "number": 6,
+    "tier": "legend",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 3,
+      "laukaus": 7,
+      "harhautus": 7,
+      "torjunta": 4,
+      "stamina": 1
+    },
+    "ability": {
+      "description_fi": "Jos pelaat Poukan Petri Alasen jälkeen, nosta Poukan statseja +2",
+      "description_en": null
+    }
+  },
+  {
+    "id": "miro_saari",
+    "name": "Miro Saari",
+    "number": 12,
+    "tier": "legend",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 6,
+      "laukaus": 5,
+      "harhautus": 5,
+      "torjunta": 5,
+      "stamina": 1
+    },
+    "anecdotes": [
+      "Kilon irttarit"
+    ]
+  },
+  {
+    "id": "jarkko_kumpulainen",
+    "name": "Jarkko Kumpulainen",
+    "number": 16,
+    "tier": "legend",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 5,
+      "laukaus": 4,
+      "harhautus": 7,
+      "torjunta": 5,
+      "stamina": 1
+    }
+  },
+  {
+    "id": "juha_mehtonen",
+    "name": "Juha Mehtonen",
+    "number": 18,
+    "tier": "legend",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 9,
+      "laukaus": 4,
+      "harhautus": 4,
+      "torjunta": 4,
+      "stamina": 1
+    }
+  },
+  {
+    "id": "jarkko_mattila",
+    "name": "Jarkko Mattila",
+    "number": 11,
+    "tier": "legend",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 6,
+      "laukaus": 8,
+      "harhautus": 3,
+      "torjunta": 3,
+      "stamina": 2
+    }
+  },
+  {
+    "id": "ville_salonen",
+    "name": "Ville Salonen",
+    "number": 3,
+    "tier": "reinforcement",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 6,
+      "laukaus": 3,
+      "harhautus": 3,
+      "torjunta": 7,
+      "stamina": 1
+    },
+    "ability": {
+      "description_fi": "Pelinohjaaja - jos torjut maaliyrityksen, nosta seuraavan kortin statseja +2",
+      "description_en": null
+    }
+  },
+  {
+    "id": "jussi_nytorp",
+    "name": "Jussi Nytorp",
+    "number": 40,
+    "tier": "reinforcement",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 1,
+      "laukaus": 8,
+      "harhautus": 8,
+      "torjunta": 1,
+      "stamina": 2
+    }
+  },
+  {
+    "id": "aref_jalili_monir",
+    "name": "Aref Jalili-Monir",
+    "number": 44,
+    "tier": "reinforcement",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 5,
+      "laukaus": 4,
+      "harhautus": 6,
+      "torjunta": 3,
+      "stamina": 2
+    }
+  },
+  {
+    "id": "tero_lappalainen",
+    "name": "Tero Lappalainen",
+    "number": 22,
+    "tier": "reinforcement",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 6,
+      "laukaus": 5,
+      "harhautus": 6,
+      "torjunta": 2,
+      "stamina": 1
+    }
+  },
+  {
+    "id": "otto_kuparinen",
+    "name": "Otto Kuparinen",
+    "number": 99,
+    "tier": "reinforcement",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 6,
+      "laukaus": 4,
+      "harhautus": 3,
+      "torjunta": 5,
+      "stamina": 2
+    }
+  },
+  {
+    "id": "heikki_raappana",
+    "name": "Heikki Raappana",
+    "number": 33,
+    "tier": "reinforcement",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 9,
+      "laukaus": 3,
+      "harhautus": 4,
+      "torjunta": 2,
+      "stamina": 2
+    }
+  },
+  {
+    "id": "lasse_enojarvi",
+    "name": "Lasse Enojärvi",
+    "number": 55,
+    "tier": "reinforcement",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 7,
+      "laukaus": 2,
+      "harhautus": 3,
+      "torjunta": 6,
+      "stamina": 2
+    }
+  },
+  {
+    "id": "elmer_mattila",
+    "name": "Elmer Mattila",
+    "number": 66,
+    "tier": "reinforcement",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 5,
+      "laukaus": 4,
+      "harhautus": 6,
+      "torjunta": 3,
+      "stamina": 2
+    }
+  },
+  {
+    "id": "eero_olden",
+    "name": "Eero Olden",
+    "number": 28,
+    "tier": "reinforcement",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 7,
+      "laukaus": 3,
+      "harhautus": 3,
+      "torjunta": 5,
+      "stamina": 2
+    }
+  },
+  {
+    "id": "mikko_salmensuo",
+    "name": "Mikko Salmensuo",
+    "number": 27,
+    "tier": "reinforcement",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 7,
+      "laukaus": 6,
+      "harhautus": 3,
+      "torjunta": 3,
+      "stamina": 1
+    }
+  },
+  {
+    "id": "petri_kukkala",
+    "name": "Petri Kukkala",
+    "number": 80,
+    "tier": "reinforcement",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 7,
+      "laukaus": 3,
+      "harhautus": 5,
+      "torjunta": 4,
+      "stamina": 1
+    }
+  },
+  {
+    "id": "tony_reima",
+    "name": "Tony Reima",
+    "number": 98,
+    "tier": "reinforcement",
+    "position": [
+      "GK"
+    ],
+    "stats": {
+      "riisto": 5,
+      "laukaus": 2,
+      "harhautus": 2,
+      "torjunta": 9,
+      "stamina": 2
+    }
+  },
+  {
+    "id": "jaakko_rantanen",
+    "name": "Jaakko Rantanen",
+    "number": 30,
+    "tier": "reinforcement",
+    "position": [
+      "GK"
+    ],
+    "stats": {
+      "riisto": 7,
+      "laukaus": 2,
+      "harhautus": 2,
+      "torjunta": 8,
+      "stamina": 1
+    }
+  },
+  {
+    "id": "jazib_javed",
+    "name": "Jazib Javed",
+    "number": 58,
+    "tier": "reinforcement",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 7,
+      "laukaus": 4,
+      "harhautus": 3,
+      "torjunta": 4,
+      "stamina": 2
+    }
+  },
+  {
+    "id": "jaume",
+    "name": "Jaume",
+    "number": 70,
+    "tier": "reinforcement",
+    "position": [
+      "MF",
+      "FW"
+    ],
+    "stats": {
+      "riisto": 7,
+      "laukaus": 2,
+      "harhautus": 2,
+      "torjunta": 7,
+      "stamina": 2
     }
   }
 ]
