@@ -3,9 +3,11 @@
  * Application root and screen router.
  *
  * Reads `matchStore.phase` and renders the appropriate screen for the current
- * stage of a solo match:
+ * stage of the solo season flow:
  *
- *   TITLE → TRIVIA → LINEUP → FIRST_HALF → HALFTIME → SECOND_HALF → RESULT
+ *   TITLE → SEASON → PREMATCH → TRIVIA → LINEUP →
+ *   FIRST_HALF → HALFTIME → SECOND_HALF → RESULT → SEASON (loop × 7)
+ *   → SEASON_COMPLETE
  *
  * The LanguageToggle is rendered as a persistent overlay on every screen that
  * does not embed its own toggle (i.e. everything except TitleScreen).
@@ -14,13 +16,16 @@
 import './i18n/index.ts';
 import { useMatchStore } from './store/matchStore';
 import { MATCH_PHASE } from './engine/match';
-import TitleScreen from './components/screens/TitleScreen';
-import TriviaScreen from './components/screens/TriviaScreen';
-import LineupScreen from './components/screens/LineupScreen';
-import DuelScreen from './components/screens/DuelScreen';
-import HalftimeScreen from './components/screens/HalftimeScreen';
-import ResultScreen from './components/screens/ResultScreen';
-import LanguageToggle from './components/ui/LanguageToggle';
+import TitleScreen          from './components/screens/TitleScreen';
+import SeasonScreen         from './components/screens/SeasonScreen';
+import PreMatchScreen       from './components/screens/PreMatchScreen';
+import TriviaScreen         from './components/screens/TriviaScreen';
+import LineupScreen         from './components/screens/LineupScreen';
+import DuelScreen           from './components/screens/DuelScreen';
+import HalftimeScreen       from './components/screens/HalftimeScreen';
+import ResultScreen         from './components/screens/ResultScreen';
+import SeasonCompleteScreen from './components/screens/SeasonCompleteScreen';
+import LanguageToggle       from './components/ui/LanguageToggle';
 
 /**
  * App — top-level router component.
@@ -39,6 +44,10 @@ export default function App(): JSX.Element {
       case MATCH_PHASE.TITLE:
         // TitleScreen embeds its own LanguageToggle
         return <TitleScreen />;
+      case MATCH_PHASE.SEASON:
+        return <SeasonScreen />;
+      case MATCH_PHASE.PREMATCH:
+        return <PreMatchScreen />;
       case MATCH_PHASE.TRIVIA:
         return <TriviaScreen />;
       case MATCH_PHASE.LINEUP:
@@ -50,6 +59,8 @@ export default function App(): JSX.Element {
         return <HalftimeScreen />;
       case MATCH_PHASE.RESULT:
         return <ResultScreen />;
+      case MATCH_PHASE.SEASON_COMPLETE:
+        return <SeasonCompleteScreen />;
       default:
         return <TitleScreen />;
     }

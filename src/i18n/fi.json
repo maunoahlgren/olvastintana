@@ -72,7 +72,7 @@
   },
   "language": "Kieli",
   "title": {
-    "start_solo": "Aloita yksinpeli",
+    "start_solo": "Aloita kausi",
     "version": "20. juhlavuosiversio"
   },
   "trivia": {
@@ -153,5 +153,40 @@
     "hard_desc": "Älykäs tekoäly — vastaa kaikkeen",
     "ai_attacking": "Tekoäly hyökkää — valitse puolustuksesi",
     "ai_thinking": "Tekoäly valitsee..."
+  },
+  "season": {
+    "title": "Kausi",
+    "fixtures": "Otteluohjelma",
+    "points_label": "Pisteet",
+    "play_next": "Pelaa seuraava ottelu",
+    "match_number": "Ottelu",
+    "upcoming": "Tulossa",
+    "tier_hard": "Kova",
+    "tier_normal": "Normaali",
+    "tier_easy": "Helppo",
+    "result_win": "V",
+    "result_draw": "T",
+    "result_loss": "H"
+  },
+  "prematch": {
+    "vs": "vs",
+    "tier_hard": "🔴 Kova",
+    "tier_normal": "🟡 Normaali",
+    "tier_easy": "🟢 Helppo",
+    "warning_hard": "Varoitus: tämä joukkue on vaarallinen.",
+    "warning_normal": "Tasainen ottelu odotettavissa.",
+    "warning_easy": "Teidän pitäisi selvitä tästä.",
+    "kickoff": "Aloita ottelu",
+    "record_label": "Historiallinen ennätys",
+    "seasons_label": "Kaudet",
+    "titles_label": "Mestaruudet",
+    "goals_label": "Maalit",
+    "ppg_label": "Pist./ottelu"
+  },
+  "season_complete": {
+    "title": "Kausi päättynyt!",
+    "points": "Loppupisteet",
+    "record": "Kauden tulos",
+    "new": "Uusi kausi"
   }
 }

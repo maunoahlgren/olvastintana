@@ -12,12 +12,18 @@ export const DUELS_PER_HALF = 5;
 /** Match phase state machine */
 export const MATCH_PHASE = {
   TITLE: 'title',
+  /** Season hub — shown between matches; displays fixture list and points */
+  SEASON: 'season',
+  /** Pre-match screen — opponent info, tier badge, kick off button */
+  PREMATCH: 'prematch',
   TRIVIA: 'trivia',
   LINEUP: 'lineup',
   FIRST_HALF: 'first_half',
   HALFTIME: 'halftime',
   SECOND_HALF: 'second_half',
   RESULT: 'result',
+  /** All 7 fixtures played — final standings screen */
+  SEASON_COMPLETE: 'season_complete',
 } as const;
 
 export type MatchPhase = (typeof MATCH_PHASE)[keyof typeof MATCH_PHASE];

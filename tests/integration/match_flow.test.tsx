@@ -2,10 +2,12 @@
  * @file match_flow.test.tsx
  * Full solo match flow integration test.
  *
- * Covers the complete path from TitleScreen → TriviaScreen → LineupScreen →
- * DuelScreen (10 duels) → HalftimeScreen → DuelScreen (10 duels) →
- * ResultScreen, verifying that App renders the correct screen at each phase
- * and all navigation works end-to-end.
+ * Covers the complete path through App routing:
+ *   TITLE → SEASON → PREMATCH → TRIVIA → LINEUP → FIRST_HALF →
+ *   HALFTIME → SECOND_HALF → RESULT → SEASON
+ *
+ * Tests that use beginSoloMatch() directly still bypass the season screens
+ * and jump straight to TRIVIA — this is intentional for speed.
  *
  * Uses store actions exclusively for setup; never sets store state directly.
  */
@@ -17,8 +19,11 @@ import App from '../../src/App';
 import { useMatchStore } from '../../src/store/matchStore';
 import { useSquadStore } from '../../src/store/squadStore';
 import { useSessionStore } from '../../src/store/sessionStore';
+import { useSeasonStore } from '../../src/store/seasonStore';
 import { MATCH_PHASE } from '../../src/engine/match';
 import playersData from '../../src/data/players.json';
+import type { Opponent } from '../../src/engine/season';
+import opponentsData from '../../src/data/opponents.json';
 
 // ---------------------------------------------------------------------------
 // Player data helpers
@@ -30,6 +35,8 @@ const outfieldPlayers = allPlayers.filter((p) =>
   p.position.some((pos) => pos === 'MF' || pos === 'FW'),
 );
 const gkPlayer = allPlayers.find((p) => p.position.includes('GK'))!;
+
+const opponents = opponentsData as Opponent[];
 
 // ---------------------------------------------------------------------------
 // UI helpers
@@ -54,26 +61,22 @@ function pickFullLineup(): void {
  * 3. Defender picks a card
  * 4. Result panel → continue
  *
- * @param attackerCard - CSS selector suffix for the attacker's card button (press/feint/shot)
- * @param defenderCard - CSS selector suffix for the defender's card button
+ * @param attackerCard - Card choice for the attacker
+ * @param defenderCard - Card choice for the defender
  */
 function playOneDuel(
   attackerCard: 'press' | 'feint' | 'shot' = 'press',
   defenderCard: 'press' | 'feint' | 'shot' = 'feint',
 ): void {
-  // Attacker picks
   expect(screen.getByTestId('attacker-pick-prompt')).toBeInTheDocument();
   fireEvent.click(screen.getByTestId(`card-btn-${attackerCard}`));
 
-  // Cover screen
   expect(screen.getByTestId('cover-continue-btn')).toBeInTheDocument();
   fireEvent.click(screen.getByTestId('cover-continue-btn'));
 
-  // Defender picks
   expect(screen.getByTestId('defender-pick-prompt')).toBeInTheDocument();
   fireEvent.click(screen.getByTestId(`card-btn-${defenderCard}`));
 
-  // Result → advance
   expect(screen.getByTestId('duel-result-panel')).toBeInTheDocument();
   fireEvent.click(screen.getByTestId('duel-continue-btn'));
 }
@@ -95,6 +98,7 @@ describe('Full solo match flow (App routing)', () => {
   beforeEach(() => {
     useMatchStore.getState().reset();
     useSquadStore.getState().reset();
+    useSeasonStore.getState().reset();
     // Force two-player mode so the cover screen is present in playOneDuel()
     useSessionStore.getState().setAiDifficulty(null);
   });
@@ -112,18 +116,42 @@ describe('Full solo match flow (App routing)', () => {
     expect(screen.getByText('EN')).toBeInTheDocument();
   });
 
-  // ── TITLE → TRIVIA ────────────────────────────────────────────────────────
+  // ── TITLE → SEASON ────────────────────────────────────────────────────────
 
-  it('clicking Start Solo Match advances to TriviaScreen', () => {
+  it('clicking Start Season advances to SeasonScreen', () => {
     renderWithProviders(<App />);
     fireEvent.click(screen.getByTestId('start-solo-btn'));
+    expect(useMatchStore.getState().phase).toBe(MATCH_PHASE.SEASON);
+    expect(screen.getByTestId('season-screen')).toBeInTheDocument();
+  });
+
+  // ── SEASON → PREMATCH ─────────────────────────────────────────────────────
+
+  it('clicking Play Next Match from SeasonScreen advances to PreMatchScreen', () => {
+    useSeasonStore.getState().initSeason(opponents);
+    useMatchStore.getState().startSeason();
+    renderWithProviders(<App />);
+    fireEvent.click(screen.getByTestId('season-play-next-btn'));
+    expect(useMatchStore.getState().phase).toBe(MATCH_PHASE.PREMATCH);
+    expect(screen.getByTestId('prematch-screen')).toBeInTheDocument();
+  });
+
+  // ── PREMATCH → TRIVIA ─────────────────────────────────────────────────────
+
+  it('clicking Kick Off from PreMatchScreen advances to TriviaScreen', () => {
+    useSeasonStore.getState().initSeason(opponents);
+    useMatchStore.getState().goToPreMatch();
+    renderWithProviders(<App />);
+    fireEvent.click(screen.getByTestId('prematch-kickoff-btn'));
+    expect(useMatchStore.getState().phase).toBe(MATCH_PHASE.TRIVIA);
     expect(screen.getByTestId('trivia-question-card')).toBeInTheDocument();
   });
+
+  // ── Trivia screen (uses beginSoloMatch shortcut) ──────────────────────────
 
   it('floating language toggle visible on TriviaScreen', () => {
     useMatchStore.getState().beginSoloMatch();
     renderWithProviders(<App />);
-    // Phase is now TRIVIA; App renders floating toggle
     expect(screen.getByText('EN')).toBeInTheDocument();
     expect(screen.getByTestId('trivia-question-card')).toBeInTheDocument();
   });
@@ -153,10 +181,8 @@ describe('Full solo match flow (App routing)', () => {
     useMatchStore.getState().triviaCorrect();
     renderWithProviders(<App />);
 
-    // Home lineup
     pickFullLineup();
     fireEvent.click(screen.getByTestId('confirm-lineup-btn'));
-    // Away lineup
     pickFullLineup();
     fireEvent.click(screen.getByTestId('confirm-lineup-btn'));
 
@@ -167,7 +193,6 @@ describe('Full solo match flow (App routing)', () => {
   // ── FIRST HALF → HALFTIME ─────────────────────────────────────────────────
 
   it('after 5 duels in first half, shows HalftimeScreen', () => {
-    // Drive to FIRST_HALF via store actions
     useMatchStore.getState().beginSoloMatch();
     useMatchStore.getState().triviaCorrect();
     useMatchStore.getState().startFirstHalf();
@@ -192,7 +217,6 @@ describe('Full solo match flow (App routing)', () => {
     }
 
     renderWithProviders(<App />);
-    // Should be on HalftimeScreen
     expect(screen.getByTestId('start-second-half-btn')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('start-second-half-btn'));
 
@@ -217,13 +241,14 @@ describe('Full solo match flow (App routing)', () => {
 
     expect(useMatchStore.getState().phase).toBe(MATCH_PHASE.RESULT);
     expect(screen.getByTestId('result-banner')).toBeInTheDocument();
-    expect(screen.getByTestId('play-again-btn')).toBeInTheDocument();
+    expect(screen.getByTestId('continue-to-season-btn')).toBeInTheDocument();
   });
 
-  // ── RESULT → TITLE (Play Again) ───────────────────────────────────────────
+  // ── RESULT → SEASON (Continue button) ────────────────────────────────────
 
-  it('Play Again on ResultScreen resets to TitleScreen', () => {
-    // Drive directly to RESULT using store actions
+  it('Continue on ResultScreen navigates to SeasonScreen', () => {
+    // Initialize season first so Continue button works
+    useSeasonStore.getState().initSeason(opponents);
     useMatchStore.getState().beginSoloMatch();
     useMatchStore.getState().triviaCorrect();
     useMatchStore.getState().startFirstHalf();
@@ -238,20 +263,19 @@ describe('Full solo match flow (App routing)', () => {
     renderWithProviders(<App />);
     expect(screen.getByTestId('result-banner')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId('play-again-btn'));
+    fireEvent.click(screen.getByTestId('continue-to-season-btn'));
 
-    expect(useMatchStore.getState().phase).toBe(MATCH_PHASE.TITLE);
-    expect(screen.getByTestId('start-solo-btn')).toBeInTheDocument();
+    // Should be on SeasonScreen (phase = SEASON)
+    expect(useMatchStore.getState().phase).toBe(MATCH_PHASE.SEASON);
+    expect(screen.getByTestId('season-screen')).toBeInTheDocument();
   });
 
   // ── LANGUAGE TOGGLE ───────────────────────────────────────────────────────
 
   it('language toggle switches text EN ↔ FI', () => {
-    // TriviaScreen is a stable screen for this test
     useMatchStore.getState().beginSoloMatch();
     renderWithProviders(<App />);
 
-    // Starts in EN (test env default), toggle button says 'FI' (switch to Finnish)
     const toggle = screen.getByRole('button', { name: /FI|EN/i });
     const initialText = toggle.textContent;
 

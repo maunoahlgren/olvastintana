@@ -5,6 +5,50 @@ Format: `## [version] — date` with Added / Changed / Fixed sections.
 
 ---
 
+## [0.4.0] — 2026-03-09
+
+### Added
+- **Season structure — 7-fixture solo season mode**
+  - `src/engine/season.ts` — pure functions for season management
+    - Types: `OpponentTier`, `Opponent`, `FixtureResult`, `Fixture`
+    - `SEASON_FORMAT` constant: 1 hard + 3 normal + 3 easy = 7 total fixtures
+    - `generateFixtures(opponents, rng?)` — picks & sorts by strength_score ascending; optional RNG for deterministic tests
+    - `fixturePoints(homeGoals, awayGoals)` — returns 3 / 1 / 0
+  - `src/data/opponents.json` — 20 opponent clubs in 3 tiers (hard / normal / easy)
+- **Three new screens**
+  - `SeasonScreen` — fixture list (7 rows), points tally, "Play Next Match" button; `data-testid="season-screen"`
+  - `PreMatchScreen` — opponent name, tier badge, flavour text, W/D/L record, stats, "Kick Off" button; tier auto-sets AI difficulty; `data-testid="prematch-screen"`
+  - `SeasonCompleteScreen` — final points (colour-coded green/yellow/red), W/D/L breakdown, "New Season" button; `data-testid="season-complete-screen"`
+- **Routing extended**: `TITLE → SEASON → PREMATCH → TRIVIA → LINEUP → FIRST_HALF → HALFTIME → SECOND_HALF → RESULT → SEASON` (×7) `→ SEASON_COMPLETE`
+- **New MATCH_PHASE constants** in `src/engine/match.ts`: `SEASON`, `PREMATCH`, `SEASON_COMPLETE`
+- **New matchStore actions**: `startSeason()`, `goToPreMatch()`, `returnToSeason()`, `completeSeason()`
+- **seasonStore** completely rewritten for solo season tracking
+  - State: `fixtures: Fixture[]`, `currentFixtureIndex: number`
+  - Actions: `initSeason`, `recordFixtureResult`, `getCurrentFixture`, `getTotalPoints`, `getWins`, `getDraws`, `getLosses`, `isSeasonComplete`, `reset`
+- **i18n** — new keys in both `en.json` and `fi.json`: `season.*`, `prematch.*`, `season_complete.*`
+- **New tests** (90 total across 5 new files):
+  - `tests/unit/engine/season.test.ts` — 18 tests: fixture generation, format invariants, deterministic RNG, points calculation
+  - `tests/unit/store/seasonStore.test.ts` — 24 tests: initSeason, recordFixtureResult, aggregation functions, guard behaviour
+  - `tests/integration/SeasonScreen.test.tsx` — 11 tests: fixture rows, result badges, points tally, navigation
+  - `tests/integration/PreMatchScreen.test.tsx` — 15 tests: opponent display, tier badge, flavour text, AI difficulty mapping, kick off navigation
+  - `tests/integration/SeasonCompleteScreen.test.tsx` — 8 tests: points display, W/D/L record, new season flow
+  - `tests/functional/season_flow.test.ts` — 18 tests: phase transitions, full 7-match season via store, format invariants across 10 random seasons
+- Total: **317 passing tests** (up from 227)
+
+### Changed
+- `TitleScreen` — difficulty selector **removed**; "Start Season" button generates 7-fixture season and navigates to `SEASON` phase; i18n key `title.start_solo` updated
+- `ResultScreen` — "Play Again" replaced by **"Continue"** button (`data-testid="continue-to-season-btn"`); clicking Continue records result in `seasonStore` and navigates to `SEASON` (or `SEASON_COMPLETE` if last fixture)
+- `App.tsx` — 3 new phase cases: `SEASON → SeasonScreen`, `PREMATCH → PreMatchScreen`, `SEASON_COMPLETE → SeasonCompleteScreen`
+- `PreMatchScreen` — maps opponent tier to `sessionStore.aiDifficulty` before calling `beginSoloMatch()`
+
+### Fixed
+- Updated existing tests to match new routing and button renames:
+  - `TitleScreen.test.tsx` — removed difficulty selector tests; "Start Season" now goes to `SEASON` not `TRIVIA`; season fixture population tests added
+  - `ResultScreen.test.tsx` — `play-again-btn` → `continue-to-season-btn`; phase after click `TITLE` → `SEASON`; SEASON_COMPLETE test for last fixture
+  - `match_flow.test.tsx` — `beforeEach` resets `seasonStore`; "Start Season → SeasonScreen" and "Continue → SEASON" tests updated
+
+---
+
 ## [0.3.1] — 2026-03-09
 
 ### Fixed

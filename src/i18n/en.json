@@ -72,7 +72,7 @@
   },
   "language": "Language",
   "title": {
-    "start_solo": "Start Solo Match",
+    "start_solo": "Start Season",
     "version": "20th Anniversary Edition"
   },
   "trivia": {
@@ -153,5 +153,40 @@
     "hard_desc": "Smart AI — counters your every move",
     "ai_attacking": "AI is attacking — choose your defence",
     "ai_thinking": "AI is picking..."
+  },
+  "season": {
+    "title": "Season",
+    "fixtures": "Fixtures",
+    "points_label": "Points",
+    "play_next": "Play Next Match",
+    "match_number": "Match",
+    "upcoming": "Upcoming",
+    "tier_hard": "Hard",
+    "tier_normal": "Normal",
+    "tier_easy": "Easy",
+    "result_win": "W",
+    "result_draw": "D",
+    "result_loss": "L"
+  },
+  "prematch": {
+    "vs": "vs",
+    "tier_hard": "🔴 Hard",
+    "tier_normal": "🟡 Normal",
+    "tier_easy": "🟢 Easy",
+    "warning_hard": "Warning: this team means business.",
+    "warning_normal": "Expect a close match.",
+    "warning_easy": "You should handle this one.",
+    "kickoff": "Kick Off",
+    "record_label": "All-time record",
+    "seasons_label": "Seasons",
+    "titles_label": "Titles",
+    "goals_label": "Goals",
+    "ppg_label": "Pts/game"
+  },
+  "season_complete": {
+    "title": "Season Complete!",
+    "points": "Final Points",
+    "record": "Season Record",
+    "new": "New Season"
   }
 }

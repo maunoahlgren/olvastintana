@@ -47,6 +47,26 @@ interface MatchState {
 }
 
 interface MatchActions {
+  /**
+   * TITLE → SEASON: generate season fixtures and navigate to the season hub.
+   * Called when "Start Season" is clicked on TitleScreen.
+   */
+  startSeason: () => void;
+  /**
+   * SEASON → PREMATCH: navigate to the pre-match screen for the next fixture.
+   * Called when "Play Next Match" is clicked on SeasonScreen.
+   */
+  goToPreMatch: () => void;
+  /**
+   * RESULT → SEASON: return to the season hub after a match.
+   * Called from ResultScreen when there are still fixtures left to play.
+   */
+  returnToSeason: () => void;
+  /**
+   * RESULT → SEASON_COMPLETE: transition to season-complete screen.
+   * Called from ResultScreen when all 7 fixtures have been played.
+   */
+  completeSeason: () => void;
   /** TITLE → TRIVIA: coin flip to decide first-half kickoff side */
   beginSoloMatch: () => void;
   /** Trivia answered correctly: activate first-duel boost, advance to LINEUP */
@@ -93,6 +113,22 @@ const initialState: MatchState = {
 
 export const useMatchStore = create<MatchState & MatchActions>((set, get) => ({
   ...initialState,
+
+  startSeason() {
+    set({ phase: MATCH_PHASE.SEASON });
+  },
+
+  goToPreMatch() {
+    set({ phase: MATCH_PHASE.PREMATCH });
+  },
+
+  returnToSeason() {
+    set({ phase: MATCH_PHASE.SEASON });
+  },
+
+  completeSeason() {
+    set({ phase: MATCH_PHASE.SEASON_COMPLETE });
+  },
 
   beginSoloMatch() {
     const kick = coinFlip();
