@@ -1,7 +1,7 @@
 # CONTEXT.md — Olvastin Tana FC: The Game
 # Full project context for Claude Code.
 # Updated after every significant decision or completed phase.
-# Last updated: 2026-03-09 — v0.3.1 lineup rule fix: 6 outfield + 1 GK (7 total per side)
+# Last updated: 2026-03-10 — rebuilt from CHANGELOG + git history after accidental deletion
 
 ---
 
@@ -9,7 +9,7 @@
 A bilingual (Finnish/English) web-based football card game built for Olvastin Tana FC's 20th anniversary (2005–2025). The club is a tight group of childhood friends who play park football. The game is built around their real players, history, and inside jokes.
 
 Two modes:
-- **Solo mode** — manage the club through a season alone
+- **Solo mode** — play a 7-match season against real league opponents
 - **Derby Night** — party mode for 2–6 players at get-togethers, everyone on their own phone
 
 ---
@@ -22,7 +22,7 @@ Two modes:
 | State | Zustand |
 | Multiplayer | Firebase Realtime Database |
 | Hosting | Vercel |
-| Version Control | GitHub |
+| Version Control | GitHub — github.com/maunoahlgren/olvastintana |
 | Testing | Vitest + React Testing Library |
 | i18n | i18next (Finnish default, English toggle) |
 | Language | TypeScript strict mode |
@@ -33,65 +33,61 @@ Two modes:
 ```
 /src
   /data
-    players.json        ← All player cards
-    trivia.json         ← Club history questions (EN + FI)
-    sattuma.json        ← Fortune deck card definitions
+    players.json        ← 8 real players with abilities
+    trivia.json         ← Club history questions (PLACEHOLDER — real questions not written yet)
+    sattuma.json        ← 12 fortune deck card definitions
+    opponents.json      ← 24 real league teams with strength scores and tiers
   /engine
-    duel.ts             ← Duel resolution logic (pure functions)
-    abilities.ts        ← Player ability handlers
-    possession.ts       ← Possession state logic
-    goalkeeper.ts       ← Save attempt logic
-    sattuma.ts          ← Sattuma deck draw and apply
-    dirtyMoves.ts       ← Dirty move logic
-    match.ts            ← Full match orchestration
-    season.ts           ← Season tracking
-    ai.ts               ← Computer opponent logic (NEW — see Phase 1.5)
+    duel.ts             ← Card triangle (Press/Feint/Shot) + stat tiebreaks
+    abilities.ts        ← Hot Streak, Try-Hard Mode, 44 minuutin paine, Estis, stamina penalty
+    possession.ts       ← Possession transitions, coin flip, kickoff
+    goalkeeper.ts       ← Save attempt logic + Brick Wall (once-per-half)
+    sattuma.ts          ← Weighted deck builder (40/35/25%) + draw
+    match.ts            ← Phase constants, match points (W=3/D=1/L=0), halftime options
+    ai.ts               ← Computer opponent (Easy/Normal/Hard) — 9 pure functions
   /store
-    matchStore.ts       ← Zustand match state
+    matchStore.ts       ← Zustand match state + playerCardHistory
     squadStore.ts       ← Zustand squad state
-    sessionStore.ts     ← Zustand session/multiplayer state
-    seasonStore.ts      ← Zustand season state
+    sessionStore.ts     ← Zustand session state (aiDifficulty etc.)
+    seasonStore.ts      ← Zustand season state (fixtures, results, points)
   /components
-    /match              ← Match UI components
-    /squad              ← Squad/player card components
-    /trivia             ← Trivia screen components
-    /lobby              ← Derby Night lobby components
-    /season             ← Season tracker components
-    /shared             ← Shared UI (buttons, banners, logo)
+    /match              ← DuelScreen, HalftimeScreen, ResultScreen, ScoreBoard, CardButton
+    /squad              ← PlayerCard, LineupScreen
+    /trivia             ← TriviaScreen
+    /season             ← SeasonScreen, PreMatchScreen, SeasonCompleteScreen
+    /shared             ← TitleScreen, shared UI
   /i18n
     en.json             ← English translations
     fi.json             ← Finnish translations
   /firebase
-    config.ts           ← Firebase setup
-    room.ts             ← Room creation and joining
-    sync.ts             ← Real-time state sync
+    config.ts
+    room.ts
+    sync.ts
   /media
-    /players            ← Player photos
-    /clips              ← Club video clips for celebrations
+    /players            ← Player photos (not yet added)
+    /clips              ← Club video clips (not yet added)
 /tests
-  /unit
-    /engine             ← Unit tests for all engine functions
+  /unit/engine          ← Engine unit tests
   /functional           ← Full flow and ability interaction tests
-  /integration          ← React Testing Library UI flow tests
+  /integration          ← React Testing Library screen tests
 /docs
   PLAYERS.md
   TRIVIA.md
   ARCHITECTURE.md
   FIREBASE.md
   CHANGELOG.md
-  CONTRIBUTING.md
 ```
 
 ---
 
-## 🎮 Game Rules Summary
+## 🎮 Game Rules
 
 ### Format
 - Park football: 6 outfield players + 1 goalkeeper per side (7 total)
 - 44 minutes: two halves of 22 minutes each
 - Card duels simulate key match moments
 
-### The Three Cards (Rock-Paper-Scissors)
+### The Three Cards
 | Card | Finnish | Beats | Loses to |
 |------|---------|-------|----------|
 | ⚔️ Press | Riisto | Feint | Shot |
@@ -101,16 +97,17 @@ Two modes:
 ### Duel Flow
 1. Both players secretly pick a card
 2. Reveal simultaneously
-3. Reactive abilities trigger (before resolution)
-4. Winner determined by triangle above
+3. Reactive abilities trigger
+4. Winner determined by triangle
 5. Post-resolution abilities trigger
 6. Sattuma drawn if ability requires it
 7. Possession / goal resolved
 
 ### Possession
-- Only the player with possession can shoot
-- Winning a duel without the ball = gain possession
-- Winning a duel with the ball + Shot card = goal attempt
+- Only the player with possession can attempt a goal
+- Win duel without ball → gain possession (no goal)
+- Win duel with ball + Shot card → goal attempt → keeper save check
+- Win duel with ball + Press or Feint → keep possession (no shot)
 
 ### Goalkeeper
 - Does not participate in duels
@@ -118,417 +115,233 @@ Two modes:
 - Save = stat check (keeper stats vs shooter Power)
 
 ### Match Structure
-1. Trivia question → correct = first card auto-wins, wrong = opponent picks player to get -1 all stats
-2. Manager picks: 6 outfield players + keeper, tactics, dirty move (Derby Night)
-3. Dirty moves revealed simultaneously
-4. First half duels
-5. Halftime: swap one player OR change tactics (not both)
-6. Second half duels (low Stamina players get -1 all stats)
-7. Full time: count goals, settle Bet Slip wagers
+1. Trivia question → correct = first card auto-wins; wrong = opponent picks a player to get -1 all stats
+2. Manager picks: 6 outfield + GK, tactics
+3. First half duels
+4. Halftime: swap one player OR change tactics (not both)
+5. Second half duels (low Stamina = -1 all stats)
+6. Full time → result → return to SeasonScreen
 
 ### Tactics
-- Aggressive → boosts Shot cards
-- Defensive → boosts Press cards
-- Creative → boosts Feint cards
+- Aggressive → boosts Shot
+- Defensive → boosts Press
+- Creative → boosts Feint
 
 ---
 
-## 👥 Squad Data
+## 👥 Squad (8 players)
 
-### Known Players
 ```json
 [
-  {
-    "id": "alanen",
-    "name": "Alanen",
-    "position": ["MF", "FW"],
-    "stats": { "pace": 4, "technique": 5, "power": 4, "iq": 6, "stamina": 4, "chaos": 3 },
-    "ability": {
-      "type": "boost",
-      "id": "hot_streak",
-      "name_en": "Hot Streak",
-      "name_fi": "Tulisarja",
-      "description_en": "Can randomly explode for 6 points. On a roll, cannot be stopped.",
-      "description_fi": "Voi räjähtää satunnaisesti 6 pisteeseen. Vauhdissa ei voi pysäyttää."
-    }
-  },
-  {
-    "id": "mehtonen",
-    "name": "Mehtonen",
-    "position": ["MF", "FW"],
-    "stats": { "pace": 4, "technique": 4, "power": 4, "iq": 4, "stamina": 5, "chaos": 2 },
-    "ability": {
-      "type": "boost",
-      "id": "box_to_box",
-      "name_en": "Box to Box",
-      "name_fi": "Edestakaisin",
-      "description_en": "Counts as both midfielder and forward in the same duel.",
-      "description_fi": "Lasketaan sekä keskikenttäpelaajana että hyökkääjänä samassa duelissa."
-    }
-  },
-  {
-    "id": "mattila",
-    "name": "Mattila",
-    "position": ["MF", "FW"],
-    "stats": { "pace": 3, "technique": 3, "power": 6, "iq": 3, "stamina": 4, "chaos": 5 },
-    "ability": {
-      "type": "boost",
-      "id": "any_body_part",
-      "name_en": "Any Body Part",
-      "name_fi": "Mikä tahansa ruumiinosa",
-      "description_en": "Goals count regardless of how ugly.",
-      "description_fi": "Maalit lasketaan riippumatta siitä miten ruma se on."
-    }
-  },
-  {
-    "id": "mauno",
-    "name": "Mauno",
-    "position": ["FW", "MF"],
-    "stats": { "pace": 6, "technique": 3, "power": 3, "iq": 3, "stamina": 5, "chaos": 6 },
-    "ability": {
-      "type": "chaos",
-      "id": "try_hard_mode",
-      "name_en": "Try-Hard Mode",
-      "name_fi": "Yrittäjä-moodi",
-      "description_en": "When Mauno wins a duel, draw a Sattuma card. Could be glorious. Could be a disaster.",
-      "description_fi": "Kun Mauno voittaa duelin, nosta Sattuma-kortti. Voi olla loistava tai katastrofaalinen.",
-      "trigger": "on_duel_win",
-      "effect": "draw_sattuma"
-    }
-  },
-  {
-    "id": "iiro",
-    "name": "Iiro",
-    "position": ["MF", "FW"],
-    "stats": { "pace": 5, "technique": 5, "power": 4, "iq": 4, "stamina": 5, "chaos": 4 },
-    "ability": {
-      "type": "chaos",
-      "id": "ninja",
-      "name_en": "Ninja",
-      "name_fi": "Ninja",
-      "description_en": "Unexpected moves, can launch the ball from anywhere.",
-      "description_fi": "Odottamattomat siirrot, voi laukaista pallon mistä tahansa."
-    }
-  },
-  {
-    "id": "estola",
-    "name": "Estola",
-    "position": ["MF", "FW"],
-    "stats": { "pace": 3, "technique": 5, "power": 4, "iq": 6, "stamina": 3, "chaos": 2 },
-    "ability": {
-      "type": "reactive",
-      "id": "estis",
-      "name_en": "Estis",
-      "name_fi": "Estis",
-      "description_en": "After seeing the opponent's card, choose to play either Press or Shot in response.",
-      "description_fi": "Nähtyään vastustajan kortin, valitsee pelaako Riistoa vai Laukausta vastaukseksi.",
-      "trigger": "after_opponent_reveal",
-      "effect": "choose_press_or_shot"
-    }
-  },
-  {
-    "id": "jyrki",
-    "name": "Jyrki",
-    "position": ["MF"],
-    "stats": { "pace": 3, "technique": 3, "power": 4, "iq": 4, "stamina": 6, "chaos": 2 },
-    "ability": {
-      "type": "restriction",
-      "id": "44_minuutin_paine",
-      "name_en": "44 Minutes of Pressure",
-      "name_fi": "44 minuutin paine",
-      "description_en": "After Jyrki wins a duel, the opponent cannot play Feint in the next duel.",
-      "description_fi": "Kun Jyrki voittaa duelin, vastustaja ei voi pelata Harhautusta seuraavassa duelissa.",
-      "trigger": "on_duel_win",
-      "effect": "block_feint_next_duel",
-      "duration": 1
-    }
-  },
-  {
-    "id": "tommi",
-    "name": "Tommi",
-    "position": ["GK"],
-    "stats": { "pace": 3, "technique": 3, "power": 4, "iq": 4, "stamina": 4, "chaos": 1 },
-    "ability": {
-      "type": "boost",
-      "id": "brick_wall",
-      "name_en": "Brick Wall",
-      "name_fi": "Kivimuuri",
-      "description_en": "Once per half, automatically blocks a shot. Resets at halftime.",
-      "description_fi": "Kerran per jakso torjuu automaattisesti laukauksen. Palautuu puoliajalla.",
-      "trigger": "on_shot_attempt",
-      "effect": "auto_save",
-      "uses_per_half": 1,
-      "resets_at_halftime": true
-    }
-  }
+  { "id": "alanen", "name": "Alanen", "position": ["MF","FW"],
+    "stats": {"pace":4,"technique":5,"power":4,"iq":6,"stamina":4,"chaos":3},
+    "ability": {"type":"boost","id":"hot_streak","name_en":"Hot Streak","name_fi":"Tulisarja",
+      "description_en":"Can randomly explode for 6 points.",
+      "description_fi":"Voi räjähtää satunnaisesti 6 pisteeseen."} },
+
+  { "id": "mehtonen", "name": "Mehtonen", "position": ["MF","FW"],
+    "stats": {"pace":4,"technique":4,"power":4,"iq":4,"stamina":5,"chaos":2},
+    "ability": {"type":"boost","id":"box_to_box","name_en":"Box to Box","name_fi":"Edestakaisin",
+      "description_en":"Counts as both MF and FW in the same duel.",
+      "description_fi":"Lasketaan sekä MF että FW samassa duelissa."} },
+
+  { "id": "mattila", "name": "Mattila", "position": ["MF","FW"],
+    "stats": {"pace":3,"technique":3,"power":6,"iq":3,"stamina":4,"chaos":5},
+    "ability": {"type":"boost","id":"any_body_part","name_en":"Any Body Part","name_fi":"Mikä tahansa ruumiinosa",
+      "description_en":"Goals count regardless of how ugly.",
+      "description_fi":"Maalit lasketaan riippumatta miten rumia."} },
+
+  { "id": "mauno", "name": "Mauno", "position": ["FW","MF"],
+    "stats": {"pace":6,"technique":3,"power":3,"iq":3,"stamina":5,"chaos":6},
+    "ability": {"type":"chaos","id":"try_hard_mode","name_en":"Try-Hard Mode","name_fi":"Yrittäjä-moodi",
+      "trigger":"on_duel_win","effect":"draw_sattuma",
+      "description_en":"Win a duel → draw a Sattuma card. Glorious or disastrous.",
+      "description_fi":"Voita dueli → nosta Sattuma. Loistava tai katastrofaalinen."} },
+
+  { "id": "iiro", "name": "Iiro", "position": ["MF","FW"],
+    "stats": {"pace":5,"technique":5,"power":4,"iq":4,"stamina":5,"chaos":4},
+    "ability": {"type":"chaos","id":"ninja","name_en":"Ninja","name_fi":"Ninja",
+      "description_en":"Unexpected moves, can launch from anywhere.",
+      "description_fi":"Odottamattomat siirrot, laukaisu mistä tahansa."} },
+
+  { "id": "estola", "name": "Estola", "position": ["MF","FW"],
+    "stats": {"pace":3,"technique":5,"power":4,"iq":6,"stamina":3,"chaos":2},
+    "ability": {"type":"reactive","id":"estis","name_en":"Estis","name_fi":"Estis",
+      "trigger":"after_opponent_reveal","effect":"choose_press_or_shot",
+      "description_en":"After seeing opponent's card, choose Press or Shot.",
+      "description_fi":"Nähtyään vastustajan kortin, valitse Riisto tai Laukaus."} },
+
+  { "id": "jyrki", "name": "Jyrki", "position": ["MF"],
+    "stats": {"pace":3,"technique":3,"power":4,"iq":4,"stamina":6,"chaos":2},
+    "ability": {"type":"restriction","id":"44_minuutin_paine","name_en":"44 Minutes of Pressure","name_fi":"44 minuutin paine",
+      "trigger":"on_duel_win","effect":"block_feint_next_duel","duration":1,
+      "description_en":"Win a duel → opponent can't play Feint next duel.",
+      "description_fi":"Voita dueli → vastustaja ei voi pelata Harhautusta seuraavassa."} },
+
+  { "id": "tommi", "name": "Tommi", "position": ["GK"],
+    "stats": {"pace":3,"technique":3,"power":4,"iq":4,"stamina":4,"chaos":1},
+    "ability": {"type":"boost","id":"brick_wall","name_en":"Brick Wall","name_fi":"Kivimuuri",
+      "trigger":"on_shot_attempt","effect":"auto_save","uses_per_half":1,"resets_at_halftime":true,
+      "description_en":"Once per half, auto-blocks a shot. Resets at halftime.",
+      "description_fi":"Kerran per jakso torjuu automaattisesti. Palautuu puoliajalla."} }
 ]
 ```
 
-### Players Still Needed (descriptions from the crew)
-Tero, Jari, Kurkela, Kukko, Nissinen, Saravo, Kari, Ari
+### Players still needed
+Tero, Jari, Kurkela, Kukko, Nissinen, Saravo, Kari, Ari — descriptions coming from the crew later.
 
 ---
 
 ## 🃏 Sattuma Deck
 
-### Distribution
-- 40% Hyvä (Good)
-- 35% Paha (Bad)
-- 25% Hyvin Paha (Very Bad)
+Distribution: 40% Hyvä (Good) / 35% Paha (Bad) / 25% Hyvin Paha (Very Bad)
 
-### Cards
-```json
-[
-  { "id": "selkatuulta", "tier": "hyva", "name_fi": "Tuulee selkätuulta", "name_en": "Tailwind", "effect": "next_shot_auto_wins" },
-  { "id": "ref_muualle", "tier": "hyva", "name_fi": "Ref katsoo muualle", "name_en": "Ref Looked Away", "effect": "dirty_move_unblockable" },
-  { "id": "maaginen_syotto", "tier": "hyva", "name_fi": "Maaginen syöttö", "name_en": "Magic Pass", "effect": "gain_possession_regardless" },
-  { "id": "tuplat", "tier": "hyva", "name_fi": "Tuplat", "name_en": "Doubles", "effect": "next_goal_counts_double" },
-  { "id": "liukas_kentta", "tier": "paha", "name_fi": "Liukas kenttä", "name_en": "Slippery Pitch", "effect": "feint_disabled_this_half" },
-  { "id": "ref_naki", "tier": "paha", "name_fi": "Ref näki kaiken", "name_en": "Ref Saw Everything", "effect": "dirty_move_cancelled_revealed" },
-  { "id": "krampit", "tier": "paha", "name_fi": "Krampit", "name_en": "Cramp", "effect": "lowest_stamina_sits_out_next_duel" },
-  { "id": "myohassa", "tier": "paha", "name_fi": "Myöhässä taas", "name_en": "Late Again", "effect": "auto_lose_first_duel_next_half" },
-  { "id": "punainen_kortti", "tier": "hyvin_paha", "name_fi": "Punainen kortti", "name_en": "Red Card", "effect": "best_player_suspended_rest_of_half" },
-  { "id": "mv_loukkautui", "tier": "hyvin_paha", "name_fi": "Maalivahti loukkautui", "name_en": "Keeper Injured", "effect": "goalkeeper_save_disabled_match" },
-  { "id": "nakivat_kortit", "tier": "hyvin_paha", "name_fi": "Vastustaja näki korttisi", "name_en": "They Saw Your Hand", "effect": "opponent_sees_next_3_cards" },
-  { "id": "oma_maali", "tier": "hyvin_paha", "name_fi": "Oma maali", "name_en": "Own Goal", "effect": "opponent_scores_free_goal" }
-]
+| ID | Tier | Finnish | English | Effect |
+|----|------|---------|---------|--------|
+| selkatuulta | hyva | Tuulee selkätuulta | Tailwind | next_shot_auto_wins |
+| ref_muualle | hyva | Ref katsoo muualle | Ref Looked Away | dirty_move_unblockable |
+| maaginen_syotto | hyva | Maaginen syöttö | Magic Pass | gain_possession_regardless |
+| tuplat | hyva | Tuplat | Doubles | next_goal_counts_double |
+| liukas_kentta | paha | Liukas kenttä | Slippery Pitch | feint_disabled_this_half |
+| ref_naki | paha | Ref näki kaiken | Ref Saw Everything | dirty_move_cancelled_revealed |
+| krampit | paha | Krampit | Cramp | lowest_stamina_sits_out_next_duel |
+| myohassa | paha | Myöhässä taas | Late Again | auto_lose_first_duel_next_half |
+| punainen_kortti | hyvin_paha | Punainen kortti | Red Card | best_player_suspended_rest_of_half |
+| mv_loukkautui | hyvin_paha | Maalivahti loukkautui | Keeper Injured | goalkeeper_save_disabled_match |
+| nakivat_kortit | hyvin_paha | Vastustaja näki korttisi | They Saw Your Hand | opponent_sees_next_3_cards |
+| oma_maali | hyvin_paha | Oma maali | Own Goal | opponent_scores_free_goal |
+
+---
+
+## ⚽ Opponent Teams
+
+### Source
+5 seasons of real league data (2021–2025). Strength score = win rate (40%) + PPG (30%) + GD/game (20%) + avg normalised position (10%).
+
+### Tiers → AI difficulty
+| Tier | Score | AI |
+|------|-------|----|
+| 🔴 Hard | 60–100 | Hard AI |
+| 🟡 Normal | 35–59 | Normal AI |
+| 🟢 Easy | 0–34 | Easy AI |
+
+### Teams
+| Name | Score | Tier | Titles |
+|------|-------|------|--------|
+| FC Kylmärinki | 84.0 | hard | 3 |
+| MIAU-MIEHET | 74.8 | hard | 1 |
+| Susiraja FC | 67.8 | hard | 0 |
+| Idän Raivo | 58.7 | normal | 0 |
+| Olympiakos Tampere | 52.2 | normal | 0 |
+| FC Adonis | 42.8 | normal | 1 |
+| FC Oluthuone | 40.5 | normal | 0 |
+| Real Soar | 37.0 | normal | 0 |
+| AC Darra Punapaidat | 34.6 | easy | 0 |
+| NiPa | 34.4 | easy | 0 |
+| FC Gullit | 32.3 | easy | 0 |
+| AC Lokomo | 31.9 | easy | 0 |
+| Jalkapallojoukkue JPJ | 28.5 | easy | 0 |
+| FC Ohiveto | 28.4 | easy | 0 |
+| AC Tenator | 23.4 | easy | 0 |
+| TaHU | 20.5 | easy | 0 |
+| Vastapuoli | 18.6 | easy | 0 |
+| FC Aamukanuuna | 12.8 | easy | 0 |
+| HT-Påsse | 10.4 | easy | 0 |
+| Big Balls | 3.5 | easy | 0 |
+
+Full data in `/src/data/opponents.json`.
+
+---
+
+## 🗓️ Solo Mode — Season Structure
+
+- **7 matches per season**: 1 Hard + 3 Normal + 3 Easy opponents
+- Ordered by strength ascending — easiest first, hardest last
+- No promotion/relegation (planned for Phase 4)
+- Season points: W=3, D=1, L=0
+- After all 7 matches → SeasonCompleteScreen → new season generates fresh fixtures
+
+---
+
+## 📺 Screen Flow
+
+```
+TITLE → SEASON → PREMATCH → TRIVIA → LINEUP → FIRST_HALF → HALFTIME → SECOND_HALF → RESULT → SEASON
 ```
 
----
+After 7 matches: SEASON → SEASON_COMPLETE → SEASON (new season)
 
-## 🎯 Dirty Moves
-| Move | Finnish | Effect |
-|------|---------|--------|
-| Sabotage | Sabotointi | Target player -1 all stats next match |
-| Tap Up | Houkuttelu | Target player unavailable for one round |
-| Bet Slip | Vedonlyönti | Bet on result — correct = bonus points, wrong = deduction |
-
----
-
-## 🏆 Current Build Status
-
-### ✅ Phase 1 — Foundation (Solo Mode MVP)
-**Status: COMPLETE (v0.2.0 — 2026-03-09)**
-**Repo:** github.com/maunoahlgren/olvastintana
-**Dev server:** :5173 (dev) and :4173 (preview) — configured in `.claude/launch.json`
-
-#### ✅ Everything delivered
-- Project scaffold: React + Vite + TypeScript strict + Tailwind CSS v4
-- **Game engine** (pure TypeScript, fully decoupled from React):
-  - `duel.ts` — card triangle (Press/Feint/Shot) + stat tiebreak resolution
-  - `goalkeeper.ts` — save attempt logic + Kivimuuri state per half
-  - `possession.ts` — possession transitions, coin flip, kickoff rules
-  - `abilities.ts` — Hot Streak, Try-Hard Mode, 44 minuutin paine, Estis, stamina penalty
-  - `sattuma.ts` — weighted deck builder (40/35/25%) + card draw
-  - `match.ts` — phase constants, match points (W=3/D=1/L=0), halftime options
-- **Zustand stores:** matchStore, squadStore, sessionStore, seasonStore
-- **Data files:** players.json (8 players), sattuma.json (12 cards), trivia.json
-- **i18n** — Finnish default, English toggle, all UI keys in both languages
-- **Full solo match UI** (phase router: TITLE → TRIVIA → LINEUP → FIRST_HALF → HALFTIME → SECOND_HALF → RESULT):
-  - TitleScreen, TriviaScreen, LineupScreen, DuelScreen, HalftimeScreen, ResultScreen
-  - UI components: CardButton, ScoreBoard, PlayerCard
-- **App.tsx** — phase-driven screen router
-- **148 passing tests:** unit (engine), functional (match), integration (all screens + full flow)
+### Screens
+| Screen | Status | Notes |
+|--------|--------|-------|
+| TitleScreen | ✅ | Language toggle |
+| SeasonScreen | ✅ | Fixture list, points tally, play next |
+| PreMatchScreen | ✅ | OT vs opponent, tier badge, record, flavour text |
+| TriviaScreen | ✅ | Question, two answers, apply effect |
+| LineupScreen | ✅ | Pick 6 outfield + GK |
+| DuelScreen | ✅ | Card selection, AI resolves instantly |
+| HalftimeScreen | ✅ | Swap player OR change tactics |
+| ResultScreen | ✅ | Score, winner, points earned |
+| SeasonCompleteScreen | ✅ | Final standings, new season |
 
 ---
 
-### 🔄 Phase 1.5 — AI Opponent
-**Status: TO BUILD NOW — before Phase 2**
+## 🏆 Build Status
 
-Solo mode currently requires the player to control both sides manually. A computer opponent must be added so solo mode is actually playable against something.
+### ✅ v0.1 — Scaffold
+Vite/React/TS/Tailwind/Zustand/Vitest, full engine in pure TypeScript, data files, i18n skeleton.
 
-#### New file: `/src/engine/ai.ts`
-Pure TypeScript functions only. Fully decoupled from React. Three difficulty levels:
+### ✅ v0.2 — Solo Match UI
+All 7 match screens, full match flow end-to-end.
 
-**🟢 Helppo (Easy)**
-- Picks cards randomly (equal 33% chance each)
-- No awareness of game state
-- Good for learning the game
+### ✅ v0.3 — AI Opponent
+3 difficulty levels. Easy = random. Normal = weighted by game state. Hard = counters card history + IQ mistakes.
 
-**🟡 Normaali (Normal)**
-- Weighted random based on game state:
-  - Has possession → higher weight on Laukaus (Shot)
-  - Losing with fewer than 2 duels left in half → higher weight on Laukaus
-  - Opponent just played Riisto → higher weight on Harhautus
-  - Otherwise balanced weights
-- Picks lineup based on highest combined stats
-- Picks tactics randomly
+### ✅ v0.3.1 — Rule Fix
+Lineup corrected to 6 outfield + 1 GK (7 total).
 
-**🔴 Vaikea (Hard)**
-- Reads full game state:
-  - Tracks which cards the player has played in the last 3 duels
-  - Counters the player's most frequent recent card
-  - If possession: plays Shot unless player likely to counter with Press
-  - Picks lineup to maximise stat advantage over player's chosen lineup
-  - Picks tactics to counter player's chosen tactics
-  - Uses IQ stat of active player to add occasional intentional mistakes (not perfectly predictable)
+### ✅ v0.4 — Season Structure
+7-fixture season, SeasonScreen, PreMatchScreen, SeasonCompleteScreen, tier-driven AI, full routing loop.
 
-#### AI function signatures
-```typescript
-type CardChoice = 'press' | 'feint' | 'shot'
-type Tactic = 'aggressive' | 'defensive' | 'creative'
-
-// Card decisions
-function easyAiCard(): CardChoice
-function normalAiCard(gameState: GameState): CardChoice
-function hardAiCard(gameState: GameState, cardHistory: CardChoice[]): CardChoice
-
-// Lineup decisions
-function easyAiLineup(squad: Player[]): { outfield: string[], goalkeeper: string }
-function normalAiLineup(squad: Player[], playerLineup: string[]): { outfield: string[], goalkeeper: string }
-function hardAiLineup(squad: Player[], playerLineup: string[], playerTactic: Tactic): { outfield: string[], goalkeeper: string }
-
-// Tactics decisions
-function easyAiTactics(): Tactic
-function normalAiTactics(gameState: GameState): Tactic
-function hardAiTactics(gameState: GameState, playerTactic: Tactic): Tactic
-```
-
-#### UI changes needed
-- Add difficulty selector to TitleScreen (or a new DifficultyScreen after title)
-- Store selected difficulty in sessionStore
-- DuelScreen reads difficulty from sessionStore, calls correct AI function for opponent's card
-- LineupScreen: AI auto-selects its own lineup based on difficulty, not shown to player
-- i18n keys to add: `difficulty_easy`, `difficulty_normal`, `difficulty_hard`, `difficulty_select` (EN + FI)
-
-#### Tests required
-- `/tests/unit/engine/ai.test.ts` — unit tests for all 9 functions:
-  - Easy: always returns a valid card / lineup / tactic
-  - Normal: possession state increases Shot weight, losing late increases Shot weight
-  - Hard: counters player's most frequent recent card correctly
-- `/tests/functional/ai_match.test.ts` — full match simulation at all 3 difficulties completes without errors
+**317 tests passing across unit, functional, and integration.**
 
 ---
 
-### ⏳ Phase 2 — Derby Night Local (NOT STARTED)
-**Depends on:** Phase 1.5 complete and playtested
+## ❌ Not Yet Built
 
-#### What Phase 2 adds
-- 2–6 managers taking turns on one device (pass-and-play)
-- Manager avatar selection — each player picks a real club member as their avatar
-- Secret submission screen — content hidden until player confirms
-- Simultaneous dirty move reveal — all submitted → all revealed at once
-- Trivia shown before each match
-- Bet Slip settlement at full time
-- Derby Night lobby screen — room setup, manager avatars
-- Derby Night result screen — leaderboard across all managers
-
-### ⏳ Phase 3 — Live Multiplayer + Sattuma (NOT STARTED)
-### ⏳ Phase 4 — Season Mode + Polish (NOT STARTED)
+| Area | Notes |
+|------|-------|
+| Sattuma in-game | `sattuma.ts` exists but cards not drawn/applied during matches |
+| Ability UI | `estis`, `44_minuutin_paine`, `hot_streak`, `try_hard_mode` in engine but not wired to UI |
+| Trivia content | `trivia.json` is placeholder — real club history questions not written |
+| Derby Night | Firebase multiplayer, dirty moves, simultaneous reveal — Phase 2 |
+| Bet Slip | Season betting mechanic — Phase 2 |
+| Action Cards | Manager-phase resources between matches — Phase 3 |
+| Promotion/relegation | Phase 4 |
+| Player photos | `/media/players` empty |
+| Animations | Phase 4 |
 
 ---
 
-## 🎨 Design & Branding
-- **Primary background:** Deep charcoal `#1A1A1A`
-- **Accent:** Club yellow `#FFE600`
-- **Text:** Off-white `#F5F0E8`
-- **Logo:** Black running figure on yellow background (OT letterform)
-- **Feel:** Dark stadium at night, floodlights, yellow kit flashing
-
----
-
-## ❓ Open Questions (decide before building)
-1. How many duels per half? → Suggested: 5 (needs playtesting)
+## ❓ Open Questions
+1. How many duels per half? → Suggested 5, not yet decided
 2. Duel tie resolution: re-duel or specific rule?
 3. Houkuttelu success rate: always or stat-based?
-4. Season length: how many matches?
-5. Dirty move counter mechanics (Phase 3)
+4. Season length expansion: home + away (14 games) in Phase 4?
 
 ---
 
 ## 📋 Standing Rules for Claude Code
-*(Also in CLAUDE.md — enforced every session)*
+*(Also in CLAUDE.md)*
 
 - Every function needs JSDoc comments
 - Every feature needs unit + functional + integration tests
 - Tests written alongside code, never after
 - No hardcoded strings — always use i18n (en.json + fi.json)
 - No hardcoded player data — always read from players.json
+- No hardcoded opponent data — always read from opponents.json
 - Game engine must be pure functions, decoupled from React
 - Update CHANGELOG.md with every commit
 - Update CONTEXT.md when a phase completes
 - Never push to main without passing full test suite
 - Finnish is the default language
-
-
----
-
-## ⚽ Opponent Teams Database
-
-### Source
-Derived from 5 seasons of real league data (2021–2025). Strength score calculated from win rate (40%), points per game (30%), goal difference per game (20%), and average normalised league position (10%). Score range: 0–100.
-
-### File: `/src/data/opponents.json`
-24 real teams from the league. Olvastin Tana is the home team and does NOT appear in this file.
-
-### Tiers
-| Tier | Score range | AI difficulty | Teams |
-|------|-------------|---------------|-------|
-| 🔴 Hard | 60–100 | Hard AI | FC Kylmärinki (84), MIAU-MIEHET (74.8), Susiraja FC (67.8) |
-| 🟡 Normal | 35–59 | Normal AI | Idän Raivo, Olympiakos Tampere, FC Adonis, FC Oluthuone, Real Soar |
-| 🟢 Easy | 0–34 | Easy AI | AC Darra Punapaidat, NiPa, FC Gullit, AC Lokomo, Jalkapallojoukkue JPJ, FC Ohiveto, AC Tenator, TaHU, Vastapuoli, FC Aamukanuuna, HT-Påsse, Big Balls |
-
----
-
-## 🗓️ Solo Mode — Season Structure
-
-### Format
-- **7 matches per season** — one home match against each of 7 opponents
-- No away matches, no promotion or relegation (planned for Phase 4)
-- Season fixture list is generated at season start and fixed for that season
-
-### Fixture generation
-Pick 7 opponents from `opponents.json` to form the season schedule:
-- 1 Hard team
-- 3 Normal teams
-- 3 Easy teams
-
-Order them by strength score ascending — you face easier opponents first, hardest last. This gives the season a natural difficulty curve.
-
-### Season points
-- Win = 3 pts | Draw = 1 pt | Loss = 0 pts
-- Final standing shown on season result screen after all 7 matches
-
-### AI difficulty
-Tier maps directly to AI difficulty — no manual difficulty picker needed anymore:
-- Hard team → Hard AI
-- Normal team → Normal AI
-- Easy team → Easy AI
-
-**Remove the difficulty selector from TitleScreen** — it is replaced by the season/opponent system.
-
----
-
-## 📺 New Screens Required
-
-### SeasonScreen (season hub)
-Shown between matches. Displays:
-- Current season fixture list (7 matches)
-- Each fixture: opponent name, tier badge, result (if played) or "upcoming"
-- Season points tally so far
-- "Play next match" button → navigates to PreMatchScreen
-- i18n keys: `season_title`, `season_fixtures`, `season_points`, `season_play_next`, `season_complete`
-
-### PreMatchScreen (pre-match)
-Shown before each match kicks off. Displays:
-- Home team (Olvastin Tana) vs Away team (opponent name)
-- Opponent tier badge: 🔴 Kova / 🟡 Normaali / 🟢 Helppo
-- Opponent historical record from opponents.json: seasons, titles, W/D/L, goals
-- Flavour line based on tier:
-  - Hard: "Varoitus: tämä joukkue on vaarallinen." / "Warning: this team means business."
-  - Normal: "Tasainen ottelu odotettavissa." / "Expect a close match."
-  - Easy: "Teidän pitäisi selvitä tästä." / "You should handle this one."
-- "Aloita ottelu" / "Kick off" button → navigates to TriviaScreen
-- i18n keys: `prematch_vs`, `prematch_tier_hard`, `prematch_tier_normal`, `prematch_tier_easy`, `prematch_warning_hard`, `prematch_warning_normal`, `prematch_warning_easy`, `prematch_kickoff`
-
-### Updated App routing
-```
-TITLE → SEASON → PREMATCH → TRIVIA → LINEUP → FIRST_HALF → HALFTIME → SECOND_HALF → RESULT → SEASON (next match)
-```
-After ResultScreen, return to SeasonScreen. When all 7 matches played → SeasonCompleteScreen.
-
-### SeasonCompleteScreen
-- Final points tally
-- W/D/L breakdown across all 7 matches
-- "Uusi kausi" / "New season" button → generates a fresh fixture list and resets season state
-- i18n keys: `season_complete_title`, `season_complete_points`, `season_complete_record`, `season_new`
