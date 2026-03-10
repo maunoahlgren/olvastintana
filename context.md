@@ -345,3 +345,57 @@ Lineup corrected to 6 outfield + 1 GK (7 total).
 - Update CONTEXT.md when a phase completes
 - Never push to main without passing full test suite
 - Finnish is the default language
+
+---
+
+## 🔄 BREAKING CHANGE — Player data updated (2026-03-10)
+
+### New stat system
+Olli designed the complete squad. Stats have changed from the old system to match the three cards directly:
+
+| Stat | Finnish | Maps to |
+|------|---------|---------|
+| riisto | Riisto | Press card strength |
+| laukaus | Laukaus | Shot card strength |
+| harhautus | Harhautus | Feint card strength |
+| torjunta | Torjunta | Save ability (GK + defenders) |
+| stamina | Stamina | Endurance, second half penalty |
+
+**Old stats (pace, technique, power, iq, chaos) are removed. Update all engine references.**
+
+### Player tiers
+| Tier | Finnish | Count | Notes |
+|------|---------|-------|-------|
+| regular | Vakiokasvo | 16 | Core squad, always available |
+| legend | Legenda | 9 | Club legends, special cards |
+| reinforcement | Vahvistus | 15 | Squad depth |
+
+### Goalkeepers
+Mikko Ruokoranta (#2), Tommi Helminen (#1, legend), Tony Reima (#98), Jaakko Rantanen (#30)
+
+### Full roster — 40 players
+All data now in `/src/data/players.json`. Do not hardcode player data anywhere.
+
+Key players with abilities defined:
+- Olli Mehtonen #20 — Kapteeni: win duel → +2 to next card stats
+- Mauno Ahlgren #15 — Kaaoksen lähettiläs: win duel → draw Sattuma card
+- Tero Backman #17 — Fasilitaattori: win duel → draw Action card
+- Kimmo Mattila #14 — Matigol: win duel with possession → automatic goal (skip save check)
+- Iiro Mäkelä #13 — Ninja: win duel → attempt goal even without possession
+- Jukka Estola #88 — Estis: play Press → can switch to Shot after seeing opponent's card
+- Petri Alanen #83 — play Shot → can switch to Feint after seeing opponent's card
+- Olli Nissinen #61 — score a goal → draw Sattuma card
+- Jyrki Orjasniemi #5 — 44 minuutin paine: win duel → opponent can't play Feint next duel
+- Jari Savela #8 — Dominoiva: win duel → cancel opponent's next ability
+- Aki Tuokko #50 — Yllätyksellinen: win duel → opponent's next card -2 stats
+- Olli Kurkela #21 — Laitanousu: win duel → opponent can't play Press next duel
+- Antti Haritonov #19 — play Feint → can switch to Press after seeing opponent's card
+- Ossi Nieminen #60 — Tuplablokki: win duel → opponent can't play Shot next duel
+- Kari Virtanen #10 — Kokenut: win possession with Press → draw Action card
+- Mikko Ruokoranta #2 (GK) — save attempt → draw Sattuma card
+- Kimmo Lustila #7 (legend) — Maaginen kosketus: win all tiebreaks
+- Tommi Helminen #1 (legend, GK) — Muuri: auto-block all shots regardless of abilities
+- Kukko #4 (legend) — after shot attempt → draw Sattuma card
+- Juho Saravo #9 (legend) — miss a goal → next card +2 stats
+- Tomi Poukka #6 (legend) — if played after Petri Alanen → +2 stats
+- Ville Salonen #3 (reinforcement) — Pelinohjaaja: save → next card +2 stats
