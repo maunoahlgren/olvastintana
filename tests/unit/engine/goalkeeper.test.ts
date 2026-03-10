@@ -2,17 +2,17 @@ import { describe, it, expect } from 'vitest';
 import { resolveGoalkeeping, useBrickWall, resetBrickWall } from '../../../src/engine/goalkeeper';
 
 describe('resolveGoalkeeping()', () => {
-  it('autosave (Kivimuuri) always saves regardless of power', () => {
-    expect(resolveGoalkeeping({ power: 1 }, { power: 10 }, true)).toBe('saved');
+  it('autosave (Kivimuuri) always saves regardless of stats', () => {
+    expect(resolveGoalkeeping({ torjunta: 1 }, { laukaus: 10 }, true)).toBe('saved');
   });
 
-  it('keeper power >= shooter power → saved', () => {
-    expect(resolveGoalkeeping({ power: 4 }, { power: 4 })).toBe('saved');
-    expect(resolveGoalkeeping({ power: 5 }, { power: 3 })).toBe('saved');
+  it('keeper torjunta >= shooter laukaus → saved', () => {
+    expect(resolveGoalkeeping({ torjunta: 4 }, { laukaus: 4 })).toBe('saved');
+    expect(resolveGoalkeeping({ torjunta: 5 }, { laukaus: 3 })).toBe('saved');
   });
 
-  it('keeper power < shooter power → goal', () => {
-    expect(resolveGoalkeeping({ power: 3 }, { power: 5 })).toBe('goal');
+  it('keeper torjunta < shooter laukaus → goal', () => {
+    expect(resolveGoalkeeping({ torjunta: 3 }, { laukaus: 5 })).toBe('goal');
   });
 });
 

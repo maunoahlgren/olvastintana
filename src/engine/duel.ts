@@ -3,7 +3,7 @@
  * Duel resolution engine — pure functions, no side effects.
  *
  * Triangle: Press > Feint > Shot > Press
- * Tie-break by stat: Press tie → Pace, Feint tie → Technique, Shot tie → Power
+ * Tie-break by stat: Press tie → Riisto, Feint tie → Harhautus, Shot tie → Laukaus
  * Equal stats on tie → null (possession unchanged, nothing happens)
  */
 
@@ -16,21 +16,30 @@ export const CARD = {
 
 export type Card = (typeof CARD)[keyof typeof CARD];
 
-/** Player stat block */
+/**
+ * Player stat block — maps directly to the three card types plus save and endurance.
+ *
+ * | Stat     | Finnish   | Card/role                        |
+ * |----------|-----------|----------------------------------|
+ * | riisto   | Riisto    | Press card strength + Press tiebreak  |
+ * | laukaus  | Laukaus   | Shot card strength + Shot tiebreak    |
+ * | harhautus| Harhautus | Feint card strength + Feint tiebreak  |
+ * | torjunta | Torjunta  | Save ability (GK + defenders)        |
+ * | stamina  | Stamina   | Endurance; stamina=1 → -1 all in H2  |
+ */
 export interface PlayerStats {
-  pace: number;
-  technique: number;
-  power: number;
-  iq: number;
+  riisto: number;
+  laukaus: number;
+  harhautus: number;
+  torjunta: number;
   stamina: number;
-  chaos: number;
 }
 
 /** Stat used to break a tie for each card type */
 const TIE_STAT: Record<Card, keyof PlayerStats> = {
-  [CARD.PRESS]: 'pace',
-  [CARD.FEINT]: 'technique',
-  [CARD.SHOT]: 'power',
+  [CARD.PRESS]: 'riisto',
+  [CARD.FEINT]: 'harhautus',
+  [CARD.SHOT]: 'laukaus',
 };
 
 /**
@@ -44,7 +53,7 @@ const TIE_STAT: Record<Card, keyof PlayerStats> = {
  *
  * @example
  * resolveDuel(CARD.PRESS, CARD.FEINT, statsA, statsB) // → 'attacker'
- * resolveDuel(CARD.PRESS, CARD.PRESS, { pace: 3 }, { pace: 3 }) // → null
+ * resolveDuel(CARD.PRESS, CARD.PRESS, { riisto: 3 }, { riisto: 3 }) // → null
  */
 export function resolveDuel(
   attackerCard: Card,

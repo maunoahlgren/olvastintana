@@ -4,7 +4,7 @@
  *
  * The goalkeeper does not participate in duels.
  * A save attempt is triggered when Shot wins a duel.
- * Save succeeds if keeper Power >= shooter Power, or if Kivimuuri (auto-save) is active.
+ * Save succeeds if keeper Torjunta >= shooter Laukaus, or if Kivimuuri (auto-save) is active.
  */
 
 import type { PlayerStats } from './duel';
@@ -15,23 +15,23 @@ export type SaveResult = 'saved' | 'goal';
 /**
  * Resolve a goalkeeper save attempt.
  *
- * @param keeperStats - Goalkeeper stat block
- * @param shooterStats - Shooting player stat block
+ * @param keeperStats - Goalkeeper stat block (uses torjunta for save ability)
+ * @param shooterStats - Shooting player stat block (uses laukaus for shot power)
  * @param autosave - True when Kivimuuri (brick_wall) ability triggers (SQ-08)
  * @returns 'saved' if the keeper stops the shot, 'goal' if it goes in
  *
  * @example
- * resolveGoalkeeping({ power: 4 }, { power: 3 }) // → 'saved'
- * resolveGoalkeeping({ power: 3 }, { power: 5 }) // → 'goal'
- * resolveGoalkeeping({ power: 1 }, { power: 10 }, true) // → 'saved' (Kivimuuri)
+ * resolveGoalkeeping({ torjunta: 4 }, { laukaus: 3 }) // → 'saved'
+ * resolveGoalkeeping({ torjunta: 3 }, { laukaus: 5 }) // → 'goal'
+ * resolveGoalkeeping({ torjunta: 1 }, { laukaus: 10 }, true) // → 'saved' (Kivimuuri)
  */
 export function resolveGoalkeeping(
-  keeperStats: Pick<PlayerStats, 'power'>,
-  shooterStats: Pick<PlayerStats, 'power'>,
+  keeperStats: Pick<PlayerStats, 'torjunta'>,
+  shooterStats: Pick<PlayerStats, 'laukaus'>,
   autosave = false,
 ): SaveResult {
   if (autosave) return 'saved';
-  return keeperStats.power >= shooterStats.power ? 'saved' : 'goal';
+  return keeperStats.torjunta >= shooterStats.laukaus ? 'saved' : 'goal';
 }
 
 /**

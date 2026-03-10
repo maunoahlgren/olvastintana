@@ -32,12 +32,11 @@
     "play_card": "Pelaa kortti"
   },
   "stats": {
-    "pace": "Nopeus",
-    "technique": "Tekniikka",
-    "power": "Voima",
-    "iq": "ÄO",
-    "stamina": "Kestävyys",
-    "chaos": "Kaaos"
+    "riisto": "Riisto",
+    "laukaus": "Laukaus",
+    "harhautus": "Harhautus",
+    "torjunta": "Torjunta",
+    "stamina": "Kestävyys"
   },
   "result": {
     "win": "Voitto!",

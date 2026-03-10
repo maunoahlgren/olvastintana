@@ -13,15 +13,13 @@ import type { Player } from '../../../src/store/squadStore';
 const alanen: Player = {
   id: 'alanen',
   name: 'Alanen',
+  number: 7,
+  tier: 'regular',
   position: ['MF', 'FW'],
-  stats: { pace: 4, technique: 5, power: 4, iq: 6, stamina: 4, chaos: 3 },
+  stats: { riisto: 4, laukaus: 4, harhautus: 5, torjunta: 4, stamina: 2 },
   ability: {
-    type: 'boost',
-    id: 'hot_streak',
-    name_en: 'Hot Streak',
-    name_fi: 'Tulisarja',
-    description_en: 'Can randomly explode for 6 points.',
-    description_fi: 'Voi räjähtää satunnaisesti 6 pisteeseen.',
+    description_en: 'Can randomly explode for 8 points.',
+    description_fi: 'Voi räjähtää satunnaisesti 8 pisteeseen.',
   },
 };
 
@@ -33,24 +31,19 @@ describe('PlayerCard', () => {
 
   it('renders base stats correctly', () => {
     renderWithProviders(<PlayerCard player={alanen} />);
-    expect(screen.getByTestId('stat-alanen-pace')).toHaveTextContent('4');
-    expect(screen.getByTestId('stat-alanen-iq')).toHaveTextContent('6');
+    expect(screen.getByTestId('stat-alanen-riisto')).toHaveTextContent('4');
+    expect(screen.getByTestId('stat-alanen-harhautus')).toHaveTextContent('5');
   });
 
   it('applies negative stat modifier visually', () => {
-    renderWithProviders(<PlayerCard player={alanen} statModifier={{ pace: -1 }} />);
-    // pace 4 + (-1) = 3
-    expect(screen.getByTestId('stat-alanen-pace')).toHaveTextContent('3');
+    renderWithProviders(<PlayerCard player={alanen} statModifier={{ riisto: -1 }} />);
+    // riisto 4 + (-1) = 3
+    expect(screen.getByTestId('stat-alanen-riisto')).toHaveTextContent('3');
   });
 
-  it('shows ability name in English', () => {
+  it('shows ability description in English', () => {
     renderWithProviders(<PlayerCard player={alanen} />);
-    expect(screen.getByText('Hot Streak')).toBeInTheDocument();
-  });
-
-  it('shows ability icon for boost type', () => {
-    renderWithProviders(<PlayerCard player={alanen} />);
-    expect(screen.getByText('💥')).toBeInTheDocument();
+    expect(screen.getByText('Can randomly explode for 8 points.')).toBeInTheDocument();
   });
 
   it('calls onSelect when clicked', () => {
@@ -68,11 +61,22 @@ describe('PlayerCard', () => {
 
   it('hides ability when showAbility=false', () => {
     renderWithProviders(<PlayerCard player={alanen} showAbility={false} />);
-    expect(screen.queryByText('Hot Streak')).not.toBeInTheDocument();
+    expect(screen.queryByText('Can randomly explode for 8 points.')).not.toBeInTheDocument();
   });
 
   it('renders positions', () => {
     renderWithProviders(<PlayerCard player={alanen} />);
     expect(screen.getByText('MF · FW')).toBeInTheDocument();
+  });
+
+  it('renders player number', () => {
+    renderWithProviders(<PlayerCard player={alanen} />);
+    expect(screen.getByText('#7')).toBeInTheDocument();
+  });
+
+  it('renders without ability gracefully when no ability defined', () => {
+    const noAbility: Player = { ...alanen, ability: undefined };
+    renderWithProviders(<PlayerCard player={noAbility} />);
+    expect(screen.getByTestId('player-name-alanen')).toBeInTheDocument();
   });
 });

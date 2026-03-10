@@ -104,8 +104,8 @@ describe('DuelScreen', () => {
 
   it('shows draw result when same cards tie on equal stats', () => {
     // Tie on equal stats → null
-    // We need players with equal pace for press tie
-    // Use two identical lineup players and hope they tie on pace
+    // We need players with equal riisto for press tie
+    // Use two identical lineup players and hope they tie on riisto
     // Let's just pick PRESS vs PRESS and see what happens (outcome depends on stats)
     renderWithProviders(<DuelScreen />);
     // At least the result panel appears

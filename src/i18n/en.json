@@ -32,12 +32,11 @@
     "play_card": "Play Card"
   },
   "stats": {
-    "pace": "Pace",
-    "technique": "Technique",
-    "power": "Power",
-    "iq": "IQ",
-    "stamina": "Stamina",
-    "chaos": "Chaos"
+    "riisto": "Press",
+    "laukaus": "Shot",
+    "harhautus": "Feint",
+    "torjunta": "Save",
+    "stamina": "Stamina"
   },
   "result": {
     "win": "Victory!",

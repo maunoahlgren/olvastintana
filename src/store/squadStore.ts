@@ -11,26 +11,25 @@ import type { PlayerStats } from '../engine/duel';
 
 export type Position = 'GK' | 'MF' | 'FW' | 'DF';
 
+/** Player tier — regular squad, club legend, or reinforcement signing */
+export type PlayerTier = 'regular' | 'legend' | 'reinforcement';
+
 export interface PlayerAbility {
-  type: 'boost' | 'chaos' | 'reactive' | 'restriction' | 'dominant';
-  id: string;
-  name_en: string;
-  name_fi: string;
-  description_en: string;
   description_fi: string;
-  trigger?: string;
-  effect?: string;
-  duration?: number;
-  uses_per_half?: number;
-  resets_at_halftime?: boolean;
+  description_en: string | null;
 }
 
 export interface Player {
   id: string;
   name: string;
+  /** Squad number */
+  number: number;
+  /** Player tier for squad management */
+  tier: PlayerTier;
   position: Position[];
   stats: PlayerStats;
-  ability: PlayerAbility;
+  /** Optional — not all players have a special ability */
+  ability?: PlayerAbility;
 }
 
 export interface SquadSlot {

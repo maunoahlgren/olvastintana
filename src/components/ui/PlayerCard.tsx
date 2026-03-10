@@ -8,7 +8,7 @@
  * @example
  * <PlayerCard player={alanen} />
  * <PlayerCard player={alanen} selected onSelect={() => pick(alanen)} />
- * <PlayerCard player={alanen} statModifier={{ pace: -1 }} />
+ * <PlayerCard player={alanen} statModifier={{ riisto: -1 }} />
  */
 
 import { useTranslation } from 'react-i18next';
@@ -28,16 +28,7 @@ interface PlayerCardProps {
   showAbility?: boolean;
 }
 
-const STAT_KEYS: (keyof PlayerStats)[] = ['pace', 'technique', 'power', 'iq', 'stamina', 'chaos'];
-
-/** Ability type icons */
-const ABILITY_ICON: Record<string, string> = {
-  boost: '💥',
-  chaos: '🎲',
-  reactive: '⚡',
-  restriction: '🔒',
-  dominant: '🏆',
-};
+const STAT_KEYS: (keyof PlayerStats)[] = ['riisto', 'laukaus', 'harhautus', 'torjunta', 'stamina'];
 
 /**
  * PlayerCard — shows a player's full card for lineup selection or display.
@@ -55,8 +46,9 @@ export default function PlayerCard({
   const { t, i18n } = useTranslation();
   const lang = i18n.language === 'fi' ? 'fi' : 'en';
 
-  const abilityName = lang === 'fi' ? player.ability.name_fi : player.ability.name_en;
-  const abilityDesc = lang === 'fi' ? player.ability.description_fi : player.ability.description_en;
+  const abilityDesc = player.ability
+    ? (lang === 'fi' ? player.ability.description_fi : (player.ability.description_en ?? player.ability.description_fi))
+    : null;
 
   return (
     <div
@@ -70,14 +62,19 @@ export default function PlayerCard({
           : 'border-[#F5F0E8]/20 bg-[#1A1A1A]',
       ].join(' ')}
     >
-      {/* Header: name + positions */}
+      {/* Header: number + name + positions */}
       <div className="flex items-center justify-between">
-        <span
-          data-testid={`player-name-${player.id}`}
-          className="font-black text-base text-[#F5F0E8] uppercase tracking-wide"
-        >
-          {player.name}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-[#F5F0E8]/40 font-bold w-6 text-right">
+            #{player.number}
+          </span>
+          <span
+            data-testid={`player-name-${player.id}`}
+            className="font-black text-base text-[#F5F0E8] uppercase tracking-wide"
+          >
+            {player.name}
+          </span>
+        </div>
         <span className="text-xs text-[#F5F0E8]/50 font-bold">
           {player.position.join(' · ')}
         </span>
@@ -104,13 +101,9 @@ export default function PlayerCard({
       </div>
 
       {/* Ability */}
-      {showAbility && (
+      {showAbility && abilityDesc && (
         <div className="mt-1 border-t border-[#F5F0E8]/10 pt-2">
-          <div className="flex items-center gap-1 text-xs">
-            <span>{ABILITY_ICON[player.ability.type] ?? '?'}</span>
-            <span className="font-bold text-[#FFE600]">{abilityName}</span>
-          </div>
-          <p className="text-xs text-[#F5F0E8]/60 mt-0.5">{abilityDesc}</p>
+          <p className="text-xs text-[#F5F0E8]/60">{abilityDesc}</p>
         </div>
       )}
     </div>

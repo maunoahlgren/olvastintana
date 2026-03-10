@@ -5,7 +5,7 @@
  * Three difficulty levels:
  *   🟢 Easy   — fully random; no game-state awareness
  *   🟡 Normal — weighted random; reads possession, score, and last player card
- *   🔴 Hard   — counter-based; tracks player card history, uses active player IQ
+ *   🔴 Hard   — counter-based; tracks player card history, uses active player Stamina
  *
  * All functions are pure (no side effects) and decoupled from React.
  * Randomness is via Math.random() so tests should spy on it when determinism matters.
@@ -43,8 +43,8 @@ export interface AiGameState {
   duelsPerHalf: number;
   /** The last card played by the human player (home), for Normal AI */
   lastPlayerCard?: CardChoice;
-  /** IQ stat of the active AI (away) player, for Hard AI mistake rate */
-  activePlayerIq?: number;
+  /** Stamina stat of the active AI (away) player, for Hard AI mistake rate */
+  activePlayerStamina?: number;
 }
 
 /** Lineup selection returned by AI lineup functions */
@@ -85,14 +85,14 @@ function weightedRandom(weights: Record<string, number>): string {
 }
 
 /**
- * Sum all six stats for a player.
+ * Sum all five stats for a player.
  *
  * @param player - Player to evaluate
  * @returns Total stat points
  */
 function totalStats(player: Player): number {
-  const { pace, technique, power, iq, stamina, chaos } = player.stats;
-  return pace + technique + power + iq + stamina + chaos;
+  const { riisto, laukaus, harhautus, torjunta, stamina } = player.stats;
+  return riisto + laukaus + harhautus + torjunta + stamina;
 }
 
 /**
@@ -171,9 +171,9 @@ export function normalAiCard(gameState: AiGameState): CardChoice {
  * Strategy:
  * 1. Count the player's last 3 cards; play the counter to the most frequent.
  * 2. If AI has possession and player rarely plays Feint, override to Shot.
- * 3. Apply a small random mistake rate based on active player's IQ
- *    (IQ=1 → ~42% mistake chance; IQ=6 → 0%). Models the human fallibility
- *    of the IQ stat — a slow-thinking player won't always pick optimally.
+ * 3. Apply a small random mistake rate based on active player's Stamina
+ *    (Stamina=1 → 25% mistake chance; Stamina=2 → 0%). Models fatigue:
+ *    a tired player won't always pick optimally.
  *
  * Counter table (X most frequent → play Y to beat X):
  *   Press → Shot  (Shot beats Press)
@@ -213,10 +213,10 @@ export function hardAiCard(gameState: AiGameState, cardHistory: CardChoice[]): C
     }
   }
 
-  // IQ-based mistake: lower IQ → higher chance of a random card instead
-  // Formula: iq=1 → 5/12 ≈ 42%, iq=4 → 2/12 ≈ 17%, iq=6 → 0%
-  const iq = gameState.activePlayerIq ?? 4;
-  const mistakeChance = Math.max(0, (6 - iq) / 12);
+  // Stamina-based mistake: lower stamina → higher chance of a random card instead
+  // Formula: stamina=1 → 1/4 = 25%, stamina=2 → 0%
+  const stamina = gameState.activePlayerStamina ?? 2;
+  const mistakeChance = Math.max(0, (2 - stamina) / 4);
   if (Math.random() < mistakeChance) {
     return easyAiCard();
   }
@@ -279,9 +279,9 @@ export function normalAiLineup(squad: Player[], _playerLineup: string[]): AiLine
  * against the player's chosen tactic.
  *
  * Counter-stat mapping:
- *   Aggressive (boosts Shot) → prioritise Technique (Feint counters Shot)
- *   Defensive  (boosts Press) → prioritise Power     (Shot counters Press)
- *   Creative   (boosts Feint) → prioritise Pace      (Press counters Feint)
+ *   Aggressive (boosts Shot) → prioritise Harhautus (Feint counters Shot)
+ *   Defensive  (boosts Press) → prioritise Laukaus  (Shot counters Press)
+ *   Creative   (boosts Feint) → prioritise Riisto   (Press counters Feint)
  *
  * Within same counter-stat, falls back to total stats.
  *
@@ -291,7 +291,7 @@ export function normalAiLineup(squad: Player[], _playerLineup: string[]): AiLine
  * @returns AiLineup optimised against the player's tactic
  *
  * @example
- * hardAiLineup(players, homeIds, 'aggressive') // → picks high-Technique players
+ * hardAiLineup(players, homeIds, 'aggressive') // → picks high-Harhautus players
  */
 export function hardAiLineup(
   squad: Player[],
@@ -303,9 +303,9 @@ export function hardAiLineup(
 
   // Counter-stat: the stat that wins against the tactic's preferred card
   const counterStat: Record<Tactic, keyof Player['stats']> = {
-    aggressive: 'technique', // Feint (technique) beats Shot (aggressive)
-    defensive: 'power',      // Shot (power) beats Press (defensive)
-    creative: 'pace',        // Press (pace) beats Feint (creative)
+    aggressive: 'harhautus', // Feint (harhautus) beats Shot (aggressive)
+    defensive: 'laukaus',    // Shot (laukaus) beats Press (defensive)
+    creative: 'riisto',      // Press (riisto) beats Feint (creative)
   };
   const key = counterStat[playerTactic];
 

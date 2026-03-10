@@ -51,39 +51,33 @@ function makePlayer(
   position: string[],
   stats: Partial<PlayerStats> = {},
 ): Player {
-  const defaultStats: PlayerStats = { pace: 3, technique: 3, power: 3, iq: 3, stamina: 3, chaos: 3 };
+  const defaultStats: PlayerStats = { riisto: 3, laukaus: 3, harhautus: 3, torjunta: 3, stamina: 3 };
   return {
     id,
     name: id,
+    number: 0,
+    tier: 'regular',
     position: position as Player['position'],
     stats: { ...defaultStats, ...stats },
-    ability: {
-      id: 'none',
-      type: 'boost',
-      name_en: 'None',
-      name_fi: 'Ei mitään',
-      description_en: '',
-      description_fi: '',
-    },
   };
 }
 
 /**
  * Test squad: 7 outfield players of varying quality + 1 GK.
  *
- * Totals: p1=30, p2=24, p3=18, p4=12, p6=12, p5=6, p7=5
- * p6 has unusually high technique (6) for testing hardAiLineup vs 'aggressive'
+ * Totals (5 stats): p1=25, p2=20, p3=15, p4=10, p6=11, p5=5, p7=4
+ * p6 has unusually high harhautus (6) for testing hardAiLineup vs 'aggressive'
  * p7 is the lowest-stat player — excluded when selecting top 6
  */
 const TEST_SQUAD: Player[] = [
-  makePlayer('p1', ['MF'], { pace: 5, technique: 5, power: 5, iq: 5, stamina: 5, chaos: 5 }), // 30
-  makePlayer('p2', ['FW'], { pace: 4, technique: 4, power: 4, iq: 4, stamina: 4, chaos: 4 }), // 24
-  makePlayer('p3', ['MF'], { pace: 3, technique: 3, power: 3, iq: 3, stamina: 3, chaos: 3 }), // 18
-  makePlayer('p4', ['FW'], { pace: 2, technique: 2, power: 2, iq: 2, stamina: 2, chaos: 2 }), // 12
-  makePlayer('p5', ['MF'], { pace: 1, technique: 1, power: 1, iq: 1, stamina: 1, chaos: 1 }), //  6
-  makePlayer('p6', ['FW'], { pace: 2, technique: 6, power: 1, iq: 1, stamina: 1, chaos: 1 }), // 12 — high technique
-  makePlayer('p7', ['MF'], { pace: 1, technique: 1, power: 1, iq: 1, stamina: 1, chaos: 0 }), //  5 — lowest stat player
-  makePlayer('gk1', ['GK'], { pace: 2, technique: 2, power: 4, iq: 4, stamina: 4, chaos: 1 }),
+  makePlayer('p1', ['MF'], { riisto: 5, laukaus: 5, harhautus: 5, torjunta: 5, stamina: 5 }), // 25
+  makePlayer('p2', ['FW'], { riisto: 4, laukaus: 4, harhautus: 4, torjunta: 4, stamina: 4 }), // 20
+  makePlayer('p3', ['MF'], { riisto: 3, laukaus: 3, harhautus: 3, torjunta: 3, stamina: 3 }), // 15
+  makePlayer('p4', ['FW'], { riisto: 2, laukaus: 2, harhautus: 2, torjunta: 2, stamina: 2 }), // 10
+  makePlayer('p5', ['MF'], { riisto: 1, laukaus: 1, harhautus: 1, torjunta: 1, stamina: 1 }), //  5
+  makePlayer('p6', ['FW'], { riisto: 2, laukaus: 1, harhautus: 6, torjunta: 1, stamina: 1 }), // 11 — high harhautus
+  makePlayer('p7', ['MF'], { riisto: 1, laukaus: 1, harhautus: 1, torjunta: 1, stamina: 0 }), //  4 — lowest stat player
+  makePlayer('gk1', ['GK'], { riisto: 2, laukaus: 2, harhautus: 2, torjunta: 4, stamina: 4 }),
 ];
 
 afterEach(() => {
@@ -172,29 +166,29 @@ describe('normalAiCard', () => {
 // ---------------------------------------------------------------------------
 
 describe('hardAiCard', () => {
-  it('counters most-frequent Press → plays Shot (iq=6, no mistake)', () => {
+  it('counters most-frequent Press → plays Shot (stamina=2, no mistake)', () => {
     // Math.random=0.99 → mistake check 0.99 < 0 is false
     vi.spyOn(Math, 'random').mockReturnValue(0.99);
     const result = hardAiCard(
-      { ...BASE_STATE, activePlayerIq: 6 },
+      { ...BASE_STATE, activePlayerStamina: 2 },
       ['press', 'press', 'press'],
     );
     expect(result).toBe('shot');
   });
 
-  it('counters most-frequent Feint → plays Press (iq=6, no mistake)', () => {
+  it('counters most-frequent Feint → plays Press (stamina=2, no mistake)', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.99);
     const result = hardAiCard(
-      { ...BASE_STATE, activePlayerIq: 6 },
+      { ...BASE_STATE, activePlayerStamina: 2 },
       ['feint', 'feint', 'feint'],
     );
     expect(result).toBe('press');
   });
 
-  it('counters most-frequent Shot → plays Feint (iq=6, no mistake)', () => {
+  it('counters most-frequent Shot → plays Feint (stamina=2, no mistake)', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.99);
     const result = hardAiCard(
-      { ...BASE_STATE, activePlayerIq: 6 },
+      { ...BASE_STATE, activePlayerStamina: 2 },
       ['shot', 'shot', 'shot'],
     );
     expect(result).toBe('feint');
@@ -205,7 +199,7 @@ describe('hardAiCard', () => {
     // possession = 'away', feintFreq = 0 < 0.5 → override to 'shot'
     vi.spyOn(Math, 'random').mockReturnValue(0.99);
     const result = hardAiCard(
-      { ...BASE_STATE, possession: 'away', activePlayerIq: 6 },
+      { ...BASE_STATE, possession: 'away', activePlayerStamina: 2 },
       ['shot', 'shot', 'shot'],
     );
     expect(result).toBe('shot');
@@ -215,30 +209,30 @@ describe('hardAiCard', () => {
     // feintFreq = 3/3 = 1.0 ≥ 0.5 → no override → counter 'press' stays
     vi.spyOn(Math, 'random').mockReturnValue(0.99);
     const result = hardAiCard(
-      { ...BASE_STATE, possession: 'away', activePlayerIq: 6 },
+      { ...BASE_STATE, possession: 'away', activePlayerStamina: 2 },
       ['feint', 'feint', 'feint'],
     );
     // Counter for feint = press; feintFreq = 1.0 ≥ 0.5 so no shot override
     expect(result).toBe('press');
   });
 
-  it('makes random mistake at low IQ (iq=1)', () => {
-    // mistakeChance = (6-1)/12 ≈ 0.417
-    // Math.random first call = 0.01 < 0.417 → mistake
+  it('makes random mistake at low stamina (stamina=1)', () => {
+    // mistakeChance = (2-1)/4 = 0.25
+    // Math.random = 0.01 < 0.25 → mistake fires
     // easyAiCard: Math.random = 0.01 → floor(0.01*3) = 0 → ALL_CARDS[0] = 'press'
     vi.spyOn(Math, 'random').mockReturnValue(0.01);
     const result = hardAiCard(
-      { ...BASE_STATE, activePlayerIq: 1 },
+      { ...BASE_STATE, activePlayerStamina: 1 },
       ['shot', 'shot', 'shot'], // counter would be 'feint', but mistake fires
     );
     // Mistake occurred → easyAiCard returned 'press' (not 'feint')
     expect(result).toBe('press');
   });
 
-  it('no mistake at max IQ (iq=6) → plays optimal counter', () => {
+  it('no mistake at max stamina (stamina=2) → plays optimal counter', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.99);
     const result = hardAiCard(
-      { ...BASE_STATE, activePlayerIq: 6 },
+      { ...BASE_STATE, activePlayerStamina: 2 },
       ['shot', 'shot', 'shot'],
     );
     expect(result).toBe('feint'); // pure counter, zero mistake chance
@@ -254,7 +248,7 @@ describe('hardAiCard', () => {
     // Long history with mostly feint but last 3 are all press → counter = shot
     vi.spyOn(Math, 'random').mockReturnValue(0.99);
     const result = hardAiCard(
-      { ...BASE_STATE, activePlayerIq: 6 },
+      { ...BASE_STATE, activePlayerStamina: 2 },
       ['feint', 'feint', 'feint', 'feint', 'press', 'press', 'press'],
     );
     expect(result).toBe('shot'); // press is most frequent in last 3
@@ -305,13 +299,13 @@ describe('normalAiLineup', () => {
     expect(lineup.outfield).toHaveLength(6);
   });
 
-  it('includes the highest-stat players (p1=30, p2=24)', () => {
+  it('includes the highest-stat players (p1=25, p2=20)', () => {
     const lineup = normalAiLineup(TEST_SQUAD, []);
     expect(lineup.outfield).toContain('p1');
     expect(lineup.outfield).toContain('p2');
   });
 
-  it('excludes the lowest-stat outfield player (p7=5)', () => {
+  it('excludes the lowest-stat outfield player (p7=4)', () => {
     const lineup = normalAiLineup(TEST_SQUAD, []);
     expect(lineup.outfield).not.toContain('p7');
   });
@@ -337,21 +331,21 @@ describe('hardAiLineup', () => {
     expect(hardAiLineup(TEST_SQUAD, [], 'aggressive').goalkeeper).toBe('gk1');
   });
 
-  it('prioritises high-Technique players vs Aggressive tactic', () => {
-    // p6 has technique=6 (highest), p1 has technique=5
+  it('prioritises high-Harhautus players vs Aggressive tactic', () => {
+    // p6 has harhautus=6 (highest), p1 has harhautus=5
     const lineup = hardAiLineup(TEST_SQUAD, [], 'aggressive');
     expect(lineup.outfield).toContain('p6');
-    // p6 should come before p1 (higher technique)
+    // p6 should come before p1 (higher harhautus)
     const p6Idx = lineup.outfield.indexOf('p6');
     const p1Idx = lineup.outfield.indexOf('p1');
     expect(p6Idx).toBeLessThan(p1Idx);
   });
 
-  it('prioritises high-Power players vs Defensive tactic', () => {
+  it('prioritises high-Laukaus players vs Defensive tactic', () => {
     const squad = [
-      makePlayer('strongPower', ['MF'], { power: 6, pace: 1, technique: 1, iq: 1, stamina: 1, chaos: 1 }),
-      makePlayer('medPower', ['FW'], { power: 3, pace: 3, technique: 3, iq: 3, stamina: 3, chaos: 3 }),
-      makePlayer('lowPower', ['MF'], { power: 1, pace: 5, technique: 5, iq: 5, stamina: 5, chaos: 5 }),
+      makePlayer('strongLaukaus', ['MF'], { laukaus: 6, riisto: 1, harhautus: 1, torjunta: 1, stamina: 1 }),
+      makePlayer('medLaukaus', ['FW'], { laukaus: 3, riisto: 3, harhautus: 3, torjunta: 3, stamina: 3 }),
+      makePlayer('lowLaukaus', ['MF'], { laukaus: 1, riisto: 5, harhautus: 5, torjunta: 5, stamina: 5 }),
       makePlayer('a', ['FW'], {}),
       makePlayer('b', ['MF'], {}),
       makePlayer('c', ['FW'], {}),
@@ -359,14 +353,14 @@ describe('hardAiLineup', () => {
       makePlayer('gk', ['GK'], {}),
     ];
     const lineup = hardAiLineup(squad, [], 'defensive');
-    expect(lineup.outfield[0]).toBe('strongPower');
+    expect(lineup.outfield[0]).toBe('strongLaukaus');
   });
 
-  it('prioritises high-Pace players vs Creative tactic', () => {
+  it('prioritises high-Riisto players vs Creative tactic', () => {
     const squad = [
-      makePlayer('fastPace', ['MF'], { pace: 6, technique: 1, power: 1, iq: 1, stamina: 1, chaos: 1 }),
-      makePlayer('medPace', ['FW'], { pace: 3, technique: 3, power: 3, iq: 3, stamina: 3, chaos: 3 }),
-      makePlayer('slowPace', ['MF'], { pace: 1, technique: 5, power: 5, iq: 5, stamina: 5, chaos: 5 }),
+      makePlayer('strongRiisto', ['MF'], { riisto: 6, laukaus: 1, harhautus: 1, torjunta: 1, stamina: 1 }),
+      makePlayer('medRiisto', ['FW'], { riisto: 3, laukaus: 3, harhautus: 3, torjunta: 3, stamina: 3 }),
+      makePlayer('lowRiisto', ['MF'], { riisto: 1, laukaus: 5, harhautus: 5, torjunta: 5, stamina: 5 }),
       makePlayer('a', ['FW'], {}),
       makePlayer('b', ['MF'], {}),
       makePlayer('c', ['FW'], {}),
@@ -374,7 +368,7 @@ describe('hardAiLineup', () => {
       makePlayer('gk', ['GK'], {}),
     ];
     const lineup = hardAiLineup(squad, [], 'creative');
-    expect(lineup.outfield[0]).toBe('fastPace');
+    expect(lineup.outfield[0]).toBe('strongRiisto');
   });
 });
 
@@ -452,15 +446,15 @@ describe('pickAiCard', () => {
 
   it('hard → returns a valid card', () => {
     expect(['press', 'feint', 'shot']).toContain(
-      pickAiCard('hard', { ...BASE_STATE, activePlayerIq: 4 }, ['press']),
+      pickAiCard('hard', { ...BASE_STATE, activePlayerStamina: 2 }, ['press']),
     );
   });
 
   it('hard → dispatches counter logic with history', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.99); // no IQ mistake
+    vi.spyOn(Math, 'random').mockReturnValue(0.99); // no stamina mistake
     const result = pickAiCard(
       'hard',
-      { ...BASE_STATE, activePlayerIq: 6 },
+      { ...BASE_STATE, activePlayerStamina: 2 },
       ['feint', 'feint', 'feint'],
     );
     expect(result).toBe('press'); // press counters feint

@@ -5,6 +5,29 @@ Format: `## [version] — date` with Added / Changed / Fixed sections.
 
 ---
 
+## [0.5.0] — 2026-03-10
+
+### Changed (BREAKING)
+- **Stat system fully migrated** from `pace / technique / power / iq / chaos` to `riisto / laukaus / harhautus / torjunta / stamina`
+  - `src/engine/duel.ts` — `PlayerStats` interface now `{ riisto, laukaus, harhautus, torjunta, stamina }`; `TIE_STAT` updated: Press→`riisto`, Feint→`harhautus`, Shot→`laukaus`
+  - `src/engine/goalkeeper.ts` — save check now `keeper.torjunta >= shooter.laukaus`
+  - `src/engine/abilities.ts` — `applyStaminaPenalty` applies -1 to `riisto/laukaus/harhautus/torjunta` in H2 when `stamina < 2`; `hotStreak` boosts `riisto/laukaus/harhautus` to 8; player IDs updated to `mauno_ahlgren` / `jyrki_orjasniemi`
+  - `src/engine/ai.ts` — `totalStats` sums 5 new stats; `AiGameState.activePlayerIq` renamed to `activePlayerStamina`; `hardAiCard` mistake formula updated to `(2 - stamina) / 4`; `hardAiLineup` counter-stat map: aggressive→`harhautus`, defensive→`laukaus`, creative→`riisto`
+  - `src/store/squadStore.ts` — `PlayerAbility` simplified to `{ description_fi, description_en }` (no `type/id/name_en/name_fi`); `Player` gains `number: number` and `tier: PlayerTier` fields; `ability` is now optional
+  - `src/components/ui/PlayerCard.tsx` — `STAT_KEYS` updated; ability shows description only (no name/icon); player number shown
+  - `src/components/screens/LineupScreen.tsx` — trivia penalty mod uses new stat names
+  - `src/i18n/en.json` & `fi.json` — `stats` section: old 6-key block replaced with `riisto/laukaus/harhautus/torjunta/stamina`
+
+### Added
+- `PlayerTier` type (`regular | legend | reinforcement`) exported from `squadStore.ts`
+- Player `number` field displayed in `PlayerCard`
+- Graceful rendering when `Player.ability` is undefined
+
+### Fixed
+- All unit and integration tests updated to use new stat names and player IDs — **318 tests passing**
+
+---
+
 ## [0.4.0] — 2026-03-09
 
 ### Added

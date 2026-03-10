@@ -98,12 +98,11 @@ export default function LineupScreen(): JSX.Element {
     // Apply trivia -1 penalty to the chosen home player
     if (isHome && homePenaltyPlayer) {
       const penaltyMod = {
-        pace: -1 as const,
-        technique: -1 as const,
-        power: -1 as const,
-        iq: -1 as const,
+        riisto: -1 as const,
+        laukaus: -1 as const,
+        harhautus: -1 as const,
+        torjunta: -1 as const,
         stamina: -1 as const,
-        chaos: -1 as const,
       };
       applyStatModifier('home', homePenaltyPlayer.id, penaltyMod);
     }
