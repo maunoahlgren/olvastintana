@@ -85,7 +85,9 @@
     "continue_to_lineup": "Continue to Lineup",
     "correct_button": "Correct",
     "wrong_button": "Wrong",
-    "the_answer_was": "The answer was:"
+    "the_answer_was": "The answer was:",
+    "lang_en": "EN",
+    "lang_fi": "FI"
   },
   "lineup": {
     "pick_your_team": "Pick Your Team",

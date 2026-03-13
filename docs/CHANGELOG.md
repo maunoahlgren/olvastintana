@@ -5,6 +5,37 @@ Format: `## [version] — date` with Added / Changed / Fixed sections.
 
 ---
 
+## [0.6.0] — 2026-03-10
+
+### Added
+- **TriviaScreen: bilingual question display with language toggle**
+  - New trivia.json schema: `id`, `sport`, `era`, `question: {en, fi}`, `answers: {en, fi}`, `correctIndex` (always 0 in source; game shuffles at runtime)
+  - `TriviaQuestion` interface updated in `TriviaScreen.tsx`
+  - Finnish shown by default; `trivia-lang-toggle` button switches to English and back
+  - Correct answer shown on reveal uses the active display language
+  - i18n: `trivia.lang_en` = "EN", `trivia.lang_fi` = "FI" added to both locale files
+- **PreMatchScreen: random flavour text from `flavour_texts.json`**
+  - `src/data/flavour_texts.json` — 10 prematch flavour lines (club anecdotes); structure `{ prematch_flavour: [{ id, text_fi, text_en }] }`
+  - `PreMatchScreen` picks a random line with `useMemo` on mount, language-aware (follows global i18n)
+  - Tier-based colour accent preserved; tier-based static i18n flavour keys removed
+- **`LanguageToggle`** component gains `data-testid="language-toggle"` for unambiguous test queries
+
+### Changed
+- `src/data/trivia.json` — replaced invalid markdown content with valid JSON array using new bilingual schema (2 sample questions; real questions TBD)
+- `src/components/screens/TriviaScreen.tsx` — full rewrite of data handling for new schema
+- `src/components/screens/PreMatchScreen.tsx` — imports `flavour_texts.json`, removes static `FLAVOUR_KEY` constant
+
+### Fixed
+- `src/data/trivia.json` — file contained TRIVIA.md documentation text (not valid JSON) after accidental commit; replaced with correct JSON structure
+- `tests/integration/match_flow.test.tsx` — "floating language toggle visible" and "language toggle switches" tests updated to use `data-testid="language-toggle"` to avoid ambiguity with trivia screen's per-question toggle
+
+### Tests
+- `tests/integration/TriviaScreen.test.tsx` — mocks `trivia.json`, adds 6 new tests (Finnish default, EN toggle, toggle button label, answer language correctness)
+- `tests/integration/PreMatchScreen.test.tsx` — mocks `flavour_texts.json`, 3 tier-specific flavour text content tests replaced with deterministic English locale test
+- Total: **323 passing tests** (up from 318)
+
+---
+
 ## [0.5.0] — 2026-03-10
 
 ### Changed (BREAKING)

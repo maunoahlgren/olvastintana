@@ -18,28 +18,32 @@
  *   prematch.goals_label, prematch.ppg_label
  */
 
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMatchStore } from '../../store/matchStore';
 import { useSeasonStore } from '../../store/seasonStore';
 import { useSessionStore, type AiDifficulty } from '../../store/sessionStore';
 import type { OpponentTier } from '../../engine/season';
+import flavourData from '../../data/flavour_texts.json';
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
+
+/** Shape of a single prematch flavour line from flavour_texts.json */
+interface FlavourLine {
+  id: string;
+  text_fi: string;
+  text_en: string;
+}
+
+const flavourLines = (flavourData as { prematch_flavour: FlavourLine[] }).prematch_flavour;
 
 /** Maps opponent tier to the i18n key for the tier badge label */
 const TIER_LABEL_KEY: Record<OpponentTier, string> = {
   hard:   'prematch.tier_hard',
   normal: 'prematch.tier_normal',
   easy:   'prematch.tier_easy',
-};
-
-/** Maps opponent tier to the i18n key for the flavour text */
-const FLAVOUR_KEY: Record<OpponentTier, string> = {
-  hard:   'prematch.warning_hard',
-  normal: 'prematch.warning_normal',
-  easy:   'prematch.warning_easy',
 };
 
 /** Flavour text colour per tier */
@@ -62,12 +66,18 @@ const FLAVOUR_COLOUR: Record<OpponentTier, string> = {
  * @returns The pre-match screen element
  */
 export default function PreMatchScreen(): JSX.Element {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const beginSoloMatch  = useMatchStore((s) => s.beginSoloMatch);
   const setAiDifficulty = useSessionStore((s) => s.setAiDifficulty);
   const getCurrentFixture = useSeasonStore((s) => s.getCurrentFixture);
 
   const fixture = getCurrentFixture();
+
+  /** Pick a random flavour line — stable for the lifetime of this screen mount */
+  const flavourLine = useMemo(() => {
+    const idx = Math.floor(Math.random() * flavourLines.length);
+    return flavourLines[idx] ?? flavourLines[0];
+  }, []);
 
   /**
    * Kick off the match:
@@ -98,6 +108,8 @@ export default function PreMatchScreen(): JSX.Element {
   }
 
   const { opponent } = fixture;
+  const flavourText =
+    i18n.language === 'fi' ? flavourLine.text_fi : flavourLine.text_en;
 
   return (
     <div
@@ -194,12 +206,12 @@ export default function PreMatchScreen(): JSX.Element {
         </div>
       </div>
 
-      {/* Flavour line */}
+      {/* Flavour line — random pick from flavour_texts.json, language-aware */}
       <div
         data-testid="prematch-flavour"
         className={['text-sm italic font-semibold text-center', FLAVOUR_COLOUR[opponent.tier]].join(' ')}
       >
-        {t(FLAVOUR_KEY[opponent.tier])}
+        {flavourText}
       </div>
 
       {/* Kick Off button */}

@@ -85,7 +85,9 @@
     "continue_to_lineup": "Jatka kokoonpanoon",
     "correct_button": "Oikein",
     "wrong_button": "Väärin",
-    "the_answer_was": "Vastaus oli:"
+    "the_answer_was": "Vastaus oli:",
+    "lang_en": "EN",
+    "lang_fi": "FI"
   },
   "lineup": {
     "pick_your_team": "Valitse joukkueesi",

@@ -152,7 +152,7 @@ describe('Full solo match flow (App routing)', () => {
   it('floating language toggle visible on TriviaScreen', () => {
     useMatchStore.getState().beginSoloMatch();
     renderWithProviders(<App />);
-    expect(screen.getByText('EN')).toBeInTheDocument();
+    expect(screen.getByTestId('language-toggle')).toBeInTheDocument();
     expect(screen.getByTestId('trivia-question-card')).toBeInTheDocument();
   });
 
@@ -276,7 +276,7 @@ describe('Full solo match flow (App routing)', () => {
     useMatchStore.getState().beginSoloMatch();
     renderWithProviders(<App />);
 
-    const toggle = screen.getByRole('button', { name: /FI|EN/i });
+    const toggle = screen.getByTestId('language-toggle');
     const initialText = toggle.textContent;
 
     fireEvent.click(toggle);

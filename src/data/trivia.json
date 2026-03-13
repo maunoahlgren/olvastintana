@@ -1,56 +1,3 @@
-# Adding Trivia Questions — TRIVIA.md
-
-How to add new club history trivia questions to the game.
-
----
-
-## Trivia JSON Schema
-
-All questions live in `/src/data/trivia.json`:
-
-```json
-{
-  "id": "unique_question_id",
-  "sport": "football | orienteering | petanque | running | biking | rowing | general",
-  "era": "early | middle | recent",
-  "question": {
-    "en": "Question text in English?",
-    "fi": "Kysymys suomeksi?"
-  },
-  "answers": {
-    "en": ["Correct Answer", "Wrong Answer 1", "Wrong Answer 2", "Wrong Answer 3"],
-    "fi": ["Oikea vastaus", "Väärä vastaus 1", "Väärä vastaus 2", "Väärä vastaus 3"]
-  },
-  "correctIndex": 0
-}
-```
-
-The `correctIndex` is always 0 in the source file. The game shuffles the answers before displaying.
-
----
-
-## Era Guide
-
-| Era | Approximate Years |
-|-----|------------------|
-| `early` | 2005–2010 |
-| `middle` | 2011–2017 |
-| `recent` | 2018–2025 |
-
----
-
-## Tips for Good Questions
-
-- The best questions are ones only the crew would know
-- Specific moments beat general knowledge (who scored vs what year founded)
-- Embarrassing moments make for the best wrong answers
-- Keep answers roughly similar length so the correct one doesn't stand out
-
----
-
-## Example Questions
-
-```json
 [
   {
     "id": "first_goal_ever",
@@ -81,15 +28,3 @@ The `correctIndex` is always 0 in the source file. The game shuffles the answers
     "correctIndex": 0
   }
 ]
-```
-
----
-
-## Checklist When Adding Questions
-
-- [ ] Add to `/src/data/trivia.json`
-- [ ] `id` is unique
-- [ ] Both `en` and `fi` versions filled in for question AND all answers
-- [ ] `correctIndex` is set to 0 (game will shuffle)
-- [ ] `sport` tag is one of the valid values
-- [ ] `era` tag is set correctly

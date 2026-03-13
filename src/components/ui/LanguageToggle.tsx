@@ -12,7 +12,11 @@ export default function LanguageToggle(): JSX.Element {
   }
 
   return (
-    <button onClick={toggle} className="text-sm font-bold uppercase tracking-widest">
+    <button
+      data-testid="language-toggle"
+      onClick={toggle}
+      className="text-sm font-bold uppercase tracking-widest"
+    >
       {language === 'fi' ? 'EN' : 'FI'}
     </button>
   );

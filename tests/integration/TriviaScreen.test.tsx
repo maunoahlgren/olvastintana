@@ -1,14 +1,36 @@
 /**
  * @file TriviaScreen.test.tsx
  * Integration tests for TriviaScreen.
+ *
+ * trivia.json is mocked with a single known question so random selection
+ * is deterministic (Math.floor(random * 1) === 0 always).
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithProviders } from '../utils/renderWithProviders';
 import TriviaScreen from '../../src/components/screens/TriviaScreen';
 import { useMatchStore } from '../../src/store/matchStore';
 import { MATCH_PHASE } from '../../src/engine/match';
+
+vi.mock('../../src/data/trivia.json', () => ({
+  default: [
+    {
+      id: 'first_goal_ever',
+      sport: 'football',
+      era: 'early',
+      question: {
+        en: 'Who scored the very first goal in Olvastin Tana history?',
+        fi: 'Kuka teki Olvastin Tanan historian ensimmäisen maalin?',
+      },
+      answers: {
+        en: ['Mattila', 'Alanen', 'Mauno', 'Mehtonen'],
+        fi: ['Mattila', 'Alanen', 'Mauno', 'Mehtonen'],
+      },
+      correctIndex: 0,
+    },
+  ],
+}));
 
 describe('TriviaScreen', () => {
   beforeEach(() => {
@@ -26,11 +48,11 @@ describe('TriviaScreen', () => {
     expect(screen.getByTestId('trivia-question-card')).toBeInTheDocument();
   });
 
-  it('renders a question text (loaded from trivia.json)', () => {
+  it('renders a question text — Finnish by default', () => {
     renderWithProviders(<TriviaScreen />);
-    expect(screen.getByTestId('trivia-question-text')).toBeInTheDocument();
-    // Must not be empty
-    expect(screen.getByTestId('trivia-question-text').textContent?.length).toBeGreaterThan(0);
+    expect(screen.getByTestId('trivia-question-text').textContent).toBe(
+      'Kuka teki Olvastin Tanan historian ensimmäisen maalin?'
+    );
   });
 
   it('renders the reveal answer button before answer is shown', () => {
@@ -38,11 +60,50 @@ describe('TriviaScreen', () => {
     expect(screen.getByTestId('reveal-answer-btn')).toBeInTheDocument();
   });
 
-  it('shows the answer after clicking reveal', () => {
+  it('shows the language toggle button', () => {
+    renderWithProviders(<TriviaScreen />);
+    expect(screen.getByTestId('trivia-lang-toggle')).toBeInTheDocument();
+  });
+
+  it('language toggle button shows EN when in Finnish mode', () => {
+    renderWithProviders(<TriviaScreen />);
+    expect(screen.getByTestId('trivia-lang-toggle').textContent).toBe('EN');
+  });
+
+  it('clicking language toggle switches question to English', () => {
+    renderWithProviders(<TriviaScreen />);
+    fireEvent.click(screen.getByTestId('trivia-lang-toggle'));
+    expect(screen.getByTestId('trivia-question-text').textContent).toBe(
+      'Who scored the very first goal in Olvastin Tana history?'
+    );
+  });
+
+  it('language toggle button shows FI after switching to English', () => {
+    renderWithProviders(<TriviaScreen />);
+    fireEvent.click(screen.getByTestId('trivia-lang-toggle'));
+    expect(screen.getByTestId('trivia-lang-toggle').textContent).toBe('FI');
+  });
+
+  it('clicking language toggle twice returns to Finnish', () => {
+    renderWithProviders(<TriviaScreen />);
+    fireEvent.click(screen.getByTestId('trivia-lang-toggle'));
+    fireEvent.click(screen.getByTestId('trivia-lang-toggle'));
+    expect(screen.getByTestId('trivia-question-text').textContent).toBe(
+      'Kuka teki Olvastin Tanan historian ensimmäisen maalin?'
+    );
+  });
+
+  it('shows the Finnish answer after clicking reveal (default language)', () => {
     renderWithProviders(<TriviaScreen />);
     fireEvent.click(screen.getByTestId('reveal-answer-btn'));
-    expect(screen.getByTestId('trivia-answer-text')).toBeInTheDocument();
-    expect(screen.getByTestId('trivia-answer-text').textContent).toBe('2005');
+    expect(screen.getByTestId('trivia-answer-text').textContent).toBe('Mattila');
+  });
+
+  it('shows the English answer after toggling to English then revealing', () => {
+    renderWithProviders(<TriviaScreen />);
+    fireEvent.click(screen.getByTestId('trivia-lang-toggle'));
+    fireEvent.click(screen.getByTestId('reveal-answer-btn'));
+    expect(screen.getByTestId('trivia-answer-text').textContent).toBe('Mattila');
   });
 
   it('shows correct and wrong buttons after revealing', () => {

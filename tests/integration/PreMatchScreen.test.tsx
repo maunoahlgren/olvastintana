@@ -4,9 +4,11 @@
  *
  * Tests: opponent info display, tier badge, flavour text, kick-off navigation,
  * AI difficulty mapped from opponent tier.
+ *
+ * flavour_texts.json is mocked with a single entry for deterministic output.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithProviders } from '../utils/renderWithProviders';
 import PreMatchScreen from '../../src/components/screens/PreMatchScreen';
@@ -15,6 +17,18 @@ import { useSeasonStore } from '../../src/store/seasonStore';
 import { useSessionStore } from '../../src/store/sessionStore';
 import { MATCH_PHASE } from '../../src/engine/match';
 import type { Opponent, Fixture } from '../../src/engine/season';
+
+vi.mock('../../src/data/flavour_texts.json', () => ({
+  default: {
+    prematch_flavour: [
+      {
+        id: 'test_flavour',
+        text_fi: 'Testilauseke suomeksi.',
+        text_en: 'Test flavour text in English.',
+      },
+    ],
+  },
+}));
 
 // ---------------------------------------------------------------------------
 // Fixture helpers — inject synthetic fixtures into the store
@@ -109,22 +123,19 @@ describe('PreMatchScreen', () => {
 
   // ── Flavour text ───────────────────────────────────────────────────────────
 
-  it('hard tier shows warning flavour text', () => {
+  it('shows a flavour text from flavour_texts.json (English locale)', () => {
+    setCurrentFixture(makeFixture('normal', 'Test FC'));
+    renderWithProviders(<PreMatchScreen />);
+    // Test environment defaults to English — expect English flavour text
+    expect(screen.getByTestId('prematch-flavour').textContent).toBe(
+      'Test flavour text in English.'
+    );
+  });
+
+  it('flavour element is present', () => {
     setCurrentFixture(makeFixture('hard', 'Hard FC'));
     renderWithProviders(<PreMatchScreen />);
-    expect(screen.getByTestId('prematch-flavour').textContent).toContain('Warning');
-  });
-
-  it('normal tier shows close match flavour text', () => {
-    setCurrentFixture(makeFixture('normal', 'Normal FC'));
-    renderWithProviders(<PreMatchScreen />);
-    expect(screen.getByTestId('prematch-flavour').textContent).toContain('close match');
-  });
-
-  it('easy tier shows "you should handle this" flavour text', () => {
-    setCurrentFixture(makeFixture('easy', 'Easy FC'));
-    renderWithProviders(<PreMatchScreen />);
-    expect(screen.getByTestId('prematch-flavour').textContent).toContain('handle this');
+    expect(screen.getByTestId('prematch-flavour')).toBeInTheDocument();
   });
 
   // ── Kick Off navigation ───────────────────────────────────────────────────
