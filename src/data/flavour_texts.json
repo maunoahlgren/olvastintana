@@ -1,0 +1,54 @@
+{
+  "prematch_flavour": [
+    {
+      "id": "annalan_maradona",
+      "text_fi": "Annalan Maradona on paikalla.",
+      "text_en": "Annalan Maradona is in the building."
+    },
+    {
+      "id": "mule_kick",
+      "text_fi": "Alanen lämmittelee muulinpotkuaan.",
+      "text_en": "Alanen is warming up his mule kick."
+    },
+    {
+      "id": "mattila_cheek",
+      "text_fi": "Mattila tekee maaleja vaikka poskella, jos tilanne vaatii.",
+      "text_en": "Mattila will score with his cheek if that's what it takes."
+    },
+    {
+      "id": "kukko_instinct",
+      "text_fi": "Kukko viimeistelee junnuvuosien maalivainullaan.",
+      "text_en": "Kukko finishes with the goal instinct from his youth years."
+    },
+    {
+      "id": "taistelutoverit",
+      "text_fi": "Taistelutoverit — alkuperäinen nimi, ikuinen henki.",
+      "text_en": "Taistelutoverit — the original name, the eternal spirit."
+    },
+    {
+      "id": "last_signup",
+      "text_fi": "Seura syntyi viimeisenä ilmoittautumisillan, Tampereen Palloliiton sivuilla.",
+      "text_en": "The club was born on the last signup night, on the Tampere Palloliitto website."
+    },
+    {
+      "id": "sauna_decision",
+      "text_fi": "Suuret päätökset tehdään saunassa.",
+      "text_en": "Great decisions are made in the sauna."
+    },
+    {
+      "id": "mese",
+      "text_fi": "Kaikki alkoi yhdestä viestistä mesessä.",
+      "text_en": "It all started with one message on MSN Messenger."
+    },
+    {
+      "id": "jukola_candy",
+      "text_fi": "Ankkuri tankkailee irtokarkeilla.",
+      "text_en": "The anchor leg fuels up on bulk candy."
+    },
+    {
+      "id": "hornet",
+      "text_fi": "Hornet jylisee. Aika pelata.",
+      "text_en": "The Hornet roars. Time to play."
+    }
+  ]
+}
