@@ -18,7 +18,12 @@
     "ability": {
       "description_fi": "Kapteeni - jos voitat tämän duelin, nosta seuraavan pelaamasi kortin statseja +2",
       "description_en": null
-    }
+    },
+    "anecdotes": [
+      "Kapteeni. Tekee piste per peli tahtiin tavalla tai toisella",
+      "Kaudella 2012 ei tehtyä ainuttakaan maalia — tiettävästi ainut paikka vähemmillä maaleilla olivat Tampereen ulkojäät joululomilla",
+      "Kieltäytyi Jukola-projektista useista houkutteluista huolimatta"
+    ]
   },
   {
     "id": "mauno_ahlgren",
@@ -39,7 +44,11 @@
     "ability": {
       "description_fi": "Kaaoksen lähettiläs - kun voitat tämän duelin, nosta sattumakortti",
       "description_en": null
-    }
+    },
+    "anecdotes": [
+      "Lähetti kohtalokkaan viestin Kimmolle mesessä: 'Pitäskö se puistofutisjoukkue laittaa pystyyn?'",
+      "Perusti seuran viimeisenä ilmoittautumisiltana"
+    ]
   },
   {
     "id": "tero_backman",
@@ -60,7 +69,10 @@
     "ability": {
       "description_fi": "Fasilitaattori - kun voitat tämän duelin, nosta toimintakortti",
       "description_en": null
-    }
+    },
+    "anecdotes": [
+      "Taktiikkani on tehdä tasaisen varmaa suunnistustyötä vauhdin kustannuksella — mutta kerran Horhassa tein urani ainoan pohja-ajan rastivälillä"
+    ]
   },
   {
     "id": "kimmo_mattila",
@@ -81,7 +93,10 @@
     "ability": {
       "description_fi": "Matigol - jos voitat tämän duelin ja pallo on sinun hallussa, teet suoraan maalin (skippaa torjuntacheckki)",
       "description_en": null
-    }
+    },
+    "anecdotes": [
+      "Tekee maaleja vaikka poskella jos tilanne vaatii"
+    ]
   },
   {
     "id": "iiro_makela",
@@ -102,7 +117,10 @@
     "ability": {
       "description_fi": "Ninja - kun voitat tämän duelin, yritä maalintekoa vaikkei pallo olisi sinun hallussa (pallo pysyy sinun hallussa jos maalinteko ei onnistu)",
       "description_en": null
-    }
+    },
+    "anecdotes": [
+      "Valmistujaisia vietettiin Arkkitehdinkadulla — tuona iltana moni lupautui Jukolaan oluen siivittämänä"
+    ]
   },
   {
     "id": "jukka_estola",
@@ -123,7 +141,11 @@
     "ability": {
       "description_fi": "Jos pelaat Riisto-kortin, voit muuttaa sen laukaukseksi nähtyäsi vastustajan kortin. ",
       "description_en": null
-    }
+    },
+    "anecdotes": [
+      "Jukola-projektin henkinen isä — kävi iltarasteilla jo ennen kuin muut tiesivät osallistuvansa",
+      "Juoksi Jämsä Jukolassa Pälkäneen Lukon mukana hankkien kokemusta joukkueelle"
+    ]
   },
   {
     "id": "petri_alanen",
@@ -144,7 +166,11 @@
     "ability": {
       "description_fi": "Jos pelaat Laukaus-kortin, voit muuttaa sen harhautukseksi nähtyäsi vastustajan kortin",
       "description_en": null
-    }
+    },
+    "anecdotes": [
+      "Painaa maaleja muulinpotkullaan",
+      "Junnuvuosien laukausvoimaa"
+    ]
   },
   {
     "id": "olli_nissinen",
@@ -353,7 +379,12 @@
     "ability": {
       "description_fi": "Maaginen kosketus - voitat tasapelit kaikissa tarkasteluissa",
       "description_en": null
-    }
+    },
+    "anecdotes": [
+      "Lempinimi: Annalan Maradona",
+      "Pitkä historia Tampereen junnufutiksen dominoinnista",
+      "Kellotti useamman kärkiajan maalirastille iltarasteilla"
+    ]
   },
   {
     "id": "tommi_helminen",
@@ -458,7 +489,8 @@
       "stamina": 1
     },
     "anecdotes": [
-      "Kilon irttarit"
+      "Kilon irttarit",
+      "Osti puolitoista kiloa irtokarkkeja ABC-kioskista ennen Jukolan ankkuriosuutta"
     ]
   },
   {
@@ -476,7 +508,10 @@
       "harhautus": 7,
       "torjunta": 5,
       "stamina": 1
-    }
+    },
+    "anecdotes": [
+      "Liittyi Jukolaan sanoen ettei tarvitse treeniä — olihan suunnistanut armeijassa kymmenen vuotta sitten"
+    ]
   },
   {
     "id": "juha_mehtonen",
