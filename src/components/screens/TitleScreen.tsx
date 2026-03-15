@@ -56,7 +56,7 @@ export default function TitleScreen(): JSX.Element {
 
         {/* Anniversary badge */}
         <div className="text-sm text-[#F5F0E8]/40 tracking-widest">
-          2005 – 2025
+          2006 – 2026
         </div>
 
         {/* Start Season button */}

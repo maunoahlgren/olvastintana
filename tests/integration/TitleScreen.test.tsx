@@ -35,7 +35,7 @@ describe('TitleScreen', () => {
 
   it('renders the anniversary years', () => {
     renderWithProviders(<TitleScreen />);
-    expect(screen.getByText('2005 – 2025')).toBeInTheDocument();
+    expect(screen.getByText('2006 – 2026')).toBeInTheDocument();
   });
 
   // ── Start button ──────────────────────────────────────────────────────────

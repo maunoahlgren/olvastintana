@@ -6,7 +6,7 @@
 ---
 
 ## 🏟️ What This Is
-A bilingual (Finnish/English) web-based football card game built for Olvastin Tana FC's 20th anniversary (2005–2025). The club is a tight group of childhood friends who play park football. The game is built around their real players, history, and inside jokes.
+A bilingual (Finnish/English) web-based football card game built for Olvastin Tana FC's 20th anniversary (2006–2026). The club is a tight group of childhood friends who play park football. The game is built around their real players, history, and inside jokes.
 
 Two modes:
 - **Solo mode** — play a 7-match season against real league opponents

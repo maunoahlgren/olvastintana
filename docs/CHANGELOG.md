@@ -5,6 +5,19 @@ Format: `## [version] — date` with Added / Changed / Fixed sections.
 
 ---
 
+## [0.6.1] — 2026-03-15
+
+### Fixed
+- **Founding year corrected to 2006** — anniversary badge in `TitleScreen.tsx` was showing `2005 – 2025`; corrected to `2006 – 2026` (club founded 2006, 20th anniversary 2026)
+- `context.md` — year range updated to `(2006–2026)`
+- `TriviaScreen` random selection confirmed correct: `Math.floor(Math.random() * questions.length)` picks uniformly across all N questions on mount
+
+### Tests
+- `TitleScreen.test.tsx` — anniversary badge assertion updated to `2006 – 2026`
+- All **323 tests passing**
+
+---
+
 ## [0.6.0] — 2026-03-10
 
 ### Added
