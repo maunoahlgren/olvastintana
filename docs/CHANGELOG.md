@@ -5,6 +5,47 @@ Format: `## [version] — date` with Added / Changed / Fixed sections.
 
 ---
 
+## [0.7.0] — 2026-03-15
+
+### Added
+- **Player ability system wired to DuelScreen** — 11 abilities now trigger during duels
+- **Ability notifications overlay** in result panel — shows player name + effect text when ability fires
+  - `data-testid="ability-notifications"` list; each item `data-testid="ability-notification"`
+- **Reactive ability panel** (`reactive_check` phase) — after both cards are chosen, Estola / Alanen / Haritonov see opponent's card and can switch their card
+  - `data-testid="reactive-check-panel"`, `reactive-keep-btn`, `reactive-switch-btn`
+  - Estola (#88): played Press → can switch to Shot
+  - Petri Alanen (#83): played Shot → can switch to Feint
+  - Antti Haritonov (#19): played Feint → can switch to Press
+- **Card restrictions** — buttons disabled when restriction effect active on attacker's side
+  - `restrict_press`, `restrict_feint`, `restrict_shot` effects from Laitanousu, Jyrki, Tuplablokki
+- **Post-win abilities** — trigger after duel winner is determined:
+  - Kapteeni (Mehtonen #20): adds `kapteeni_boost` effect with `statMod: +2 riisto/laukaus/harhautus` next duel
+  - Kaaoksen lähettiläs (Mauno #15): notification (Sattuma draw deferred to Phase 2)
+  - 44 min paine (Jyrki #5): adds `restrict_feint` to loser side
+  - Dominoiva (Savela #8): adds `ability_cancelled` to loser side
+  - Tuplablokki (Nieminen #60): adds `restrict_shot` to loser side
+  - Laitanousu (Kurkela #21): adds `restrict_press` to loser side
+  - Matigol (Mattila #14): auto-goal when winning as attacker — goalkeeper skipped
+  - Ninja (Mäkelä #13): counter-goal attempt when winning as defender
+- **Effect expiry in `handleContinue`** — effects with `expiresAfterDuel <= duelIndex` are expired before advancing
+- **Kapteeni stat boost applied** — active `kapteeni_boost` effect adds stat modifier to winning side in next duel
+- **`ActiveEffect.statMod`** — optional `Partial<PlayerStats>` field for stat-modifying effects (Kapteeni)
+- 8 new ability functions in `src/engine/abilities.ts`: `kapteeni`, `kaaoksenLahettilas`, `matigol`, `ninja`, `tuplablokki`, `laitanousu`, `dominoiva`, `checkReactiveSwitch`
+- i18n keys: `ability.*` namespace added to both `en.json` and `fi.json` (12 keys each)
+
+### Fixed
+- `DuelScreen.tsx`: AI `getAiCard()` was reading non-existent `player.stats.iq` — corrected to `player.stats.stamina`
+- `DuelScreen.tsx`: `AiGameState` object had `activePlayerIq` property — corrected to `activePlayerStamina`
+- `DuelScreen.tsx`: Brick Wall check used `goalkeeperSlot?.player.ability.id === 'brick_wall'` — `PlayerAbility` has no `id` field; corrected to check `player.id === 'tommi_helminen'`
+- `DuelScreen.tsx`: fallback stats used old `{ pace, technique, power, iq, chaos }` shape — corrected to `{ riisto, laukaus, harhautus, torjunta, stamina }`
+
+### Tests
+- `tests/unit/engine/abilities.test.ts` — 36 new unit tests for the 8 new ability functions (47 total in file)
+- `tests/integration/DuelScreen.test.tsx` — 12 new integration tests: notification display, card restriction disabled state, reactive panel show/keep/switch, non-reactive player path
+- All **369 tests passing**
+
+---
+
 ## [0.6.1] — 2026-03-15
 
 ### Fixed

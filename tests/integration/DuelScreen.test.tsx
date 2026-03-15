@@ -1,6 +1,9 @@
 /**
  * @file DuelScreen.test.tsx
  * Integration tests for DuelScreen.
+ *
+ * Tests: card flow, possession, trivia boost, halftime transition,
+ * ability notifications, card restrictions, reactive ability panel, Kapteeni boost.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -17,6 +20,11 @@ import type { Player } from '../../src/store/squadStore';
 const allPlayers = playersData as Player[];
 const outfield = allPlayers.filter((p) => p.position.some((pos) => pos === 'MF' || pos === 'FW'));
 const gk = allPlayers.find((p) => p.position.includes('GK'))!;
+
+// Specific ability players needed for ability tests
+const mehtonen = allPlayers.find((p) => p.id === 'olli_mehtonen')!;
+const estola = allPlayers.find((p) => p.id === 'jukka_estola')!;
+const nieminen = allPlayers.find((p) => p.id === 'ossi_nieminen')!;
 
 /** Set up a minimal match state in FIRST_HALF with lineups set (two-player mode) */
 function setupMatch(possession: 'home' | 'away' = 'home') {
@@ -144,5 +152,207 @@ describe('DuelScreen', () => {
       fireEvent.click(screen.getByTestId('duel-continue-btn'));
     }
     expect(useMatchStore.getState().phase).toBe(MATCH_PHASE.HALFTIME);
+  });
+});
+
+// ─── Ability notification tests ────────────────────────────────────────────────
+
+describe('DuelScreen — ability notifications', () => {
+  beforeEach(() => {
+    useSquadStore.getState().reset();
+    setupMatch();
+  });
+
+  it('shows ability notification list when an ability triggers', () => {
+    // Put Mehtonen (Kapteeni) in slot 0 for home (attacker), ensure he wins
+    // Mehtonen plays Press; away slot plays Feint → Press beats Feint → Mehtonen wins
+    const homeLineup = [mehtonen, ...outfield.slice(0, 5), gk];
+    useSquadStore.getState().setLineup('home', homeLineup);
+    renderWithProviders(<DuelScreen />);
+    playDuel('press', 'feint'); // Mehtonen wins → Kapteeni triggers
+    expect(screen.getByTestId('ability-notifications')).toBeInTheDocument();
+  });
+
+  it('Kapteeni ability notification shows player name when Mehtonen wins', () => {
+    const homeLineup = [mehtonen, ...outfield.slice(0, 5), gk];
+    useSquadStore.getState().setLineup('home', homeLineup);
+    renderWithProviders(<DuelScreen />);
+    playDuel('press', 'feint');
+    const notifs = screen.getAllByTestId('ability-notification');
+    const kapteeniNotif = notifs.find((n) => n.textContent?.includes('Olli Mehtonen'));
+    expect(kapteeniNotif).toBeTruthy();
+  });
+
+  it('Tuplablokki (Nieminen) adds restrict_shot effect to loser side', () => {
+    // Nieminen at home slot 0, wins with press > feint
+    const homeLineup = [nieminen, ...outfield.slice(0, 5), gk];
+    useSquadStore.getState().setLineup('home', homeLineup);
+    renderWithProviders(<DuelScreen />);
+    playDuel('press', 'feint'); // Nieminen wins → tuplablokki triggers
+    // After result, away side should have restrict_shot
+    const awayEffects = useMatchStore.getState().effects.away;
+    expect(awayEffects.some((e) => e.id === 'restrict_shot' && !e.expired)).toBe(true);
+  });
+
+  it('no ability notifications shown when no ability player wins', () => {
+    // Use all generic players, no ability players in slot 0
+    const genericPlayers = outfield.filter(
+      (p) => p.id !== 'olli_mehtonen' && p.id !== 'ossi_nieminen' &&
+             p.id !== 'jyrki_orjasniemi' && p.id !== 'jari_savela' &&
+             p.id !== 'olli_kurkela' && p.id !== 'mauno_ahlgren' &&
+             p.id !== 'kimmo_mattila' && p.id !== 'iiro_makela'
+    );
+    if (genericPlayers.length >= 6) {
+      useSquadStore.getState().setLineup('home', [...genericPlayers.slice(0, 6), gk]);
+      useSquadStore.getState().setLineup('away', [...genericPlayers.slice(0, 6), gk]);
+      renderWithProviders(<DuelScreen />);
+      playDuel('press', 'feint');
+      expect(screen.queryByTestId('ability-notifications')).not.toBeInTheDocument();
+    }
+  });
+});
+
+// ─── Card restriction tests ────────────────────────────────────────────────────
+
+describe('DuelScreen — card restrictions', () => {
+  beforeEach(() => {
+    useSquadStore.getState().reset();
+    setupMatch();
+  });
+
+  it('Feint button is disabled when restrict_feint effect is active on attacker side', () => {
+    // Add restrict_feint effect to home (attacker) side
+    useMatchStore.getState().addEffect('home', {
+      id: 'restrict_feint',
+      source: 'jyrki_orjasniemi',
+      expiresAfterDuel: 1,
+      expired: false,
+    });
+    renderWithProviders(<DuelScreen />);
+    const feintBtn = screen.getByTestId('card-btn-feint');
+    expect(feintBtn).toBeDisabled();
+  });
+
+  it('Shot button is disabled when restrict_shot effect is active on attacker side', () => {
+    useMatchStore.getState().addEffect('home', {
+      id: 'restrict_shot',
+      source: 'ossi_nieminen',
+      expiresAfterDuel: 1,
+      expired: false,
+    });
+    renderWithProviders(<DuelScreen />);
+    const shotBtn = screen.getByTestId('card-btn-shot');
+    expect(shotBtn).toBeDisabled();
+  });
+
+  it('Press button is disabled when restrict_press effect is active on attacker side', () => {
+    useMatchStore.getState().addEffect('home', {
+      id: 'restrict_press',
+      source: 'olli_kurkela',
+      expiresAfterDuel: 1,
+      expired: false,
+    });
+    renderWithProviders(<DuelScreen />);
+    const pressBtn = screen.getByTestId('card-btn-press');
+    expect(pressBtn).toBeDisabled();
+  });
+
+  it('restriction is cleared after continuing past the target duel', () => {
+    // Add restrict_feint expiring after duel 0
+    useMatchStore.getState().addEffect('home', {
+      id: 'restrict_feint',
+      source: 'jyrki_orjasniemi',
+      expiresAfterDuel: 0,
+      expired: false,
+    });
+    // Set duelIndex to 0 (the restriction expires at duel 0)
+    useMatchStore.setState({ duelIndex: 0 });
+    renderWithProviders(<DuelScreen />);
+
+    // Play a duel (press only, feint is restricted)
+    fireEvent.click(screen.getByTestId('card-btn-press'));
+    fireEvent.click(screen.getByTestId('cover-continue-btn'));
+    fireEvent.click(screen.getByTestId('card-btn-press'));
+    // Continue past the duel — should expire the effect
+    fireEvent.click(screen.getByTestId('duel-continue-btn'));
+
+    // The restriction effect should now be expired
+    const homeEffects = useMatchStore.getState().effects.home;
+    const restriction = homeEffects.find((e) => e.id === 'restrict_feint');
+    expect(restriction?.expired).toBe(true);
+  });
+});
+
+// ─── Reactive ability panel tests ─────────────────────────────────────────────
+
+describe('DuelScreen — reactive ability panel', () => {
+  beforeEach(() => {
+    useSquadStore.getState().reset();
+    setupMatch();
+  });
+
+  it('shows reactive-check panel when Estola (slot 0 on attacker) plays Press', () => {
+    // Estola in home slot 0 (attacker)
+    const homeLineup = [estola, ...outfield.slice(0, 5), gk];
+    useSquadStore.getState().setLineup('home', homeLineup);
+    renderWithProviders(<DuelScreen />);
+
+    // Attacker picks Press (Estola's reactive trigger)
+    fireEvent.click(screen.getByTestId('card-btn-press'));
+    fireEvent.click(screen.getByTestId('cover-continue-btn'));
+    // Defender picks any card
+    fireEvent.click(screen.getByTestId('card-btn-feint'));
+
+    // Reactive check panel should appear (not show_result yet)
+    expect(screen.getByTestId('reactive-check-panel')).toBeInTheDocument();
+  });
+
+  it('clicking Keep in reactive panel resolves with original card', () => {
+    const homeLineup = [estola, ...outfield.slice(0, 5), gk];
+    useSquadStore.getState().setLineup('home', homeLineup);
+    renderWithProviders(<DuelScreen />);
+
+    fireEvent.click(screen.getByTestId('card-btn-press'));
+    fireEvent.click(screen.getByTestId('cover-continue-btn'));
+    fireEvent.click(screen.getByTestId('card-btn-feint'));
+    // Keep original Press
+    fireEvent.click(screen.getByTestId('reactive-keep-btn'));
+
+    // Should now show result panel
+    expect(screen.getByTestId('duel-result-panel')).toBeInTheDocument();
+  });
+
+  it('clicking Switch in reactive panel resolves with switched card', () => {
+    const homeLineup = [estola, ...outfield.slice(0, 5), gk];
+    useSquadStore.getState().setLineup('home', homeLineup);
+    renderWithProviders(<DuelScreen />);
+
+    // Estola plays Press, defender plays Shot
+    // Normally Press vs Shot → Shot beats Press → defender wins
+    // But if Estola switches to Shot: Shot vs Shot → tiebreak
+    fireEvent.click(screen.getByTestId('card-btn-press'));
+    fireEvent.click(screen.getByTestId('cover-continue-btn'));
+    fireEvent.click(screen.getByTestId('card-btn-shot'));
+    // Switch to Shot
+    fireEvent.click(screen.getByTestId('reactive-switch-btn'));
+
+    // Should show result panel after switching
+    expect(screen.getByTestId('duel-result-panel')).toBeInTheDocument();
+  });
+
+  it('no reactive panel when non-reactive player plays Press', () => {
+    // Use a generic player (not Estola) in slot 0
+    const genericPlayers = outfield.filter((p) => p.id !== 'jukka_estola');
+    const homeLineup = [genericPlayers[0], ...genericPlayers.slice(1, 6), gk];
+    useSquadStore.getState().setLineup('home', homeLineup);
+    renderWithProviders(<DuelScreen />);
+
+    fireEvent.click(screen.getByTestId('card-btn-press'));
+    fireEvent.click(screen.getByTestId('cover-continue-btn'));
+    fireEvent.click(screen.getByTestId('card-btn-feint'));
+
+    // Should go directly to result panel
+    expect(screen.getByTestId('duel-result-panel')).toBeInTheDocument();
+    expect(screen.queryByTestId('reactive-check-panel')).not.toBeInTheDocument();
   });
 });

@@ -189,5 +189,19 @@
     "points": "Loppupisteet",
     "record": "Kauden tulos",
     "new": "Uusi kausi"
+  },
+  "ability": {
+    "kapteeni_triggered": "+2 kaikkiin korttistatuksiin seuraavaan dueliin",
+    "mauno_triggered": "Nosta Sattuma-kortti!",
+    "matigol_triggered": "Automaattimaali — maalivahti ohitetaan!",
+    "ninja_triggered": "Ninja-vastahyökkäys — maaliyritys!",
+    "pressure44_triggered": "Vastustaja ei voi pelata Harhautusta seuraavassa duelissa",
+    "dominoiva_triggered": "Vastustajan seuraava erikoiskyky peruutetaan",
+    "tuplablokki_triggered": "Vastustaja ei voi pelata Laukausta seuraavassa duelissa",
+    "laitanousu_triggered": "Vastustaja ei voi pelata Riistoa seuraavassa duelissa",
+    "reactive_can_switch": "Voit vaihtaa korttiin",
+    "reactive_opponent_played": "Vastustaja pelasi",
+    "reactive_keep": "Pidä",
+    "reactive_switch": "Vaihda"
   }
 }

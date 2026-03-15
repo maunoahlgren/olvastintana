@@ -1,7 +1,7 @@
 # CONTEXT.md — Olvastin Tana FC: The Game
 # Full project context for Claude Code.
 # Updated after every significant decision or completed phase.
-# Last updated: 2026-03-10 — rebuilt from CHANGELOG + git history after accidental deletion
+# Last updated: 2026-03-15 — v0.7.0: player abilities wired to DuelScreen UI
 
 ---
 
@@ -279,7 +279,7 @@ After 7 matches: SEASON → SEASON_COMPLETE → SEASON (new season)
 | PreMatchScreen | ✅ | OT vs opponent, tier badge, record, flavour text |
 | TriviaScreen | ✅ | Question, two answers, apply effect |
 | LineupScreen | ✅ | Pick 6 outfield + GK |
-| DuelScreen | ✅ | Card selection, AI resolves instantly |
+| DuelScreen | ✅ | Card selection, AI resolves instantly, abilities + reactive panel |
 | HalftimeScreen | ✅ | Swap player OR change tactics |
 | ResultScreen | ✅ | Score, winner, points earned |
 | SeasonCompleteScreen | ✅ | Final standings, new season |
@@ -303,7 +303,18 @@ Lineup corrected to 6 outfield + 1 GK (7 total).
 ### ✅ v0.4 — Season Structure
 7-fixture season, SeasonScreen, PreMatchScreen, SeasonCompleteScreen, tier-driven AI, full routing loop.
 
-**317 tests passing across unit, functional, and integration.**
+### ✅ v0.5 — Stat System Migration
+Full stat migration from `pace/technique/power/iq/chaos` → `riisto/laukaus/harhautus/torjunta/stamina`.
+
+### ✅ v0.6 — TriviaScreen bilingual + PreMatch flavour text
+20-question trivia.json, Finnish/English language toggle in trivia, random flavour text on PreMatchScreen.
+
+### ✅ v0.7 — Player Ability System
+All 11 player abilities wired to DuelScreen. Reactive panel for Estola/Alanen/Haritonov.
+Post-win effects (restrictions, boosts, Matigol auto-goal, Ninja counter-goal).
+Ability notification overlay in result panel. Card restriction disabled state.
+
+**369 tests passing across unit, functional, and integration.**
 
 ---
 
@@ -311,15 +322,15 @@ Lineup corrected to 6 outfield + 1 GK (7 total).
 
 | Area | Notes |
 |------|-------|
-| Sattuma in-game | `sattuma.ts` exists but cards not drawn/applied during matches |
-| Ability UI | `estis`, `44_minuutin_paine`, `hot_streak`, `try_hard_mode` in engine but not wired to UI |
-| Trivia content | `trivia.json` is placeholder — real club history questions not written |
+| Sattuma in-game | `sattuma.ts` exists but cards not drawn/applied during matches; Mauno notification deferred |
+| Trivia content | `trivia.json` has 20 real questions ✅ |
 | Derby Night | Firebase multiplayer, dirty moves, simultaneous reveal — Phase 2 |
 | Bet Slip | Season betting mechanic — Phase 2 |
 | Action Cards | Manager-phase resources between matches — Phase 3 |
 | Promotion/relegation | Phase 4 |
 | Player photos | `/media/players` empty |
 | Animations | Phase 4 |
+| Halftime ability: `restrict_feint` Sattuma card | `feint_disabled_this_half` Sattuma not yet applied at halftime |
 
 ---
 

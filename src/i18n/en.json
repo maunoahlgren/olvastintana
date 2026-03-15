@@ -189,5 +189,19 @@
     "points": "Final Points",
     "record": "Season Record",
     "new": "New Season"
+  },
+  "ability": {
+    "kapteeni_triggered": "+2 to all card stats next duel",
+    "mauno_triggered": "Draw a Sattuma card!",
+    "matigol_triggered": "Automatic goal — goalkeeper skipped!",
+    "ninja_triggered": "Ninja counter-attack goal attempt!",
+    "pressure44_triggered": "Opponent cannot play Feint next duel",
+    "dominoiva_triggered": "Opponent's next ability is cancelled",
+    "tuplablokki_triggered": "Opponent cannot play Shot next duel",
+    "laitanousu_triggered": "Opponent cannot play Press next duel",
+    "reactive_can_switch": "Can switch to",
+    "reactive_opponent_played": "Opponent played",
+    "reactive_keep": "Keep",
+    "reactive_switch": "Switch"
   }
 }

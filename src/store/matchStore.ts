@@ -13,6 +13,7 @@ import { create } from 'zustand';
 import { MATCH_PHASE, DUELS_PER_HALF, type MatchPhase, type Tactic } from '../engine/match';
 import { coinFlip, secondHalfKickoff, type Side } from '../engine/possession';
 import type { CardChoice } from '../engine/ai';
+import type { PlayerStats } from '../engine/duel';
 
 /** An active effect applied to one side (from abilities or Sattuma) */
 export interface ActiveEffect {
@@ -21,6 +22,11 @@ export interface ActiveEffect {
   expiresAfterDuel?: number; // duel index at which this expires
   expiresAtHalftime?: boolean;
   expired: boolean;
+  /**
+   * Optional stat modifier carried by this effect (e.g. Kapteeni +2 boost).
+   * Applied additively to the affected side's stats in the next duel.
+   */
+  statMod?: Partial<PlayerStats>;
 }
 
 interface MatchState {
