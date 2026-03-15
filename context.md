@@ -1,7 +1,7 @@
 # CONTEXT.md — Olvastin Tana FC: The Game
 # Full project context for Claude Code.
 # Updated after every significant decision or completed phase.
-# Last updated: 2026-03-15 — v0.7.0: player abilities wired to DuelScreen UI
+# Last updated: 2026-03-15 — v0.8.0: Derby Night Session 1 — Firebase room system
 
 ---
 
@@ -37,6 +37,7 @@ Two modes:
     trivia.json         ← Club history questions (PLACEHOLDER — real questions not written yet)
     sattuma.json        ← 12 fortune deck card definitions
     opponents.json      ← 24 real league teams with strength scores and tiers
+    managers.json       ← 10 Derby Night manager profiles (id, display_name, number, player_id, color)
   /engine
     duel.ts             ← Card triangle (Press/Feint/Shot) + stat tiebreaks
     abilities.ts        ← Hot Streak, Try-Hard Mode, 44 minuutin paine, Estis, stamina penalty
@@ -46,10 +47,11 @@ Two modes:
     match.ts            ← Phase constants, match points (W=3/D=1/L=0), halftime options
     ai.ts               ← Computer opponent (Easy/Normal/Hard) — 9 pure functions
   /store
-    matchStore.ts       ← Zustand match state + playerCardHistory
+    matchStore.ts       ← Zustand match state + playerCardHistory + goToDerbyLobby
     squadStore.ts       ← Zustand squad state
     sessionStore.ts     ← Zustand session state (aiDifficulty etc.)
     seasonStore.ts      ← Zustand season state (fixtures, results, points)
+    roomStore.ts        ← Zustand Derby Night room state (roomCode, role, connectedPlayers)
   /components
     /match              ← DuelScreen, HalftimeScreen, ResultScreen, ScoreBoard, CardButton
     /squad              ← PlayerCard, LineupScreen
@@ -60,9 +62,9 @@ Two modes:
     en.json             ← English translations
     fi.json             ← Finnish translations
   /firebase
-    config.ts
-    room.ts
-    sync.ts
+    config.ts           ← Safe Firebase init from VITE_ env vars; db=null fallback
+    room.ts             ← generateRoomCode, createRoom, joinRoom, listenToRoom, leaveRoom
+    sync.ts             ← Reserved for match state sync (Derby Night Session 2)
   /media
     /players            ← Player photos (not yet added)
     /clips              ← Club video clips (not yet added)

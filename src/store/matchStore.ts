@@ -54,6 +54,11 @@ interface MatchState {
 
 interface MatchActions {
   /**
+   * TITLE → DERBY_LOBBY: navigate to the Derby Night lobby screen.
+   * Called when "Derby Night" is clicked on TitleScreen.
+   */
+  goToDerbyLobby: () => void;
+  /**
    * TITLE → SEASON: generate season fixtures and navigate to the season hub.
    * Called when "Start Season" is clicked on TitleScreen.
    */
@@ -119,6 +124,10 @@ const initialState: MatchState = {
 
 export const useMatchStore = create<MatchState & MatchActions>((set, get) => ({
   ...initialState,
+
+  goToDerbyLobby() {
+    set({ phase: MATCH_PHASE.DERBY_LOBBY });
+  },
 
   startSeason() {
     set({ phase: MATCH_PHASE.SEASON });

@@ -1,24 +1,37 @@
 /**
  * @file firebase/config.ts
- * Firebase configuration — placeholder for Phase 3 multiplayer.
- * Fill in with real Firebase project credentials before Phase 3.
- * See /docs/FIREBASE.md for setup instructions.
+ * Firebase initialization — reads credentials from VITE_ environment variables.
+ *
+ * If VITE_FIREBASE_DATABASE_URL is not set (local dev / test env),
+ * `db` is exported as null and all room functions degrade gracefully.
+ *
+ * See /docs/FIREBASE.md for environment variable setup instructions.
  */
 
-// import { initializeApp } from 'firebase/app';
-// import { getDatabase } from 'firebase/database';
+import { initializeApp, getApps } from 'firebase/app';
+import { getDatabase, type Database } from 'firebase/database';
 
-// const firebaseConfig = {
-//   apiKey: 'YOUR_API_KEY',
-//   authDomain: 'YOUR_AUTH_DOMAIN',
-//   databaseURL: 'YOUR_DATABASE_URL',
-//   projectId: 'YOUR_PROJECT_ID',
-//   storageBucket: 'YOUR_STORAGE_BUCKET',
-//   messagingSenderId: 'YOUR_SENDER_ID',
-//   appId: 'YOUR_APP_ID',
-// };
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY as string,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN as string,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL as string,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID as string,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET as string,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID as string,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID as string,
+};
 
-// export const app = initializeApp(firebaseConfig);
-// export const db = getDatabase(app);
+let db: Database | null = null;
 
-export const db = null; // Phase 3
+if (import.meta.env.VITE_FIREBASE_DATABASE_URL) {
+  try {
+    // Avoid duplicate app initialization in HMR environments
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+    db = getDatabase(app);
+  } catch {
+    // Firebase not configured — offline/dev mode
+    console.warn('[Firebase] Initialization failed — running in offline mode.');
+  }
+}
+
+export { db };

@@ -71,8 +71,28 @@
   },
   "language": "Kieli",
   "title": {
-    "start_solo": "Aloita kausi",
+    "start_solo": "Solo kausi",
+    "derby_night": "Derby Night",
     "version": "20. juhlavuosiversio"
+  },
+  "derby": {
+    "title": "Derby Night",
+    "subtitle": "Juhlapelimuoto",
+    "create_room": "Luo huone",
+    "join_room": "Liity huoneeseen",
+    "enter_code": "Syötä huonekoodi",
+    "room_code": "Huonekoodi",
+    "scan_qr": "Skannaa liittyäksesi",
+    "players_connected": "Pelaajat",
+    "start_game": "Aloita peli",
+    "waiting": "Odotetaan pelaajia...",
+    "pick_manager": "Valitse managerisi",
+    "join_btn": "Liity",
+    "your_manager": "Sinä",
+    "not_configured": "Firebase ei ole konfiguroitu — ota yhteyttä isäntään",
+    "min_players": "Tarvitaan vähintään 2 pelaajaa aloittamiseen",
+    "copied": "Kopioitu!",
+    "back": "Takaisin"
   },
   "trivia": {
     "question_label": "Kysymys",

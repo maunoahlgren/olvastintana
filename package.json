@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",
+    "firebase": "^12.10.0",
     "i18next": "^25.8.14",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

@@ -5,6 +5,30 @@ Format: `## [version] — date` with Added / Changed / Fixed sections.
 
 ---
 
+## [0.8.0] — 2026-03-15
+
+### Added
+- **Derby Night — Firebase room system** (Session 1)
+- `src/data/managers.json` — 10 manager profiles (OlliM #20, Mauno #15, Tero #17, Kimmo #14, Iiro #13, OlliN #61, Jyrki #5, Jukka #88, Jari #8, Petri #83) each with `id`, `display_name`, `number`, `player_id`, `color`
+- `src/firebase/config.ts` — safe Firebase initialization from VITE_ env vars; `db = null` fallback when unconfigured
+- `src/firebase/room.ts` — `generateRoomCode` (32-char safe charset, 4 chars), `createRoom`, `joinRoom`, `listenToRoom`, `leaveRoom`; Firebase path: `rooms/{code}/state|host|created_at|players/{managerId}`
+- `src/store/roomStore.ts` — Zustand store: `roomCode`, `role`, `myManagerId`, `connectedPlayers`, `lobbyStatus`, `errorMessage`; actions: `setRoom`, `setConnectedPlayers`, `addPlayer`, `removePlayer`, `setLobbyStatus`, `reset`
+- `MATCH_PHASE.DERBY_LOBBY` — new phase constant in `match.ts`
+- `matchStore.goToDerbyLobby()` — transitions to DERBY_LOBBY phase
+- `DerbyLobbyScreen.tsx` — host view (room code, QR code via api.qrserver.com, player list, Start button) + player view (code entry, manager picker grid); URL param `?room=CODE` pre-fills code input; Firebase unsubscribed on unmount
+- **TitleScreen** — two buttons: "Solo Season" (primary) + "Derby Night" (secondary pink); solo button renamed from "Start Season" → "Solo Season"
+- `App.tsx` — DERBY_LOBBY phase routes to DerbyLobbyScreen; language toggle hidden on lobby screen
+- i18n `derby.*` namespace — 15 keys in both `en.json` and `fi.json`
+- `title.derby_night` key added to both locale files; `title.start_solo` renamed "Solo Season" / "Solo kausi"
+- Unit tests: `tests/unit/store/roomStore.test.ts` (27 tests), `tests/unit/firebase/room.test.ts` (20 tests)
+- Integration tests: `tests/integration/DerbyLobbyScreen.test.tsx` (18 tests), `TitleScreen.test.tsx` updated (4 new tests for Derby Night button)
+
+### Changed
+- `TitleScreen` button label "Start Season" → "Solo Season"
+- `App.tsx` — LanguageToggle hidden on both TITLE and DERBY_LOBBY phases (DerbyLobbyScreen manages its own chrome)
+
+---
+
 ## [0.7.0] — 2026-03-15
 
 ### Added

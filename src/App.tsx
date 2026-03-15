@@ -3,14 +3,16 @@
  * Application root and screen router.
  *
  * Reads `matchStore.phase` and renders the appropriate screen for the current
- * stage of the solo season flow:
+ * stage of the flow:
  *
- *   TITLE → SEASON → PREMATCH → TRIVIA → LINEUP →
- *   FIRST_HALF → HALFTIME → SECOND_HALF → RESULT → SEASON (loop × 7)
- *   → SEASON_COMPLETE
+ *   Solo:  TITLE → SEASON → PREMATCH → TRIVIA → LINEUP →
+ *          FIRST_HALF → HALFTIME → SECOND_HALF → RESULT → SEASON (loop × 7)
+ *          → SEASON_COMPLETE
+ *
+ *   Derby: TITLE → DERBY_LOBBY → (match phases TBD Phase 3)
  *
  * The LanguageToggle is rendered as a persistent overlay on every screen that
- * does not embed its own toggle (i.e. everything except TitleScreen).
+ * does not embed its own toggle (i.e. everything except TitleScreen and DerbyLobbyScreen).
  */
 
 import './i18n/index.ts';
@@ -25,13 +27,15 @@ import DuelScreen           from './components/screens/DuelScreen';
 import HalftimeScreen       from './components/screens/HalftimeScreen';
 import ResultScreen         from './components/screens/ResultScreen';
 import SeasonCompleteScreen from './components/screens/SeasonCompleteScreen';
+import DerbyLobbyScreen     from './components/screens/DerbyLobbyScreen';
 import LanguageToggle       from './components/ui/LanguageToggle';
 
 /**
  * App — top-level router component.
  *
  * Renders a single screen based on the current match phase. A floating
- * LanguageToggle is shown on all screens except TITLE (which has its own).
+ * LanguageToggle is shown on all screens except TITLE and DERBY_LOBBY
+ * (both of which manage their own chrome).
  *
  * @returns The active screen element
  */
@@ -44,6 +48,9 @@ export default function App(): JSX.Element {
       case MATCH_PHASE.TITLE:
         // TitleScreen embeds its own LanguageToggle
         return <TitleScreen />;
+      case MATCH_PHASE.DERBY_LOBBY:
+        // DerbyLobbyScreen manages its own chrome
+        return <DerbyLobbyScreen />;
       case MATCH_PHASE.SEASON:
         return <SeasonScreen />;
       case MATCH_PHASE.PREMATCH:
@@ -66,12 +73,13 @@ export default function App(): JSX.Element {
     }
   }
 
-  const isTitleScreen = phase === MATCH_PHASE.TITLE;
+  const hideToggle =
+    phase === MATCH_PHASE.TITLE || phase === MATCH_PHASE.DERBY_LOBBY;
 
   return (
     <div className="relative min-h-screen bg-[#1A1A1A] text-[#F5F0E8]" data-testid="app-root">
-      {/* Floating language toggle — hidden on title since it renders its own */}
-      {!isTitleScreen && (
+      {/* Floating language toggle — hidden on title/derby-lobby since they render their own chrome */}
+      {!hideToggle && (
         <div className="absolute top-4 right-4 z-50">
           <LanguageToggle />
         </div>

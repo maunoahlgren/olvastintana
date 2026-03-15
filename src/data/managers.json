@@ -1,0 +1,72 @@
+[
+  {
+    "id": "olli_mehtonen",
+    "display_name": "OlliM",
+    "number": 20,
+    "player_id": "olli_mehtonen",
+    "color": "#FFE600"
+  },
+  {
+    "id": "mauno_ahlgren",
+    "display_name": "Mauno",
+    "number": 15,
+    "player_id": "mauno_ahlgren",
+    "color": "#FF4444"
+  },
+  {
+    "id": "tero_backman",
+    "display_name": "Tero",
+    "number": 17,
+    "player_id": "tero_backman",
+    "color": "#44AAFF"
+  },
+  {
+    "id": "kimmo_mattila",
+    "display_name": "Kimmo",
+    "number": 14,
+    "player_id": "kimmo_mattila",
+    "color": "#44FF88"
+  },
+  {
+    "id": "iiro_makela",
+    "display_name": "Iiro",
+    "number": 13,
+    "player_id": "iiro_makela",
+    "color": "#FF8844"
+  },
+  {
+    "id": "olli_nissinen",
+    "display_name": "OlliN",
+    "number": 61,
+    "player_id": "olli_nissinen",
+    "color": "#AA44FF"
+  },
+  {
+    "id": "jyrki_orjasniemi",
+    "display_name": "Jyrki",
+    "number": 5,
+    "player_id": "jyrki_orjasniemi",
+    "color": "#FF44AA"
+  },
+  {
+    "id": "jukka_estola",
+    "display_name": "Jukka",
+    "number": 88,
+    "player_id": "jukka_estola",
+    "color": "#44FFDD"
+  },
+  {
+    "id": "jari_savela",
+    "display_name": "Jari",
+    "number": 8,
+    "player_id": "jari_savela",
+    "color": "#FFAA44"
+  },
+  {
+    "id": "petri_alanen",
+    "display_name": "Petri",
+    "number": 83,
+    "player_id": "petri_alanen",
+    "color": "#88FF44"
+  }
+]

@@ -71,8 +71,28 @@
   },
   "language": "Language",
   "title": {
-    "start_solo": "Start Season",
+    "start_solo": "Solo Season",
+    "derby_night": "Derby Night",
     "version": "20th Anniversary Edition"
+  },
+  "derby": {
+    "title": "Derby Night",
+    "subtitle": "Party mode",
+    "create_room": "Create Room",
+    "join_room": "Join Room",
+    "enter_code": "Enter room code",
+    "room_code": "Room Code",
+    "scan_qr": "Scan to join",
+    "players_connected": "Players",
+    "start_game": "Start Game",
+    "waiting": "Waiting for players...",
+    "pick_manager": "Pick your manager",
+    "join_btn": "Join",
+    "your_manager": "You",
+    "not_configured": "Firebase not configured — contact the host",
+    "min_players": "Need at least 2 players to start",
+    "copied": "Copied!",
+    "back": "Back"
   },
   "trivia": {
     "question_label": "Question",

@@ -2,9 +2,8 @@
  * @file TitleScreen.test.tsx
  * Integration tests for TitleScreen.
  *
- * The difficulty selector was removed in v0.4.0.
- * AI difficulty is now driven automatically by opponent tier (PreMatchScreen).
- * TitleScreen now generates a season and navigates to SEASON phase.
+ * v0.4.0 — AI difficulty selector removed; AI driven by opponent tier.
+ * v0.8.0 — Added Derby Night button; Solo button now reads "Solo Season".
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -38,15 +37,19 @@ describe('TitleScreen', () => {
     expect(screen.getByText('2006 – 2026')).toBeInTheDocument();
   });
 
-  // ── Start button ──────────────────────────────────────────────────────────
+  // ── Solo Season button ────────────────────────────────────────────────────
 
-  it('renders the start season button', () => {
+  it('renders the Solo Season button', () => {
     renderWithProviders(<TitleScreen />);
     expect(screen.getByTestId('start-solo-btn')).toBeInTheDocument();
-    expect(screen.getByTestId('start-solo-btn')).toHaveTextContent('Start Season');
   });
 
-  it('clicking Start Season transitions to SEASON phase', () => {
+  it('Solo Season button reads "Solo Season" (v0.8.0 rename)', () => {
+    renderWithProviders(<TitleScreen />);
+    expect(screen.getByTestId('start-solo-btn')).toHaveTextContent('Solo Season');
+  });
+
+  it('clicking Solo Season transitions to SEASON phase', () => {
     renderWithProviders(<TitleScreen />);
     expect(useMatchStore.getState().phase).toBe(MATCH_PHASE.TITLE);
 
@@ -55,16 +58,43 @@ describe('TitleScreen', () => {
     expect(useMatchStore.getState().phase).toBe(MATCH_PHASE.SEASON);
   });
 
-  it('clicking Start Season populates 7 season fixtures', () => {
+  it('clicking Solo Season populates 7 season fixtures', () => {
     renderWithProviders(<TitleScreen />);
     fireEvent.click(screen.getByTestId('start-solo-btn'));
     expect(useSeasonStore.getState().fixtures).toHaveLength(7);
   });
 
-  it('clicking Start Season resets fixture index to 0', () => {
+  it('clicking Solo Season resets fixture index to 0', () => {
     renderWithProviders(<TitleScreen />);
     fireEvent.click(screen.getByTestId('start-solo-btn'));
     expect(useSeasonStore.getState().currentFixtureIndex).toBe(0);
+  });
+
+  // ── Derby Night button ────────────────────────────────────────────────────
+
+  it('renders the Derby Night button', () => {
+    renderWithProviders(<TitleScreen />);
+    expect(screen.getByTestId('derby-night-btn')).toBeInTheDocument();
+  });
+
+  it('Derby Night button reads "Derby Night"', () => {
+    renderWithProviders(<TitleScreen />);
+    expect(screen.getByTestId('derby-night-btn')).toHaveTextContent('Derby Night');
+  });
+
+  it('clicking Derby Night transitions to DERBY_LOBBY phase', () => {
+    renderWithProviders(<TitleScreen />);
+    expect(useMatchStore.getState().phase).toBe(MATCH_PHASE.TITLE);
+
+    fireEvent.click(screen.getByTestId('derby-night-btn'));
+
+    expect(useMatchStore.getState().phase).toBe(MATCH_PHASE.DERBY_LOBBY);
+  });
+
+  it('clicking Derby Night does not generate season fixtures', () => {
+    renderWithProviders(<TitleScreen />);
+    fireEvent.click(screen.getByTestId('derby-night-btn'));
+    expect(useSeasonStore.getState().fixtures).toHaveLength(0);
   });
 
   // ── Language toggle ───────────────────────────────────────────────────────

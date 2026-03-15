@@ -12,6 +12,8 @@ export const DUELS_PER_HALF = 5;
 /** Match phase state machine */
 export const MATCH_PHASE = {
   TITLE: 'title',
+  /** Derby Night lobby — multiplayer room creation and join flow */
+  DERBY_LOBBY: 'derby_lobby',
   /** Season hub — shown between matches; displays fixture list and points */
   SEASON: 'season',
   /** Pre-match screen — opponent info, tier badge, kick off button */
