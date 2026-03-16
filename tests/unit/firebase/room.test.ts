@@ -30,6 +30,8 @@ import {
   generateRoomCode,
   createRoom,
   joinRoom,
+  roomExists,
+  startRoom,
   listenToRoom,
   leaveRoom,
 } from '../../../src/firebase/room';
@@ -191,6 +193,50 @@ describe('listenToRoom()', () => {
         },
       ],
     });
+  });
+});
+
+// ─── roomExists ──────────────────────────────────────────────────────────────
+
+describe('roomExists()', () => {
+  it('returns true when room state exists', async () => {
+    mockGet.mockResolvedValueOnce({ exists: () => true } as never);
+    const result = await roomExists('G7KP');
+    expect(result).toBe(true);
+  });
+
+  it('returns false when room does not exist', async () => {
+    mockGet.mockResolvedValueOnce({ exists: () => false } as never);
+    const result = await roomExists('XXXX');
+    expect(result).toBe(false);
+  });
+
+  it('calls get on the room state path', async () => {
+    mockGet.mockResolvedValueOnce({ exists: () => true } as never);
+    await roomExists('G7KP');
+    expect(mockRef).toHaveBeenCalledWith(expect.anything(), 'rooms/G7KP/state');
+    expect(mockGet).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call set — read-only', async () => {
+    mockGet.mockResolvedValueOnce({ exists: () => true } as never);
+    await roomExists('G7KP');
+    expect(mockSet).not.toHaveBeenCalled();
+  });
+});
+
+// ─── startRoom ───────────────────────────────────────────────────────────────
+
+describe('startRoom()', () => {
+  it('calls set on the room state path', async () => {
+    await startRoom('G7KP');
+    expect(mockRef).toHaveBeenCalledWith(expect.anything(), 'rooms/G7KP/state');
+    expect(mockSet).toHaveBeenCalledWith(expect.anything(), 'playing');
+  });
+
+  it('sets state to playing', async () => {
+    await startRoom('G7KP');
+    expect(mockSet.mock.calls[0][1]).toBe('playing');
   });
 });
 

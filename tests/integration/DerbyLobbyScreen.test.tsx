@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { renderWithProviders } from '../utils/renderWithProviders';
 import DerbyLobbyScreen from '../../src/components/screens/DerbyLobbyScreen';
 import { useMatchStore } from '../../src/store/matchStore';
@@ -19,7 +19,9 @@ import { MATCH_PHASE } from '../../src/engine/match';
 vi.mock('../../src/firebase/room', () => ({
   generateRoomCode: vi.fn(() => 'TEST'),
   createRoom:       vi.fn(() => Promise.resolve()),
+  roomExists:       vi.fn(() => Promise.resolve(true)),
   joinRoom:         vi.fn(() => Promise.resolve(true)),
+  startRoom:        vi.fn(() => Promise.resolve()),
   listenToRoom:     vi.fn(() => vi.fn()), // returns unsubscribe fn
   leaveRoom:        vi.fn(() => Promise.resolve()),
 }));
@@ -27,7 +29,9 @@ vi.mock('../../src/firebase/room', () => ({
 import * as roomModule from '../../src/firebase/room';
 const mockGenerateCode = vi.mocked(roomModule.generateRoomCode);
 const mockCreateRoom   = vi.mocked(roomModule.createRoom);
+const mockRoomExists   = vi.mocked(roomModule.roomExists);
 const mockJoinRoom     = vi.mocked(roomModule.joinRoom);
+const mockStartRoom    = vi.mocked(roomModule.startRoom);
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
@@ -159,7 +163,7 @@ describe('DerbyLobbyScreen — Join Room', () => {
   });
 
   it('shows manager picker after entering valid code and clicking join', async () => {
-    mockJoinRoom.mockResolvedValue(true);
+    mockRoomExists.mockResolvedValue(true);
     renderWithProviders(<DerbyLobbyScreen />);
     fireEvent.click(screen.getByTestId('join-room-btn'));
 
@@ -172,7 +176,7 @@ describe('DerbyLobbyScreen — Join Room', () => {
   });
 
   it('renders all 10 manager cards in the picker', async () => {
-    mockJoinRoom.mockResolvedValue(true);
+    mockRoomExists.mockResolvedValue(true);
     renderWithProviders(<DerbyLobbyScreen />);
     fireEvent.click(screen.getByTestId('join-room-btn'));
 
@@ -187,7 +191,7 @@ describe('DerbyLobbyScreen — Join Room', () => {
   });
 
   it('confirm join button is disabled until a manager is selected', async () => {
-    mockJoinRoom.mockResolvedValue(true);
+    mockRoomExists.mockResolvedValue(true);
     renderWithProviders(<DerbyLobbyScreen />);
     fireEvent.click(screen.getByTestId('join-room-btn'));
 
@@ -200,7 +204,7 @@ describe('DerbyLobbyScreen — Join Room', () => {
   });
 
   it('confirm join button is enabled after selecting a manager', async () => {
-    mockJoinRoom.mockResolvedValue(true);
+    mockRoomExists.mockResolvedValue(true);
     renderWithProviders(<DerbyLobbyScreen />);
     fireEvent.click(screen.getByTestId('join-room-btn'));
 
@@ -214,6 +218,41 @@ describe('DerbyLobbyScreen — Join Room', () => {
     await waitFor(() => {
       expect(screen.getByTestId('confirm-manager-btn')).not.toBeDisabled();
     });
+  });
+});
+
+// ─── Start Game ──────────────────────────────────────────────────────────────
+
+describe('DerbyLobbyScreen — Start Game', () => {
+  it('start button calls startRoom when clicked with 2+ players', async () => {
+    // Seed the store with room code + 2 players before rendering
+    useRoomStore.getState().setRoom('TEST', 'host', 'host_manager');
+    useRoomStore.getState().setConnectedPlayers([
+      { managerId: 'p1', displayName: 'OlliM', joinedAt: 1000, isHost: true },
+      { managerId: 'p2', displayName: 'Mauno', joinedAt: 2000, isHost: false },
+    ]);
+    // Render with the hosting view active (create flow already done)
+    renderWithProviders(<DerbyLobbyScreen />);
+
+    // Create room so the hosting view appears
+    fireEvent.click(screen.getByTestId('create-room-btn'));
+    await waitFor(() => screen.getByTestId('room-code-display'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('start-game-btn')).not.toBeDisabled();
+    });
+
+    // Verify button is clickable (has onClick)
+    expect(screen.getByTestId('start-game-btn')).not.toBeDisabled();
+
+    // Use act to ensure async handler runs and React processes updates
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('start-game-btn'));
+    });
+
+    // startRoom called with whatever room code was generated (integration concern)
+    expect(mockStartRoom).toHaveBeenCalledTimes(1);
+    expect(mockStartRoom.mock.calls[0][0]).toMatch(/^[A-Z2-9]{4}$/);
   });
 });
 

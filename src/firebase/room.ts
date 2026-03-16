@@ -108,6 +108,41 @@ export async function createRoom(
 }
 
 /**
+ * Check whether a room exists without writing any data.
+ *
+ * @param code - The 4-character room code to check
+ * @returns True if the room exists in Firebase; false otherwise
+ * @throws If Firebase is not configured
+ *
+ * @example
+ * const exists = await roomExists('G7KP');
+ */
+export async function roomExists(code: string): Promise<boolean> {
+  if (!db) throw new Error('[Firebase] Not configured — cannot check room.');
+
+  const stateRef = ref(db, `rooms/${code}/state`);
+  const snapshot = await get(stateRef);
+  return snapshot.exists();
+}
+
+/**
+ * Set the room state to 'playing', signalling all clients to start the match.
+ * Only the host should call this.
+ *
+ * @param code - The 4-character room code
+ * @throws If Firebase is not configured or the write fails
+ *
+ * @example
+ * await startRoom('G7KP');
+ */
+export async function startRoom(code: string): Promise<void> {
+  if (!db) throw new Error('[Firebase] Not configured — cannot start room.');
+
+  const stateRef = ref(db, `rooms/${code}/state`);
+  await set(stateRef, 'playing');
+}
+
+/**
  * Join an existing room as a non-host player.
  *
  * @param code - The 4-character room code to join

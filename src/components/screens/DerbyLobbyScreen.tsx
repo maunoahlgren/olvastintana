@@ -26,6 +26,8 @@ import {
   generateRoomCode,
   createRoom,
   joinRoom,
+  roomExists,
+  startRoom,
   listenToRoom,
   leaveRoom,
   type RoomSnapshot,
@@ -121,16 +123,23 @@ export default function DerbyLobbyScreen(): JSX.Element {
       setLobbyStatus('joined');
       setView('hosting');
 
-      // Subscribe to live player updates
+      // Subscribe to live player + state updates
       unsubscribeRef.current = listenToRoom(code, (snap: RoomSnapshot) => {
         setConnectedPlayers(
-          snap.players.map((p) => ({
-            managerId: p.managerId,
-            displayName: p.displayName,
-            joinedAt: p.joinedAt,
-            isHost: p.isHost,
-          })),
+          snap.players
+            .filter((p) => p.managerId !== '__probe__')
+            .map((p) => ({
+              managerId: p.managerId,
+              displayName: p.displayName,
+              joinedAt: p.joinedAt,
+              isHost: p.isHost,
+            })),
         );
+        if (snap.state === 'playing') {
+          // TODO: Navigate to Derby Night match screen (Phase 3)
+          // For now, transition back to title as placeholder
+          reset();
+        }
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -147,13 +156,12 @@ export default function DerbyLobbyScreen(): JSX.Element {
     if (code.length !== 4) return;
     setLobbyStatus('joining');
     try {
-      // Attempt to join with a placeholder to validate room exists
-      const exists = await joinRoom(code, '__probe__', '__probe__');
+      // Check room exists without writing any data to Firebase
+      const exists = await roomExists(code);
       if (!exists) {
         setLobbyStatus('error', t('derby.enter_code'));
         return;
       }
-      // Remove the probe immediately — real join happens when manager is selected
       setRoom(code, 'player', '');
       setLobbyStatus('idle');
       setView('joining_manager');
@@ -186,13 +194,19 @@ export default function DerbyLobbyScreen(): JSX.Element {
 
       unsubscribeRef.current = listenToRoom(roomCode, (snap: RoomSnapshot) => {
         setConnectedPlayers(
-          snap.players.map((p) => ({
-            managerId: p.managerId,
-            displayName: p.displayName,
-            joinedAt: p.joinedAt,
-            isHost: p.isHost,
-          })),
+          snap.players
+            .filter((p) => p.managerId !== '__probe__')
+            .map((p) => ({
+              managerId: p.managerId,
+              displayName: p.displayName,
+              joinedAt: p.joinedAt,
+              isHost: p.isHost,
+            })),
         );
+        if (snap.state === 'playing') {
+          // TODO: Navigate to Derby Night match screen (Phase 3)
+          reset();
+        }
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -214,6 +228,21 @@ export default function DerbyLobbyScreen(): JSX.Element {
     }
     resetRoom();
     reset();
+  }
+
+  /**
+   * Handle "Start Game" click (host only).
+   * Sets the Firebase room state to 'playing' — both clients' listeners will
+   * detect this and transition to the match screen.
+   */
+  async function handleStartGame(): Promise<void> {
+    if (!roomCode) return;
+    try {
+      await startRoom(roomCode);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setLobbyStatus('error', msg);
+    }
   }
 
   /**
@@ -334,6 +363,7 @@ export default function DerbyLobbyScreen(): JSX.Element {
         {/* Start button */}
         <button
           data-testid="start-game-btn"
+          onClick={() => void handleStartGame()}
           disabled={!canStart}
           className="w-full py-4 bg-[#FFE600] text-[#1A1A1A] font-black text-lg uppercase tracking-widest rounded-xl hover:bg-[#FFE600]/90 active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
         >
