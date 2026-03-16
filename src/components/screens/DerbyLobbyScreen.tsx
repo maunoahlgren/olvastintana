@@ -205,8 +205,9 @@ export default function DerbyLobbyScreen(): JSX.Element {
             })),
         );
         if (snap.state === 'playing') {
-          // TODO: Navigate to Derby Night match screen (Phase 3)
-          reset();
+          // TODO: Replace with Derby Night match sync screen (Phase 3)
+          // For now, use solo match flow as a bridge: coin flip → LINEUP
+          startMatch();
         }
       });
     } catch (err) {
