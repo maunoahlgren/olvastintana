@@ -59,7 +59,8 @@ const MANAGERS: Manager[] = managersData as Manager[];
  */
 export default function DerbyLobbyScreen(): JSX.Element {
   const { t } = useTranslation();
-  const reset = useMatchStore((s) => s.reset);
+  const reset      = useMatchStore((s) => s.reset);
+  const startMatch = useMatchStore((s) => s.startMatch);
 
   const { setRoom, setConnectedPlayers, setLobbyStatus, reset: resetRoom } = useRoomStore();
   const connectedPlayers = useRoomStore((s) => s.connectedPlayers);
@@ -136,9 +137,9 @@ export default function DerbyLobbyScreen(): JSX.Element {
             })),
         );
         if (snap.state === 'playing') {
-          // TODO: Navigate to Derby Night match screen (Phase 3)
-          // For now, transition back to title as placeholder
-          reset();
+          // TODO: Replace with Derby Night match sync screen (Phase 3)
+          // For now, use solo match flow as a bridge: coin flip → LINEUP
+          startMatch();
         }
       });
     } catch (err) {
