@@ -5,6 +5,36 @@ Format: `## [version] — date` with Added / Changed / Fixed sections.
 
 ---
 
+## [0.9.0] — 2026-03-16
+
+### Added
+- **Derby Night — synced match flow across devices** (Session 2)
+- `src/firebase/derbyMatch.ts` — full Firebase match state schema and all write helpers: `initMatch`, `submitLineup`, `submitTriviaAnswer`, `submitCard`, `writeDuelResult`, `advanceDerbyPhase`, `resetForNextDuel`, `submitHalftimeAction`, `listenToMatch`
+- `src/store/derbyStore.ts` — display-only Zustand store; synced from Firebase via `setFromFirebase(snap)`; never written by UI directly
+- Five new `MATCH_PHASE` constants: `DERBY_LINEUP`, `DERBY_TRIVIA`, `DERBY_DUEL`, `DERBY_HALFTIME`, `DERBY_RESULT`
+- `matchStore.setDerbyPhase(phase)` and `matchStore.goToDerbyLineup()` — new phase transition actions
+- `App.tsx` — `useDerbyMatchSync` hook subscribes to Firebase `rooms/{code}/match/` for all DERBY_ match phases; `DERBY_PHASE_MAP` maps Firebase phases to local constants; language toggle hidden on all DERBY_ phases
+- `DerbyLineupScreen.tsx` — host/player phone view (player grid, 5 outfield + 1 GK validation, submit); big screen waiting view; host auto-advances to trivia when both lineups ready
+- `DerbyTriviaScreen.tsx` — all devices see question; phone view with reveal + correct/wrong buttons; first correct answer wins stat boost (atomic Firebase `get()` check); big screen continue button (gated by reveal); host auto-advances to duel when both answered
+- `DerbyDuelScreen.tsx` — phone card picker (Shot disabled when not attacking); big screen status badges with 3-2-1 countdown; `duel_result` phase view shows cards and outcome on all devices; host resolves via `resolveDuel()` + `resolveGoalkeeping()` and writes result; host advances to halftime/result after display timeout
+- `DerbyHalftimeScreen.tsx` — phone choose view (swap / tactic / skip); swap flow (select out + bench pick); tactic flow (aggressive / defensive / creative); submitted + big screen waiting views; host calls `resetForNextDuel` when both done (second-half kickoff = opposite of first half)
+- `DerbyResultScreen.tsx` — full-time score with manager avatars; contextual win/loss/draw label per role; "Back to Lobby" resets all three stores
+- `DerbyLobbyScreen.tsx` updated — two-step host flow (manager picker → create room); spectator join path; host selects manager before room creation; `initMatch()` called before `startRoom()`; all three Firebase listener callbacks call `goToDerbyLineup()`
+- i18n `derby_match.*` namespace (~60 keys) in both `en.json` and `fi.json`
+- Tests: `tests/unit/firebase/derbyMatch.test.ts` (15 tests), `tests/unit/store/derbyStore.test.ts` (12 tests), `tests/integration/DerbyLineupScreen.test.tsx`, `DerbyTriviaScreen.test.tsx`, `DerbyDuelScreen.test.tsx`, `DerbyHalftimeScreen.test.tsx`, `DerbyResultScreen.test.tsx`
+- **Total: 532 tests, all passing**
+
+### Changed
+- `DerbyLobbyScreen.tsx` — "Create Room" button now goes to host manager picker first, then creates room on confirm
+- `DerbyLobbyScreen.tsx` — `startRoom` mock in integration tests updated to include `derbyMatch.initMatch` mock
+
+### Fixed
+- `DerbyLobbyScreen` test: added `firebase/derbyMatch` mock and two-step create-room helper
+- `derbyMatch.test.ts`: removed stale `mockGet.mockResolvedValueOnce` from wrong-answer test; `onValue` mock now returns unsubscribe function
+- `DerbyTriviaScreen.test.tsx`: spectator continue button test now clicks reveal first
+
+---
+
 ## [0.8.0] — 2026-03-15
 
 ### Added

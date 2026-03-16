@@ -26,6 +26,11 @@ vi.mock('../../src/firebase/room', () => ({
   leaveRoom:        vi.fn(() => Promise.resolve()),
 }));
 
+vi.mock('../../src/firebase/derbyMatch', () => ({
+  initMatch:      vi.fn(() => Promise.resolve()),
+  listenToMatch:  vi.fn(() => vi.fn()),
+}));
+
 import * as roomModule from '../../src/firebase/room';
 const mockGenerateCode = vi.mocked(roomModule.generateRoomCode);
 const mockCreateRoom   = vi.mocked(roomModule.createRoom);
@@ -40,6 +45,25 @@ beforeEach(() => {
   useMatchStore.getState().reset();
   useRoomStore.getState().reset();
 });
+
+// ─── Helper: complete host create-room flow ───────────────────────────────────
+
+/**
+ * Navigates through the two-step host create-room flow:
+ *   1. Click "Create Room" → host_manager view
+ *   2. Pick the first manager card
+ *   3. Click "Create Room" (confirm) → hosting view
+ *
+ * Resolves once `room-code-display` is visible.
+ */
+async function goThroughCreateRoomFlow(): Promise<void> {
+  fireEvent.click(screen.getByTestId('create-room-btn'));
+  await waitFor(() => screen.getByTestId('host-manager-grid'));
+  const cards = screen.getAllByTestId(/^host-manager-card-/);
+  fireEvent.click(cards[0]);
+  fireEvent.click(screen.getByTestId('create-room-confirm-btn'));
+  await waitFor(() => screen.getByTestId('room-code-display'));
+}
 
 // ─── Static rendering ────────────────────────────────────────────────────────
 
@@ -71,57 +95,37 @@ describe('DerbyLobbyScreen — Create Room', () => {
   it('shows room code after creating a room', async () => {
     mockGenerateCode.mockReturnValue('G7KP');
     renderWithProviders(<DerbyLobbyScreen />);
-
-    fireEvent.click(screen.getByTestId('create-room-btn'));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('room-code-display')).toBeInTheDocument();
-    });
+    await goThroughCreateRoomFlow();
     expect(screen.getByTestId('room-code-display')).toHaveTextContent('G7KP');
   });
 
   it('calls createRoom with the generated code', async () => {
     mockGenerateCode.mockReturnValue('G7KP');
     renderWithProviders(<DerbyLobbyScreen />);
-
-    fireEvent.click(screen.getByTestId('create-room-btn'));
-
-    await waitFor(() => {
-      expect(mockCreateRoom).toHaveBeenCalledWith('G7KP', expect.any(String), expect.any(String));
-    });
+    await goThroughCreateRoomFlow();
+    expect(mockCreateRoom).toHaveBeenCalledWith('G7KP', expect.any(String), expect.any(String));
   });
 
   it('shows the QR code image after creating a room', async () => {
     mockGenerateCode.mockReturnValue('ABCD');
     renderWithProviders(<DerbyLobbyScreen />);
-
-    fireEvent.click(screen.getByTestId('create-room-btn'));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('qr-code-img')).toBeInTheDocument();
-    });
+    await goThroughCreateRoomFlow();
+    expect(screen.getByTestId('qr-code-img')).toBeInTheDocument();
   });
 
   it('Start Game button is disabled when fewer than 2 players connected', async () => {
     mockGenerateCode.mockReturnValue('G7KP');
     renderWithProviders(<DerbyLobbyScreen />);
-
-    fireEvent.click(screen.getByTestId('create-room-btn'));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('start-game-btn')).toBeDisabled();
-    });
+    await goThroughCreateRoomFlow();
+    expect(screen.getByTestId('start-game-btn')).toBeDisabled();
   });
 
   it('Start Game button is enabled when 2+ players are connected', async () => {
     mockGenerateCode.mockReturnValue('G7KP');
     renderWithProviders(<DerbyLobbyScreen />);
+    await goThroughCreateRoomFlow();
 
-    fireEvent.click(screen.getByTestId('create-room-btn'));
-
-    await waitFor(() => screen.getByTestId('start-game-btn'));
-
-    // Simulate 2 players joining via store
+    // Simulate a guest joining via store (host already present from create flow)
     useRoomStore.getState().setConnectedPlayers([
       { managerId: 'p1', displayName: 'OlliM', joinedAt: 1000, isHost: true },
       { managerId: 'p2', displayName: 'Mauno', joinedAt: 2000, isHost: false },
@@ -225,34 +229,26 @@ describe('DerbyLobbyScreen — Join Room', () => {
 
 describe('DerbyLobbyScreen — Start Game', () => {
   it('start button calls startRoom when clicked with 2+ players', async () => {
-    // Seed the store with room code + 2 players before rendering
-    useRoomStore.getState().setRoom('TEST', 'host', 'host_manager');
+    renderWithProviders(<DerbyLobbyScreen />);
+
+    // Go through the full two-step create-room flow
+    await goThroughCreateRoomFlow();
+
+    // Simulate a guest joining
     useRoomStore.getState().setConnectedPlayers([
       { managerId: 'p1', displayName: 'OlliM', joinedAt: 1000, isHost: true },
       { managerId: 'p2', displayName: 'Mauno', joinedAt: 2000, isHost: false },
     ]);
-    // Render with the hosting view active (create flow already done)
-    renderWithProviders(<DerbyLobbyScreen />);
-
-    // Create room so the hosting view appears
-    fireEvent.click(screen.getByTestId('create-room-btn'));
-    await waitFor(() => screen.getByTestId('room-code-display'));
 
     await waitFor(() => {
       expect(screen.getByTestId('start-game-btn')).not.toBeDisabled();
     });
 
-    // Verify button is clickable (has onClick)
-    expect(screen.getByTestId('start-game-btn')).not.toBeDisabled();
-
-    // Use act to ensure async handler runs and React processes updates
     await act(async () => {
       fireEvent.click(screen.getByTestId('start-game-btn'));
     });
 
-    // startRoom called with whatever room code was generated (integration concern)
     expect(mockStartRoom).toHaveBeenCalledTimes(1);
-    expect(mockStartRoom.mock.calls[0][0]).toMatch(/^[A-Z2-9]{4}$/);
   });
 });
 

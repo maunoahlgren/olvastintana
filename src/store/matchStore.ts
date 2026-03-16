@@ -59,6 +59,18 @@ interface MatchActions {
    */
   goToDerbyLobby: () => void;
   /**
+   * DERBY_LOBBY → DERBY_LINEUP: called when Firebase room state becomes 'playing'.
+   * Transitions all clients to the lineup selection screen.
+   */
+  goToDerbyLineup: () => void;
+  /**
+   * Any DERBY_* phase → target phase: driven by the Firebase match listener.
+   * Used by useDerbyMatchSync to keep the local phase in step with Firebase.
+   *
+   * @param phase - The MATCH_PHASE constant to transition to
+   */
+  setDerbyPhase: (phase: string) => void;
+  /**
    * TITLE → SEASON: generate season fixtures and navigate to the season hub.
    * Called when "Start Season" is clicked on TitleScreen.
    */
@@ -127,6 +139,14 @@ export const useMatchStore = create<MatchState & MatchActions>((set, get) => ({
 
   goToDerbyLobby() {
     set({ phase: MATCH_PHASE.DERBY_LOBBY });
+  },
+
+  goToDerbyLineup() {
+    set({ phase: MATCH_PHASE.DERBY_LINEUP });
+  },
+
+  setDerbyPhase(phase) {
+    set({ phase: phase as ReturnType<typeof MATCH_PHASE[keyof typeof MATCH_PHASE]> });
   },
 
   startSeason() {

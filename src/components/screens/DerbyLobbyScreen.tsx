@@ -3,18 +3,26 @@
  * Derby Night lobby — room creation and join flow.
  *
  * Internal view states:
- *   'select'         → initial view: "Create Room" button + code entry field
- *   'hosting'        → host view: room code, QR code, player list, Start button
- *   'joining_code'   → player entering a room code
- *   'joining_manager'→ player selecting a manager from managers.json
- *   'joined'         → player has joined; waiting for host to start
+ *   'select'           → initial: Create Room / Join Room / Big Screen buttons
+ *   'host_manager'     → host picks their manager before room is created
+ *   'hosting'          → host view: code, QR, player list, Start button
+ *   'joining_code'     → player/spectator entering a room code
+ *   'joining_manager'  → player selecting a manager from managers.json
+ *   'joined'           → player has joined; waiting for host to start
+ *   'spectating'       → spectator (big screen) waiting for host to start
  *
  * Firebase integration:
  *   - createRoom / joinRoom / listenToRoom / leaveRoom from src/firebase/room.ts
+ *   - initMatch / listenToMatch from src/firebase/derbyMatch.ts (Phase 3)
  *   - listenToRoom unsubscribed in useEffect cleanup
  *
  * URL param detection:
  *   ?room=CODE pre-fills the room code input and advances to 'joining_code' view
+ *
+ * Role mapping:
+ *   'host'      → creates the room, initiates match
+ *   'player'    → joins with a code and picks a manager
+ *   'spectator' → joins with a code only (no manager), big screen view
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -22,6 +30,7 @@ import { useTranslation } from 'react-i18next';
 import { useMatchStore } from '../../store/matchStore';
 import { useRoomStore } from '../../store/roomStore';
 import managersData from '../../data/managers.json';
+import triviaData from '../../data/trivia.json';
 import {
   generateRoomCode,
   createRoom,
@@ -32,10 +41,18 @@ import {
   leaveRoom,
   type RoomSnapshot,
 } from '../../firebase/room';
+import { initMatch, type PlayerKey } from '../../firebase/derbyMatch';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type LobbyView = 'select' | 'hosting' | 'joining_code' | 'joining_manager' | 'joined';
+type LobbyView =
+  | 'select'
+  | 'host_manager'
+  | 'hosting'
+  | 'joining_code'
+  | 'joining_manager'
+  | 'joined'
+  | 'spectating';
 
 interface Manager {
   id: string;
@@ -47,20 +64,32 @@ interface Manager {
 
 const MANAGERS: Manager[] = managersData as Manager[];
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Coin-flip for kickoff: returns 'p1' or 'p2' with equal probability.
+ *
+ * @returns 'p1' | 'p2'
+ */
+function coinFlipKickoff(): PlayerKey {
+  return Math.random() < 0.5 ? 'p1' : 'p2';
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 /**
  * DerbyLobbyScreen — multiplayer room creation and join flow.
  *
- * Handles both the host path (create room → share code → wait for players → start)
- * and the player path (enter code → pick manager → joined).
+ * Handles host path (manager pick → create room → share code → start),
+ * player path (enter code → pick manager → joined), and
+ * spectator path (enter code → big screen waiting view).
  *
  * @returns The Derby Night lobby screen element
  */
 export default function DerbyLobbyScreen(): JSX.Element {
   const { t } = useTranslation();
-  const reset      = useMatchStore((s) => s.reset);
-  const startMatch = useMatchStore((s) => s.startMatch);
+  const reset            = useMatchStore((s) => s.reset);
+  const goToDerbyLineup  = useMatchStore((s) => s.goToDerbyLineup);
 
   const { setRoom, setConnectedPlayers, setLobbyStatus, reset: resetRoom } = useRoomStore();
   const connectedPlayers = useRoomStore((s) => s.connectedPlayers);
@@ -69,12 +98,13 @@ export default function DerbyLobbyScreen(): JSX.Element {
   const myManagerId      = useRoomStore((s) => s.myManagerId);
   const roomCode         = useRoomStore((s) => s.roomCode);
 
-  const [view, setView]                   = useState<LobbyView>('select');
-  const [codeInput, setCodeInput]         = useState('');
+  const [view, setView]                       = useState<LobbyView>('select');
+  const [codeInput, setCodeInput]             = useState('');
   const [selectedManager, setSelectedManager] = useState<string | null>(null);
-  const [copied, setCopied]               = useState(false);
+  const [hostManager, setHostManager]         = useState<string | null>(null);
+  const [copied, setCopied]                   = useState(false);
 
-  /** Cleanup ref — stores the Firebase unsubscribe function */
+  /** Firebase room listener unsubscribe ref */
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
   // ─── URL param detection ───────────────────────────────────────────────────
@@ -104,27 +134,25 @@ export default function DerbyLobbyScreen(): JSX.Element {
   const qrUrl = lobbyUrl
     ? `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(lobbyUrl)}`
     : '';
-  const canStart = connectedPlayers.length >= 2;
+  const canStart = connectedPlayers.filter((p) => !p.isHost).length >= 1;
 
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
   /**
-   * Handle "Create Room" click.
-   * Generates a room code, writes it to Firebase, subscribes to updates.
+   * Handle the actual room creation once the host has picked their manager.
+   *
+   * @param managerId   - The host's chosen manager ID
+   * @param displayName - The host's display name
    */
-  async function handleCreateRoom(): Promise<void> {
+  async function createRoomWithManager(managerId: string, displayName: string): Promise<void> {
     setLobbyStatus('creating');
     try {
-      const code       = generateRoomCode();
-      const managerId  = 'host_manager'; // host picks manager after others join (Phase 3)
-      const displayName = t('derby.title');
-
+      const code = generateRoomCode();
       await createRoom(code, managerId, displayName);
       setRoom(code, 'host', managerId);
       setLobbyStatus('joined');
       setView('hosting');
 
-      // Subscribe to live player + state updates
       unsubscribeRef.current = listenToRoom(code, (snap: RoomSnapshot) => {
         setConnectedPlayers(
           snap.players
@@ -137,9 +165,7 @@ export default function DerbyLobbyScreen(): JSX.Element {
             })),
         );
         if (snap.state === 'playing') {
-          // TODO: Replace with Derby Night match sync screen (Phase 3)
-          // For now, use solo match flow as a bridge: coin flip → LINEUP
-          startMatch();
+          goToDerbyLineup();
         }
       });
     } catch (err) {
@@ -150,22 +176,44 @@ export default function DerbyLobbyScreen(): JSX.Element {
 
   /**
    * Handle "Join" click on the code-entry view.
-   * Validates the code exists and advances to manager selection.
+   * Validates the code exists, then routes to manager selection or spectating.
+   *
+   * @param asSpectator - True to join as spectator (big screen), false as player
    */
-  async function handleJoinCode(): Promise<void> {
+  async function handleJoinCode(asSpectator = false): Promise<void> {
     const code = codeInput.trim().toUpperCase();
     if (code.length !== 4) return;
     setLobbyStatus('joining');
     try {
-      // Check room exists without writing any data to Firebase
       const exists = await roomExists(code);
       if (!exists) {
         setLobbyStatus('error', t('derby.enter_code'));
         return;
       }
-      setRoom(code, 'player', '');
       setLobbyStatus('idle');
-      setView('joining_manager');
+      if (asSpectator) {
+        // Spectator joins anonymously — no Firebase player entry, just listens
+        setRoom(code, 'spectator', '');
+        setView('spectating');
+        unsubscribeRef.current = listenToRoom(code, (snap: RoomSnapshot) => {
+          setConnectedPlayers(
+            snap.players
+              .filter((p) => p.managerId !== '__probe__')
+              .map((p) => ({
+                managerId: p.managerId,
+                displayName: p.displayName,
+                joinedAt: p.joinedAt,
+                isHost: p.isHost,
+              })),
+          );
+          if (snap.state === 'playing') {
+            goToDerbyLineup();
+          }
+        });
+      } else {
+        setRoom(code, 'player', '');
+        setView('joining_manager');
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setLobbyStatus('error', msg);
@@ -174,11 +222,10 @@ export default function DerbyLobbyScreen(): JSX.Element {
 
   /**
    * Handle final "Join" click after selecting a manager.
-   * Writes the player's real entry to Firebase, subscribes to updates.
+   * Writes the player's entry to Firebase and subscribes to updates.
    */
   async function handleJoinWithManager(): Promise<void> {
     if (!selectedManager || !roomCode) return;
-
     const manager = MANAGERS.find((m) => m.id === selectedManager);
     if (!manager) return;
 
@@ -190,7 +237,7 @@ export default function DerbyLobbyScreen(): JSX.Element {
         return;
       }
       setRoom(roomCode, 'player', manager.id);
-      setLobbyStatus('joined');
+      setLobbyStatus('idle');
       setView('joined');
 
       unsubscribeRef.current = listenToRoom(roomCode, (snap: RoomSnapshot) => {
@@ -205,9 +252,7 @@ export default function DerbyLobbyScreen(): JSX.Element {
             })),
         );
         if (snap.state === 'playing') {
-          // TODO: Replace with Derby Night match sync screen (Phase 3)
-          // For now, use solo match flow as a bridge: coin flip → LINEUP
-          startMatch();
+          goToDerbyLineup();
         }
       });
     } catch (err) {
@@ -234,12 +279,16 @@ export default function DerbyLobbyScreen(): JSX.Element {
 
   /**
    * Handle "Start Game" click (host only).
-   * Sets the Firebase room state to 'playing' — both clients' listeners will
-   * detect this and transition to the match screen.
+   * Initialises the match document in Firebase, then sets room state to 'playing'.
+   * All connected clients' listenToRoom callbacks detect 'playing' → goToDerbyLineup().
    */
   async function handleStartGame(): Promise<void> {
     if (!roomCode) return;
     try {
+      const kickoff = coinFlipKickoff();
+      const triviaIndex = Math.floor(Math.random() * (triviaData as unknown[]).length);
+      // Write the match document first, then signal all clients to start
+      await initMatch(roomCode, kickoff, triviaIndex);
       await startRoom(roomCode);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -268,11 +317,10 @@ export default function DerbyLobbyScreen(): JSX.Element {
         {/* Create Room */}
         <button
           data-testid="create-room-btn"
-          onClick={() => void handleCreateRoom()}
-          disabled={lobbyStatus === 'creating'}
-          className="w-full py-4 bg-[#FF44AA] text-white font-black text-lg uppercase tracking-widest rounded-xl hover:bg-[#FF44AA]/90 active:scale-95 transition-all disabled:opacity-50"
+          onClick={() => setView('host_manager')}
+          className="w-full py-4 bg-[#FF44AA] text-white font-black text-lg uppercase tracking-widest rounded-xl hover:bg-[#FF44AA]/90 active:scale-95 transition-all"
         >
-          {lobbyStatus === 'creating' ? '…' : t('derby.create_room')}
+          {t('derby.create_room')}
         </button>
 
         {/* Divider */}
@@ -291,10 +339,60 @@ export default function DerbyLobbyScreen(): JSX.Element {
           {t('derby.join_room')}
         </button>
 
-        {/* Firebase not configured warning */}
+        {/* Big Screen */}
+        <button
+          data-testid="big-screen-btn"
+          onClick={() => { setView('joining_code'); }}
+          className="w-full py-3 bg-transparent border border-[#F5F0E8]/20 text-[#F5F0E8]/50 text-sm uppercase tracking-widest rounded-xl hover:bg-[#F5F0E8]/5 active:scale-95 transition-all"
+        >
+          📺 {t('derby_match.big_screen')}
+        </button>
+
         {errorMessage && (
           <p className="text-red-400 text-sm text-center">{errorMessage}</p>
         )}
+      </div>
+    );
+  }
+
+  function renderHostManagerView(): JSX.Element {
+    return (
+      <div className="flex flex-col gap-4 w-full">
+        <p className="text-[#F5F0E8]/50 text-xs uppercase tracking-widest text-center">
+          {t('derby.pick_manager')}
+        </p>
+        <div className="grid grid-cols-2 gap-3" data-testid="host-manager-grid">
+          {MANAGERS.map((m) => (
+            <button
+              key={m.id}
+              data-testid={`host-manager-card-${m.id}`}
+              onClick={() => setHostManager(m.id)}
+              style={{
+                borderColor: hostManager === m.id ? m.color : 'transparent',
+                boxShadow: hostManager === m.id ? `0 0 0 2px ${m.color}` : 'none',
+              }}
+              className="flex flex-col items-center gap-1 py-4 px-2 bg-[#F5F0E8]/5 rounded-xl border-2 hover:bg-[#F5F0E8]/10 active:scale-95 transition-all"
+            >
+              <span className="text-2xl font-black" style={{ color: m.color }}>
+                #{m.number}
+              </span>
+              <span className="text-sm font-bold text-[#F5F0E8]">{m.display_name}</span>
+            </button>
+          ))}
+        </div>
+        <button
+          data-testid="create-room-confirm-btn"
+          onClick={() => {
+            if (!hostManager) return;
+            const m = MANAGERS.find((x) => x.id === hostManager)!;
+            void createRoomWithManager(m.id, m.display_name);
+          }}
+          disabled={!hostManager || lobbyStatus === 'creating'}
+          className="w-full py-4 bg-[#FF44AA] text-white font-black text-lg uppercase tracking-widest rounded-xl hover:bg-[#FF44AA]/90 active:scale-95 transition-all disabled:opacity-50"
+        >
+          {lobbyStatus === 'creating' ? '…' : t('derby.create_room')}
+        </button>
+        {errorMessage && <p className="text-red-400 text-sm text-center">{errorMessage}</p>}
       </div>
     );
   }
@@ -350,7 +448,7 @@ export default function DerbyLobbyScreen(): JSX.Element {
               >
                 <span className="font-bold text-[#F5F0E8]">{p.displayName}</span>
                 {p.isHost && (
-                  <span className="text-[#FFE600] text-xs uppercase tracking-wider">
+                  <span className="text-[#FFE600] text-xs uppercase tracking-wider ml-auto">
                     Host
                   </span>
                 )}
@@ -371,6 +469,8 @@ export default function DerbyLobbyScreen(): JSX.Element {
         >
           {canStart ? t('derby.start_game') : t('derby.min_players')}
         </button>
+
+        {errorMessage && <p className="text-red-400 text-sm text-center">{errorMessage}</p>}
       </div>
     );
   }
@@ -392,11 +492,20 @@ export default function DerbyLobbyScreen(): JSX.Element {
         />
         <button
           data-testid="join-code-btn"
-          onClick={() => void handleJoinCode()}
+          onClick={() => void handleJoinCode(false)}
           disabled={codeInput.length !== 4 || lobbyStatus === 'joining'}
           className="w-full py-4 bg-[#44AAFF] text-white font-black text-lg uppercase tracking-widest rounded-xl hover:bg-[#44AAFF]/90 active:scale-95 transition-all disabled:opacity-50"
         >
           {lobbyStatus === 'joining' ? '…' : t('derby.join_btn')}
+        </button>
+        {/* Big screen join option */}
+        <button
+          data-testid="spectator-join-btn"
+          onClick={() => void handleJoinCode(true)}
+          disabled={codeInput.length !== 4 || lobbyStatus === 'joining'}
+          className="w-full py-3 bg-transparent border border-[#F5F0E8]/20 text-[#F5F0E8]/50 text-sm uppercase tracking-widest rounded-xl hover:bg-[#F5F0E8]/5 transition-all disabled:opacity-40"
+        >
+          📺 {t('derby_match.big_screen')}
         </button>
         {errorMessage && (
           <p className="text-red-400 text-sm text-center">{errorMessage}</p>
@@ -411,10 +520,7 @@ export default function DerbyLobbyScreen(): JSX.Element {
         <p className="text-[#F5F0E8]/50 text-xs uppercase tracking-widest text-center">
           {t('derby.pick_manager')}
         </p>
-        <div
-          className="grid grid-cols-2 gap-3"
-          data-testid="manager-grid"
-        >
+        <div className="grid grid-cols-2 gap-3" data-testid="manager-grid">
           {MANAGERS.map((m) => (
             <button
               key={m.id}
@@ -426,19 +532,13 @@ export default function DerbyLobbyScreen(): JSX.Element {
               }}
               className="flex flex-col items-center gap-1 py-4 px-2 bg-[#F5F0E8]/5 rounded-xl border-2 hover:bg-[#F5F0E8]/10 active:scale-95 transition-all"
             >
-              <span
-                className="text-2xl font-black"
-                style={{ color: m.color }}
-              >
+              <span className="text-2xl font-black" style={{ color: m.color }}>
                 #{m.number}
               </span>
-              <span className="text-sm font-bold text-[#F5F0E8]">
-                {m.display_name}
-              </span>
+              <span className="text-sm font-bold text-[#F5F0E8]">{m.display_name}</span>
             </button>
           ))}
         </div>
-
         <button
           data-testid="confirm-manager-btn"
           onClick={() => void handleJoinWithManager()}
@@ -458,8 +558,6 @@ export default function DerbyLobbyScreen(): JSX.Element {
     return (
       <div className="flex flex-col gap-6 w-full items-center">
         <p className="text-[#F5F0E8]/50 text-sm text-center">{t('derby.waiting')}</p>
-
-        {/* Connected players */}
         <div className="w-full">
           <p className="text-[#F5F0E8]/50 text-xs uppercase tracking-widest mb-2">
             {t('derby.players_connected')} ({connectedPlayers.length})
@@ -480,6 +578,33 @@ export default function DerbyLobbyScreen(): JSX.Element {
                   <span className="text-[#FFE600] text-xs uppercase tracking-wider ml-auto">
                     Host
                   </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    );
+  }
+
+  function renderSpectatingView(): JSX.Element {
+    return (
+      <div className="flex flex-col gap-6 w-full items-center" data-testid="spectating-view">
+        <div className="text-4xl">📺</div>
+        <p className="text-[#F5F0E8]/50 text-sm text-center">{t('derby.waiting')}</p>
+        <div className="w-full">
+          <p className="text-[#F5F0E8]/50 text-xs uppercase tracking-widest mb-2">
+            {t('derby.players_connected')} ({connectedPlayers.length})
+          </p>
+          <ul className="flex flex-col gap-2">
+            {connectedPlayers.map((p) => (
+              <li
+                key={p.managerId}
+                className="flex items-center gap-3 bg-[#F5F0E8]/5 rounded-lg px-4 py-3"
+              >
+                <span className="font-bold text-[#F5F0E8]">{p.displayName}</span>
+                {p.isHost && (
+                  <span className="text-[#FFE600] text-xs uppercase tracking-wider ml-auto">Host</span>
                 )}
               </li>
             ))}
@@ -518,10 +643,12 @@ export default function DerbyLobbyScreen(): JSX.Element {
       {/* Body */}
       <main className="w-full max-w-sm">
         {view === 'select'           && renderSelectView()}
+        {view === 'host_manager'     && renderHostManagerView()}
         {view === 'hosting'          && renderHostView()}
         {view === 'joining_code'     && renderJoinCodeView()}
         {view === 'joining_manager'  && renderManagerPickerView()}
         {view === 'joined'           && renderJoinedView()}
+        {view === 'spectating'       && renderSpectatingView()}
       </main>
     </div>
   );

@@ -14,6 +14,16 @@ export const MATCH_PHASE = {
   TITLE: 'title',
   /** Derby Night lobby — multiplayer room creation and join flow */
   DERBY_LOBBY: 'derby_lobby',
+  /** Derby Night: both managers pick their lineup privately on their phones */
+  DERBY_LINEUP: 'derby_lineup',
+  /** Derby Night: trivia question visible to all; phones submit answers */
+  DERBY_TRIVIA: 'derby_trivia',
+  /** Derby Night: active duel — phones pick card; big screen shows countdown + reveal */
+  DERBY_DUEL: 'derby_duel',
+  /** Derby Night: halftime — each manager makes their change privately */
+  DERBY_HALFTIME: 'derby_halftime',
+  /** Derby Night: final result shown on all devices */
+  DERBY_RESULT: 'derby_result',
   /** Season hub — shown between matches; displays fixture list and points */
   SEASON: 'season',
   /** Pre-match screen — opponent info, tier badge, kick off button */
