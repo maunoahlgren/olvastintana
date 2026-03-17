@@ -28,6 +28,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import HelpModal from '../ui/HelpModal';
 import { useRoomStore } from '../../store/roomStore';
 import { useDerbyStore } from '../../store/derbyStore';
 import {
@@ -308,6 +309,7 @@ function PhoneDuelView({ playerKey, roomCode }: PhoneDuelViewProps): JSX.Element
   const myCardReady = playerKey === 'p1' ? p1CardReady : p2CardReady;
   const isAttacker = possession === playerKey;
   const [submitting, setSubmitting] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   /**
    * Submit the chosen card to Firebase.
@@ -342,7 +344,20 @@ function PhoneDuelView({ playerKey, roomCode }: PhoneDuelViewProps): JSX.Element
   }
 
   return (
+    <>
+    {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
+
     <div className="min-h-screen bg-[#1A1A1A] text-[#F5F0E8] flex flex-col p-4" data-testid="derby-duel-phone">
+      {/* Help button */}
+      <button
+        data-testid="help-btn"
+        onClick={() => setShowHelp(true)}
+        className="fixed top-4 left-4 z-40 w-9 h-9 rounded-full border-2 border-[#555] text-[#A0A0A0] font-black text-base hover:border-[#FFE600] hover:text-[#FFE600] transition-colors bg-[#1A1A1A]"
+        aria-label="Help"
+      >
+        ?
+      </button>
+
       {/* Header */}
       <div className="flex justify-between items-center mb-3">
         <span className="text-xs text-[#A0A0A0]">
@@ -385,6 +400,7 @@ function PhoneDuelView({ playerKey, roomCode }: PhoneDuelViewProps): JSX.Element
         })}
       </div>
     </div>
+    </>
   );
 }
 

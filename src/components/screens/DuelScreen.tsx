@@ -65,6 +65,7 @@ import {
 import type { ActiveEffect } from '../../store/matchStore';
 import CardButton from '../ui/CardButton';
 import ScoreBoard from '../ui/ScoreBoard';
+import HelpModal from '../ui/HelpModal';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -155,6 +156,8 @@ export default function DuelScreen(): JSX.Element {
   const triviaBoostActive = useMatchStore((s) => s.triviaBoostActive);
   const playerCardHistory = useMatchStore((s) => s.playerCardHistory);
   const effects = useMatchStore((s) => s.effects);
+  const homeTactic = useMatchStore((s) => s.homeTactic);
+  const awayTactic = useMatchStore((s) => s.awayTactic);
   const scoreGoal = useMatchStore((s) => s.scoreGoal);
   const advanceDuel = useMatchStore((s) => s.advanceDuel);
   const setPossession = useMatchStore((s) => s.setPossession);
@@ -174,6 +177,7 @@ export default function DuelScreen(): JSX.Element {
   const [defenderCard, setDefenderCard] = useState<Card | null>(null);
   const [reactiveInfo, setReactiveInfo] = useState<ReactiveInfo | null>(null);
   const [duelResult, setDuelResult] = useState<DuelResult | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
 
   // Brick Wall resets when this component remounts (at halftime the screen unmounts)
   const [brickWall, setBrickWall] = useState<BrickWallState>(resetBrickWall);
@@ -663,11 +667,40 @@ export default function DuelScreen(): JSX.Element {
     return t('cards.shot');
   }
 
+  // Active restrictions for the current picker's side (helps modal know what to show)
+  const currentRestrictions =
+    uiPhase === 'defender_pick'
+      ? { press: defenderPressRestricted, feint: defenderFeintRestricted, shot: defenderShotRestricted }
+      : uiPhase === 'human_pick' && !humanIsAttacker
+        ? { press: defenderPressRestricted, feint: defenderFeintRestricted, shot: defenderShotRestricted }
+        : { press: attackerPressRestricted, feint: attackerFeintRestricted, shot: attackerShotRestricted };
+
   return (
+    <>
+    {/* Help modal overlay */}
+    {showHelp && (
+      <HelpModal
+        onClose={() => setShowHelp(false)}
+        homeTactic={homeTactic}
+        awayTactic={awayTactic}
+        restrictions={currentRestrictions}
+      />
+    )}
+
     <div
       data-testid="duel-screen"
       className="min-h-screen bg-[#1A1A1A] text-[#F5F0E8] flex flex-col items-center px-4 py-6 gap-6"
     >
+      {/* Help button — always visible */}
+      <button
+        data-testid="help-btn"
+        onClick={() => setShowHelp(true)}
+        className="fixed top-4 left-4 z-40 w-9 h-9 rounded-full border-2 border-[#555] text-[#A0A0A0] font-black text-base hover:border-[#FFE600] hover:text-[#FFE600] transition-colors bg-[#1A1A1A]"
+        aria-label="Help"
+      >
+        ?
+      </button>
+
       {/* ScoreBoard */}
       <ScoreBoard
         homeGoals={homeGoals}
@@ -909,5 +942,6 @@ export default function DuelScreen(): JSX.Element {
         </div>
       )}
     </div>
+    </>
   );
 }

@@ -21,11 +21,16 @@
  *
  * The LanguageToggle is rendered as a persistent overlay on every screen that
  * does not embed its own toggle (everything except TitleScreen and DerbyLobbyScreen).
+ *
+ * `useSessionPersistence` saves phase + room session to localStorage on every
+ * change and restores it on load, allowing players to survive page refreshes
+ * during both solo and Derby Night matches.
  */
 
 import './i18n/index.ts';
 import { useEffect } from 'react';
 import { useMatchStore } from './store/matchStore';
+import { useSessionPersistence } from './utils/useSessionPersistence';
 import { useRoomStore } from './store/roomStore';
 import { useDerbyStore } from './store/derbyStore';
 import { MATCH_PHASE } from './engine/match';
@@ -124,6 +129,9 @@ function useDerbyMatchSync(): void {
  */
 export default function App(): JSX.Element {
   const phase = useMatchStore((s) => s.phase);
+
+  // Persist and restore session across page refreshes
+  useSessionPersistence();
 
   // Firebase match sync — active for all Derby match phases
   useDerbyMatchSync();

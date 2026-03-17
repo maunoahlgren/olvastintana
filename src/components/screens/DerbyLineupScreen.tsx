@@ -2,7 +2,7 @@
  * @file DerbyLineupScreen.tsx
  * Derby Night lineup selection screen.
  *
- * Each manager picks 5 outfield players + 1 goalkeeper privately on their phone.
+ * Each manager picks 6 outfield players + 1 goalkeeper privately on their phone.
  * The big screen shows a waiting message until both lineups are submitted.
  *
  * Phone view flow:
@@ -136,7 +136,7 @@ function PhonePickView({ playerKey, roomCode }: PhonePickViewProps): JSX.Element
   const gkSelected = allPlayers
     .filter((p) => selected.has(p.id) && p.position.includes('GK'))
     .length;
-  const canSubmit = outfieldSelected === 5 && gkSelected === 1;
+  const canSubmit = outfieldSelected === 6 && gkSelected === 1;
 
   /** Filtered player list based on active position tab */
   const filtered = allPlayers.filter((p) => {
@@ -147,7 +147,7 @@ function PhonePickView({ playerKey, roomCode }: PhonePickViewProps): JSX.Element
 
   /**
    * Toggle a player in/out of the selection.
-   * Respects the 5 outfield + 1 GK constraint.
+   * Respects the 6 outfield + 1 GK constraint.
    *
    * @param player - The player to toggle
    */
@@ -160,7 +160,7 @@ function PhonePickView({ playerKey, roomCode }: PhonePickViewProps): JSX.Element
       }
       const isGk = player.position.includes('GK');
       if (isGk && gkSelected >= 1) return prev;
-      if (!isGk && outfieldSelected >= 5) return prev;
+      if (!isGk && outfieldSelected >= 6) return prev;
       next.add(player.id);
       return next;
     });
@@ -201,8 +201,8 @@ function PhonePickView({ playerKey, roomCode }: PhonePickViewProps): JSX.Element
 
       {/* Selection summary */}
       <div className="flex gap-4 mb-3 text-sm">
-        <span className={outfieldSelected === 5 ? 'text-green-400' : 'text-[#A0A0A0]'}>
-          ⚽ {outfieldSelected}/5
+        <span className={outfieldSelected === 6 ? 'text-green-400' : 'text-[#A0A0A0]'}>
+          ⚽ {outfieldSelected}/6
         </span>
         <span className={gkSelected === 1 ? 'text-green-400' : 'text-[#A0A0A0]'}>
           🧤 {gkSelected}/1

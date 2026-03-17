@@ -5,6 +5,20 @@ Format: `## [version] — date` with Added / Changed / Fixed sections.
 
 ---
 
+## [1.0.0] — 2026-03-16
+
+### Added
+- **Refresh protection** — `src/utils/useSessionPersistence.ts` hook saves match phase, room code, role, and manager ID to `localStorage` on every state change. On page reload the correct screen is restored. Derby Night players rejoin their room automatically (Firebase match state re-syncs via `useDerbyMatchSync`). Hook is safe: only restores when the store is at the default TITLE phase, so test setup is never overridden.
+- **In-game help modal** — `src/components/ui/HelpModal.tsx` shows the card triangle (Press beats Feint, Feint beats Shot, Shot beats Press), possession rule, active tactic (solo DuelScreen only), and active card restrictions (solo DuelScreen only). A persistent `?` button is now present on `DuelScreen` and `DerbyDuelScreen` phone view. Modal dismissable by tapping backdrop, `×` button, or bottom close button. Bilingual (FI default, EN toggle) via new `help.*` i18n namespace.
+- `i18n/fi.json` and `i18n/en.json` — 15 new keys under `help.*` namespace for the in-game help modal.
+- Tests: `tests/unit/ui/HelpModal.test.tsx` (18 tests), `tests/integration/HelpModal.test.tsx` (11 tests), `tests/unit/utils/useSessionPersistence.test.ts` (10 tests).
+- **Total: 571 tests, all passing**
+
+### Fixed
+- **Derby lineup bug** — `DerbyLineupScreen.tsx` incorrectly required 5 outfield players instead of 6. Validation logic (`canSubmit`, `outfieldSelected >= 5` cap), selection counter display (`/5`), and JSDoc all corrected to 6. `i18n` keys `derby_match.lineup_select_outfield` and `derby_match.lineup_invalid` updated to say "6" in both languages. AI lineup functions (`easyAiLineup`, `normalAiLineup`, `hardAiLineup` in `ai.ts`) were already correct (`.slice(0, 6)`).
+
+---
+
 ## [0.9.0] — 2026-03-16
 
 ### Added
