@@ -533,8 +533,21 @@ function BigScreenDuelView(): JSX.Element {
 // ─── Instruction Sidebar ──────────────────────────────────────────────────────
 
 /**
+ * Derive the active tactic for a side from their halftime action.
+ * If no tactic change was made at halftime, default to 'aggressive'.
+ *
+ * @param action - The halftime action (may be null)
+ * @returns The active tactic string
+ */
+function deriveTactic(action: { type: string; tactic?: string } | null): string {
+  if (action?.type === 'tactic' && action.tactic) return action.tactic;
+  return 'aggressive';
+}
+
+/**
  * InstructionSidebar — always-visible panel on the big screen.
- * Shows the card triangle rules, current possession, score, and half.
+ * Shows the card triangle rules, current possession, score, half,
+ * and current tactic for each side.
  *
  * @returns Sidebar element
  */
@@ -544,6 +557,18 @@ function InstructionSidebar(): JSX.Element {
   const scoreHome = useDerbyStore((s) => s.scoreHome);
   const scoreAway = useDerbyStore((s) => s.scoreAway);
   const half = useDerbyStore((s) => s.half);
+  const p1HalftimeAction = useDerbyStore((s) => s.p1HalftimeAction);
+  const p2HalftimeAction = useDerbyStore((s) => s.p2HalftimeAction);
+
+  const p1Tactic = deriveTactic(p1HalftimeAction);
+  const p2Tactic = deriveTactic(p2HalftimeAction);
+
+  /** Return the i18n description for a tactic (e.g. "Aggressive — +1 to Shot") */
+  function tacticDesc(tactic: string): string {
+    if (tactic === 'defensive') return t('help.tactic_defensive');
+    if (tactic === 'creative') return t('help.tactic_creative');
+    return t('help.tactic_aggressive');
+  }
 
   return (
     <aside
@@ -580,6 +605,27 @@ function InstructionSidebar(): JSX.Element {
           </div>
           <div className="text-[#F5F0E8]/70">
             {t('derby_match.duel_half', { half })}
+          </div>
+        </div>
+      </section>
+
+      {/* Tactics */}
+      <section data-testid="sidebar-tactics">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-[#F5F0E8]/40 mb-3">
+          {t('derby_match.tactics_title')}
+        </h3>
+        <div className="flex flex-col gap-2 text-sm">
+          <div>
+            <span className="text-[#F5F0E8]/50">{t('derby_match.p1_label')}: </span>
+            <span className="text-[#FFE600] font-bold" data-testid="sidebar-p1-tactic">
+              {tacticDesc(p1Tactic)}
+            </span>
+          </div>
+          <div>
+            <span className="text-[#F5F0E8]/50">{t('derby_match.p2_label')}: </span>
+            <span className="text-[#FFE600] font-bold" data-testid="sidebar-p2-tactic">
+              {tacticDesc(p2Tactic)}
+            </span>
           </div>
         </div>
       </section>

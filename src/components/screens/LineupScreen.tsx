@@ -153,14 +153,6 @@ export default function LineupScreen(): JSX.Element {
         </h1>
       </div>
 
-      {/* Composite counter */}
-      <div
-        data-testid="lineup-counter"
-        className="text-center text-sm font-bold text-[#FFE600]"
-      >
-        {t('lineup.counter', { outfield: outfield.length, gk: gk ? 1 : 0 })}
-      </div>
-
       {/* Trivia wrong penalty notice (home only) — informational, penalty already chosen */}
       {isHome && triviaResult === 'wrong' && (
         <div
@@ -221,20 +213,24 @@ export default function LineupScreen(): JSX.Element {
         </div>
       </section>
 
-      {/* Confirm button */}
-      <button
-        data-testid="confirm-lineup-btn"
-        onClick={confirmStep}
-        disabled={!canConfirm}
-        className={[
-          'w-full py-4 font-black text-lg uppercase tracking-widest rounded-xl transition-all',
-          canConfirm
-            ? 'bg-[#FFE600] text-[#1A1A1A] hover:bg-[#FFE600]/90 active:scale-95'
-            : 'bg-[#F5F0E8]/10 text-[#F5F0E8]/30 cursor-not-allowed',
-        ].join(' ')}
+      {/* Composite counter */}
+      <div
+        data-testid="lineup-counter"
+        className="text-center text-sm font-bold text-[#FFE600]"
       >
-        {t('lineup.confirm_lineup')}
-      </button>
+        {t('lineup.counter', { outfield: outfield.length, gk: gk ? 1 : 0 })}
+      </div>
+
+      {/* Confirm button — only rendered when lineup is complete */}
+      {canConfirm && (
+        <button
+          data-testid="confirm-lineup-btn"
+          onClick={confirmStep}
+          className="w-full py-4 font-black text-lg uppercase tracking-widest rounded-xl transition-all bg-[#FFE600] text-[#1A1A1A] hover:bg-[#FFE600]/90 active:scale-95"
+        >
+          {t('lineup.confirm_lineup')}
+        </button>
+      )}
     </div>
   );
 }

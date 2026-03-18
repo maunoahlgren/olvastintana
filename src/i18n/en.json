@@ -120,7 +120,7 @@
     "apply_penalty": "Apply -1 penalty to:",
     "penalty_info": "You answered wrong — pick one player to lose -1 to all stats.",
     "positions": "Positions",
-    "counter": "{{outfield}}/6 field players • {{gk}}/1 goalkeeper"
+    "counter": "{{outfield}}/6 field players + {{gk}}/1 goalkeeper selected"
   },
   "duel": {
     "duel_label": "Duel",
@@ -285,7 +285,8 @@
     "p1_label": "Home",
     "p2_label": "Away",
     "rules_title": "Rules",
-    "match_info_title": "Match Info"
+    "match_info_title": "Match Info",
+    "tactics_title": "Tactics"
   },
   "quit": {
     "btn": "← Home",

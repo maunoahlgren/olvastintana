@@ -120,7 +120,7 @@
     "apply_penalty": "Sovella -1 rangaistus:",
     "penalty_info": "Vastauksesi oli väärin — valitse pelaaja joka menettää tilastoja.",
     "positions": "Pelipaikat",
-    "counter": "{{outfield}}/6 kenttäpelaajaa • {{gk}}/1 maalivahti"
+    "counter": "{{outfield}}/6 kenttäpelaajaa + {{gk}}/1 maalivahti valittu"
   },
   "duel": {
     "duel_label": "Dueli",
@@ -285,7 +285,8 @@
     "p1_label": "Koti",
     "p2_label": "Vieras",
     "rules_title": "Pelisäännöt",
-    "match_info_title": "Ottelutiedot"
+    "match_info_title": "Ottelutiedot",
+    "tactics_title": "Taktiikka"
   },
   "quit": {
     "btn": "← Etusivu",

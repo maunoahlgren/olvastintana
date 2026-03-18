@@ -5,6 +5,17 @@ Format: `## [version] — date` with Added / Changed / Fixed sections.
 
 ---
 
+## [1.2.4] — 2026-03-18
+
+### Changed
+- **LineupScreen redesign** — Counter moved to bottom of screen; confirm button now only renders when exactly 6 outfield players + 1 GK are selected (previously always visible but disabled). Counter format updated to `{{outfield}}/6 + {{gk}}/1 valittu`.
+- **DerbyLineupScreen redesign** — Removed position filter tabs (All / Outfield / GK). Players are now split into two labelled sections: Goalkeeper (top) and Outfield Players (bottom). Counter at bottom. Confirm button only appears when lineup is complete.
+- **BigScreenDuelView InstructionSidebar** — Added permanent Tactics section showing the current active tactic for each side (Home / Away) with boost description (e.g. "Aggressive — +1 to Shot"). Tactic is derived from `p1HalftimeAction` / `p2HalftimeAction`; defaults to Aggressive when no halftime tactic change was made.
+- **i18n** — `lineup.counter` format updated in both `en.json` and `fi.json`; new `derby_match.tactics_title` key added in both languages.
+- **Total: 626 tests, all passing** (4 updated tests in `LineupScreen.test.tsx`, 3 updated + 1 new test in `DerbyLineupScreen.test.tsx`, 4 new tests in `DerbyDuelScreen.test.tsx`)
+
+---
+
 ## [1.2.3] — 2026-03-18
 
 ### Fixed

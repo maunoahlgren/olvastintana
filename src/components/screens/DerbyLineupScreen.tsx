@@ -41,9 +41,6 @@ interface Player {
   };
 }
 
-/** Position filter tabs */
-type PositionFilter = 'all' | 'outfield' | 'gk';
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
@@ -125,8 +122,10 @@ function PhonePickView({ playerKey, roomCode }: PhonePickViewProps): JSX.Element
   const { t } = useTranslation();
 
   const allPlayers = playersData as Player[];
+  const goalkeepers = allPlayers.filter((p) => p.position.includes('GK'));
+  const outfieldPlayers = allPlayers.filter((p) => !p.position.includes('GK'));
+
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [filter, setFilter] = useState<PositionFilter>('all');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -137,13 +136,6 @@ function PhonePickView({ playerKey, roomCode }: PhonePickViewProps): JSX.Element
     .filter((p) => selected.has(p.id) && p.position.includes('GK'))
     .length;
   const canSubmit = outfieldSelected === 6 && gkSelected === 1;
-
-  /** Filtered player list based on active position tab */
-  const filtered = allPlayers.filter((p) => {
-    if (filter === 'gk') return p.position.includes('GK');
-    if (filter === 'outfield') return !p.position.includes('GK');
-    return true;
-  });
 
   /**
    * Toggle a player in/out of the selection.
@@ -182,101 +174,76 @@ function PhonePickView({ playerKey, roomCode }: PhonePickViewProps): JSX.Element
     }
   }
 
-  const filterBtnClass = (f: PositionFilter) =>
-    `px-3 py-1 rounded text-sm font-medium transition-colors ${
-      filter === f
-        ? 'bg-[#FFE600] text-[#1A1A1A]'
-        : 'bg-[#2A2A2A] text-[#A0A0A0] hover:bg-[#333]'
-    }`;
+  /** Render a player card button for any section */
+  function renderPlayerBtn(player: Player): JSX.Element {
+    const sel = selected.has(player.id);
+    return (
+      <button
+        key={player.id}
+        data-testid={`player-card-${player.id}`}
+        onClick={() => togglePlayer(player)}
+        className={`p-2 rounded border text-left transition-colors ${
+          sel
+            ? 'border-[#FFE600] bg-[#FFE600]/10'
+            : 'border-[#333] bg-[#2A2A2A] hover:border-[#555]'
+        }`}
+      >
+        <div className="font-semibold text-sm">{player.name}</div>
+        <div className="text-xs text-[#A0A0A0] mt-1">
+          #{player.number} · ⚔{player.stats.riisto} 💨{player.stats.harhautus} 🎯{player.stats.laukaus}
+        </div>
+      </button>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#1A1A1A] text-[#F5F0E8] flex flex-col p-4" data-testid="derby-lineup-phone">
+    <div className="min-h-screen bg-[#1A1A1A] text-[#F5F0E8] flex flex-col p-4 gap-4" data-testid="derby-lineup-phone">
       {/* Header */}
-      <h1 className="text-xl font-bold text-[#FFE600] mb-1">
+      <h1 className="text-xl font-bold text-[#FFE600]">
         {t('derby_match.lineup_title')}
       </h1>
-      <p className="text-sm text-[#A0A0A0] mb-3">
-        {t('derby_match.lineup_select_outfield')} + {t('derby_match.lineup_select_gk')}
-      </p>
 
-      {/* Selection summary */}
-      <div className="flex gap-4 mb-3 text-sm">
-        <span className={outfieldSelected === 6 ? 'text-green-400' : 'text-[#A0A0A0]'}>
-          ⚽ {outfieldSelected}/6
-        </span>
-        <span className={gkSelected === 1 ? 'text-green-400' : 'text-[#A0A0A0]'}>
-          🧤 {gkSelected}/1
-        </span>
-      </div>
+      {/* Goalkeeper section */}
+      <section>
+        <div className="text-sm font-bold uppercase tracking-widest text-[#F5F0E8]/60 mb-2">
+          {t('lineup.goalkeeper')} ({gkSelected}/1)
+        </div>
+        <div data-testid="goalkeeper-grid" className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {goalkeepers.map(renderPlayerBtn)}
+        </div>
+      </section>
 
-      {/* Position filter */}
-      <div className="flex gap-2 mb-3">
-        <button className={filterBtnClass('all')} onClick={() => setFilter('all')} data-testid="filter-all">
-          All
-        </button>
-        <button className={filterBtnClass('outfield')} onClick={() => setFilter('outfield')} data-testid="filter-outfield">
-          Outfield
-        </button>
-        <button className={filterBtnClass('gk')} onClick={() => setFilter('gk')} data-testid="filter-gk">
-          GK
-        </button>
-      </div>
-
-      {/* Player grid */}
-      <div className="flex-1 overflow-y-auto grid grid-cols-2 gap-2 mb-4" data-testid="player-grid">
-        {filtered.map((player) => {
-          const isGk = player.position.includes('GK');
-          const sel = selected.has(player.id);
-          return (
-            <button
-              key={player.id}
-              data-testid={`player-card-${player.id}`}
-              onClick={() => togglePlayer(player)}
-              className={`p-2 rounded border text-left transition-colors ${
-                sel
-                  ? 'border-[#FFE600] bg-[#FFE600]/10'
-                  : 'border-[#333] bg-[#2A2A2A] hover:border-[#555]'
-              }`}
-            >
-              <div className="flex justify-between items-start">
-                <span className="font-semibold text-sm">{player.name}</span>
-                {isGk && (
-                  <span className="text-xs bg-[#FF8844] text-white px-1 rounded">
-                    {t('derby_match.lineup_gk_label')}
-                  </span>
-                )}
-              </div>
-              <div className="text-xs text-[#A0A0A0] mt-1">
-                #{player.number} · ⚔{player.stats.riisto} 💨{player.stats.harhautus} 🎯{player.stats.laukaus}
-              </div>
-            </button>
-          );
-        })}
-      </div>
+      {/* Outfield section */}
+      <section>
+        <div className="text-sm font-bold uppercase tracking-widest text-[#F5F0E8]/60 mb-2">
+          {t('lineup.outfield')} ({outfieldSelected}/6)
+        </div>
+        <div data-testid="outfield-grid" className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {outfieldPlayers.map(renderPlayerBtn)}
+        </div>
+      </section>
 
       {/* Error */}
       {error && (
-        <p className="text-red-400 text-sm mb-2">{error}</p>
+        <p className="text-red-400 text-sm">{error}</p>
       )}
 
-      {/* Validation hint */}
-      {!canSubmit && (
-        <p className="text-[#A0A0A0] text-xs mb-2">{t('derby_match.lineup_invalid')}</p>
-      )}
+      {/* Counter — shown always at the bottom */}
+      <div data-testid="lineup-counter" className="text-center text-sm font-bold text-[#FFE600]">
+        {t('lineup.counter', { outfield: outfieldSelected, gk: gkSelected })}
+      </div>
 
-      {/* Submit button */}
-      <button
-        data-testid="confirm-lineup-btn"
-        onClick={handleSubmit}
-        disabled={!canSubmit || submitting}
-        className={`w-full py-3 rounded font-bold text-[#1A1A1A] transition-colors ${
-          canSubmit && !submitting
-            ? 'bg-[#FFE600] hover:bg-[#FFD000]'
-            : 'bg-[#555] text-[#888] cursor-not-allowed'
-        }`}
-      >
-        {submitting ? '...' : t('derby_match.lineup_confirm')}
-      </button>
+      {/* Submit button — only rendered when lineup is complete */}
+      {canSubmit && (
+        <button
+          data-testid="confirm-lineup-btn"
+          onClick={handleSubmit}
+          disabled={submitting}
+          className="w-full py-3 rounded font-bold text-[#1A1A1A] bg-[#FFE600] hover:bg-[#FFD000] active:scale-95 transition-all"
+        >
+          {submitting ? '...' : t('derby_match.lineup_confirm')}
+        </button>
+      )}
     </div>
   );
 }

@@ -60,15 +60,15 @@ describe('LineupScreen', () => {
     expect(screen.getByTestId(`player-card-${gkPlayer.id}`)).toBeInTheDocument();
   });
 
-  it('confirm button is disabled before full lineup is selected', () => {
+  it('confirm button is not rendered before full lineup is selected', () => {
     renderWithProviders(<LineupScreen />);
-    expect(screen.getByTestId('confirm-lineup-btn')).toBeDisabled();
+    expect(screen.queryByTestId('confirm-lineup-btn')).not.toBeInTheDocument();
   });
 
-  it('confirm button enabled when 6 outfield + 1 GK selected', () => {
+  it('confirm button appears when 6 outfield + 1 GK selected', () => {
     renderWithProviders(<LineupScreen />);
     selectFullLineup();
-    expect(screen.getByTestId('confirm-lineup-btn')).not.toBeDisabled();
+    expect(screen.getByTestId('confirm-lineup-btn')).toBeInTheDocument();
   });
 
   it('home confirming advances to away lineup step', () => {
@@ -108,11 +108,11 @@ describe('LineupScreen', () => {
     expect(screen.queryByTestId('trivia-penalty-notice')).not.toBeInTheDocument();
   });
 
-  it('confirm button is enabled with just 6 outfield + 1 GK (no penalty selection required)', () => {
+  it('confirm button appears with just 6 outfield + 1 GK (no penalty selection required)', () => {
     useMatchStore.getState().triviaWrong();
     renderWithProviders(<LineupScreen />);
     selectFullLineup();
-    expect(screen.getByTestId('confirm-lineup-btn')).not.toBeDisabled();
+    expect(screen.getByTestId('confirm-lineup-btn')).toBeInTheDocument();
   });
 
   it('applies trivia penalty to the player stored in matchStore on lineup confirm', () => {

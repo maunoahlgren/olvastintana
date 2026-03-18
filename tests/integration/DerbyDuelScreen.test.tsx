@@ -227,4 +227,25 @@ describe('DerbyDuelScreen — instruction sidebar', () => {
     const sidebar = screen.getByTestId('instruction-sidebar');
     expect(sidebar).toHaveTextContent('Half 1');
   });
+
+  it('sidebar shows tactics section', () => {
+    renderWithProviders(<DerbyDuelScreen />);
+    expect(screen.getByTestId('sidebar-tactics')).toBeInTheDocument();
+  });
+
+  it('sidebar defaults to aggressive tactic for both sides', () => {
+    renderWithProviders(<DerbyDuelScreen />);
+    expect(screen.getByTestId('sidebar-p1-tactic')).toHaveTextContent('Aggressive');
+    expect(screen.getByTestId('sidebar-p2-tactic')).toHaveTextContent('Aggressive');
+  });
+
+  it('sidebar shows changed tactic when p1 switched at halftime', () => {
+    useDerbyStore.getState().setFromFirebase({
+      ...duelSnap,
+      p1HalftimeAction: { type: 'tactic', tactic: 'defensive' },
+    });
+    renderWithProviders(<DerbyDuelScreen />);
+    expect(screen.getByTestId('sidebar-p1-tactic')).toHaveTextContent('Defensive');
+    expect(screen.getByTestId('sidebar-p2-tactic')).toHaveTextContent('Aggressive');
+  });
 });

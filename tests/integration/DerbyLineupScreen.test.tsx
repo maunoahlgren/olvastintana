@@ -44,21 +44,24 @@ describe('DerbyLineupScreen — phone view (host)', () => {
     expect(screen.getByTestId('derby-lineup-phone')).toBeInTheDocument();
   });
 
-  it('confirm button is disabled when no players selected', () => {
+  it('confirm button is not rendered when no players selected', () => {
     renderWithProviders(<DerbyLineupScreen />);
-    expect(screen.getByTestId('confirm-lineup-btn')).toBeDisabled();
+    expect(screen.queryByTestId('confirm-lineup-btn')).not.toBeInTheDocument();
   });
 
-  it('shows position filter buttons', () => {
+  it('shows goalkeeper-grid section', () => {
     renderWithProviders(<DerbyLineupScreen />);
-    expect(screen.getByTestId('filter-all')).toBeInTheDocument();
-    expect(screen.getByTestId('filter-outfield')).toBeInTheDocument();
-    expect(screen.getByTestId('filter-gk')).toBeInTheDocument();
+    expect(screen.getByTestId('goalkeeper-grid')).toBeInTheDocument();
   });
 
-  it('shows player grid', () => {
+  it('shows outfield-grid section', () => {
     renderWithProviders(<DerbyLineupScreen />);
-    expect(screen.getByTestId('player-grid')).toBeInTheDocument();
+    expect(screen.getByTestId('outfield-grid')).toBeInTheDocument();
+  });
+
+  it('shows lineup counter', () => {
+    renderWithProviders(<DerbyLineupScreen />);
+    expect(screen.getByTestId('lineup-counter')).toBeInTheDocument();
   });
 
   it('shows the submitted view after lineup is ready', () => {
