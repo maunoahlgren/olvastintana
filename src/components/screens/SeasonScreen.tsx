@@ -16,6 +16,7 @@
 import { useTranslation } from 'react-i18next';
 import { useMatchStore } from '../../store/matchStore';
 import { useSeasonStore } from '../../store/seasonStore';
+import QuitMatchButton from '../ui/QuitMatchButton';
 import type { Fixture } from '../../engine/season';
 
 // ---------------------------------------------------------------------------
@@ -149,9 +150,12 @@ export default function SeasonScreen(): JSX.Element {
     >
       {/* Header */}
       <div className="w-full max-w-md flex items-center justify-between">
-        <h1 className="text-2xl font-black tracking-tight text-[#FFE600]">
-          {t('season.title')}
-        </h1>
+        <div className="flex items-center gap-3">
+          <QuitMatchButton />
+          <h1 className="text-2xl font-black tracking-tight text-[#FFE600]">
+            {t('season.title')}
+          </h1>
+        </div>
         <div
           data-testid="season-points-total"
           className="flex flex-col items-end"

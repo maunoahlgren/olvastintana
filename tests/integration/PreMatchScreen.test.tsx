@@ -138,6 +138,20 @@ describe('PreMatchScreen', () => {
     expect(screen.getByTestId('prematch-flavour')).toBeInTheDocument();
   });
 
+  // ── Quit button ───────────────────────────────────────────────────────────
+
+  it('renders the quit match button', () => {
+    setCurrentFixture(makeFixture('normal', 'Test FC'));
+    renderWithProviders(<PreMatchScreen />);
+    expect(screen.getByTestId('quit-match-btn')).toBeInTheDocument();
+  });
+
+  it('shows quit button even when fixture is missing (loading guard state)', () => {
+    // No fixture set — renders the loading guard
+    renderWithProviders(<PreMatchScreen />);
+    expect(screen.getByTestId('quit-match-btn')).toBeInTheDocument();
+  });
+
   // ── Kick Off navigation ───────────────────────────────────────────────────
 
   it('clicking Kick Off sets phase to TRIVIA', () => {

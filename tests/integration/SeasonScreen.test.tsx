@@ -113,6 +113,23 @@ describe('SeasonScreen', () => {
     expect(screen.getByTestId('season-points-total')).toHaveTextContent('4');
   });
 
+  // ── Quit button ───────────────────────────────────────────────────────────
+
+  it('renders the quit match button', () => {
+    initSeason();
+    renderWithProviders(<SeasonScreen />);
+    expect(screen.getByTestId('quit-match-btn')).toBeInTheDocument();
+  });
+
+  it('clicking quit resets phase to TITLE', () => {
+    initSeason();
+    renderWithProviders(<SeasonScreen />);
+    fireEvent.click(screen.getByTestId('quit-match-btn'));
+    // QuitMatchButton shows a confirm dialog — click confirm
+    fireEvent.click(screen.getByTestId('quit-confirm-btn'));
+    expect(useMatchStore.getState().phase).toBe(MATCH_PHASE.TITLE);
+  });
+
   // ── Navigation ────────────────────────────────────────────────────────────
 
   it('clicking Play Next Match sets phase to PREMATCH', () => {

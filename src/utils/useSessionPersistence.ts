@@ -34,6 +34,7 @@
 import { useEffect } from 'react';
 import { useMatchStore } from '../store/matchStore';
 import { useRoomStore } from '../store/roomStore';
+import { useSeasonStore } from '../store/seasonStore';
 import { MATCH_PHASE } from '../engine/match';
 import type { RoomRole } from '../store/roomStore';
 
@@ -132,8 +133,20 @@ export function useSessionPersistence(): void {
         }
         useMatchStore.getState().setDerbyPhase(session.phase);
       } else if (session.phase !== MATCH_PHASE.TITLE) {
-        // Restore solo phase (match state is lost but screen is shown)
-        useMatchStore.getState().setDerbyPhase(session.phase);
+        // Restore solo phase (match state is lost but screen is shown).
+        // Special case: PREMATCH requires a live fixture from seasonStore — if
+        // the user navigated away (browser back / tab close) the memory-only
+        // seasonStore is empty and getCurrentFixture() returns null, which
+        // renders a stuck "Loading..." screen.  Fall back to SEASON instead so
+        // the user lands on the season hub and can click "Play Next Match".
+        if (
+          session.phase === MATCH_PHASE.PREMATCH &&
+          useSeasonStore.getState().getCurrentFixture() === null
+        ) {
+          useMatchStore.getState().setDerbyPhase(MATCH_PHASE.SEASON);
+        } else {
+          useMatchStore.getState().setDerbyPhase(session.phase);
+        }
       }
       // TITLE phase → do nothing (default state is already TITLE)
     } catch {

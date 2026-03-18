@@ -5,6 +5,15 @@ Format: `## [version] — date` with Added / Changed / Fixed sections.
 
 ---
 
+## [1.2.1] — 2026-03-18
+
+### Fixed
+- **No quit button on SeasonScreen / PreMatchScreen** — `QuitMatchButton` added to both screens. On `SeasonScreen` it sits inline in the header row beside the title. On `PreMatchScreen` it is positioned `absolute top-4 left-4` over the centred content. The loading-guard fallback in `PreMatchScreen` also shows the quit button.
+- **Browser-back → "Loading..." stuck on PREMATCH** — `useSessionPersistence` now detects when restoring a `PREMATCH` session with an empty `seasonStore` (memory-only; lost after navigation-away) and falls back to `MATCH_PHASE.SEASON` instead. The player lands on the season hub and can click "Play Next Match" to continue their season — no more stuck loading screen.
+- **Total: 609 tests, all passing** (6 new tests across `useSessionPersistence`, `SeasonScreen`, and `PreMatchScreen` suites)
+
+---
+
 ## [1.2.0] — 2026-03-18
 
 ### Added

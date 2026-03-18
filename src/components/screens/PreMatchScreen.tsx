@@ -23,6 +23,7 @@ import { useTranslation } from 'react-i18next';
 import { useMatchStore } from '../../store/matchStore';
 import { useSeasonStore } from '../../store/seasonStore';
 import { useSessionStore, type AiDifficulty } from '../../store/sessionStore';
+import QuitMatchButton from '../ui/QuitMatchButton';
 import type { OpponentTier } from '../../engine/season';
 import flavourData from '../../data/flavour_texts.json';
 
@@ -95,13 +96,18 @@ export default function PreMatchScreen(): JSX.Element {
     beginSoloMatch();
   }
 
-  // Guard: no fixture available (shouldn't happen in normal flow)
+  // Guard: no fixture available — can happen if sessionStore is empty after
+  // browser-back. The restore hook now redirects to SEASON in this case, so
+  // this guard is a final safety net only.
   if (!fixture) {
     return (
       <div
         data-testid="prematch-screen"
-        className="min-h-screen bg-[#1A1A1A] text-[#F5F0E8] flex items-center justify-center"
+        className="relative min-h-screen bg-[#1A1A1A] text-[#F5F0E8] flex items-center justify-center"
       >
+        <div className="absolute top-4 left-4">
+          <QuitMatchButton />
+        </div>
         <span className="text-[#F5F0E8]/40">Loading...</span>
       </div>
     );
@@ -114,8 +120,13 @@ export default function PreMatchScreen(): JSX.Element {
   return (
     <div
       data-testid="prematch-screen"
-      className="min-h-screen bg-[#1A1A1A] text-[#F5F0E8] flex flex-col items-center justify-center px-6 gap-8"
+      className="relative min-h-screen bg-[#1A1A1A] text-[#F5F0E8] flex flex-col items-center justify-center px-6 gap-8"
     >
+      {/* Quit button */}
+      <div className="absolute top-4 left-4">
+        <QuitMatchButton />
+      </div>
+
       {/* Match header: Home vs Away */}
       <div className="w-full max-w-sm flex flex-col items-center gap-2">
         <div className="flex items-center gap-4 text-center">

@@ -21,6 +21,7 @@ import { renderHook, act } from '@testing-library/react';
 import { useSessionPersistence } from '../../../src/utils/useSessionPersistence';
 import { useMatchStore } from '../../../src/store/matchStore';
 import { useRoomStore } from '../../../src/store/roomStore';
+import { useSeasonStore } from '../../../src/store/seasonStore';
 import { MATCH_PHASE } from '../../../src/engine/match';
 
 const STORAGE_KEY = 'ot_session';
@@ -46,6 +47,7 @@ beforeEach(() => {
   localStorageMock.clear();
   useMatchStore.getState().reset();
   useRoomStore.getState().reset();
+  useSeasonStore.getState().reset();
 });
 
 // ─── Save behaviour ───────────────────────────────────────────────────────────
@@ -223,6 +225,61 @@ describe('useSessionPersistence — Derby session expiry', () => {
 
     expect(useMatchStore.getState().phase).toBe(MATCH_PHASE.TITLE);
     expect(localStorageMock.removeItem).toHaveBeenCalledWith(STORAGE_KEY);
+  });
+});
+
+// ─── PREMATCH safety guard ─────────────────────────────────────────────────────
+
+describe('useSessionPersistence — PREMATCH safety guard', () => {
+  it('falls back to SEASON when restoring PREMATCH with no fixture (empty seasonStore)', () => {
+    // Simulate browser-back: session saved as PREMATCH but seasonStore is empty
+    localStorageMock.getItem.mockReturnValue(JSON.stringify({
+      phase: MATCH_PHASE.PREMATCH,
+      roomCode: null,
+      role: null,
+      myManagerId: null,
+    }));
+    // seasonStore is already reset in beforeEach — getCurrentFixture returns null
+
+    renderHook(() => useSessionPersistence());
+
+    // Should restore to SEASON, not PREMATCH (avoids stuck "Loading..." screen)
+    expect(useMatchStore.getState().phase).toBe(MATCH_PHASE.SEASON);
+  });
+
+  it('restores PREMATCH normally when seasonStore has a current fixture', () => {
+    // Pre-populate seasonStore with a fixture so getCurrentFixture is non-null
+    useSeasonStore.setState({
+      fixtures: [{
+        matchNumber: 1,
+        opponent: {
+          id: 'test_opp',
+          name: 'Test FC',
+          tier: 'normal',
+          strength_score: 50,
+          seasons: 2,
+          titles: 0,
+          record: { w: 10, d: 5, l: 8 },
+          goals: { for: 30, against: 25 },
+          ppg: 1.2,
+          win_rate: 0.43,
+        },
+        result: null,
+      }],
+      currentFixtureIndex: 0,
+    });
+
+    localStorageMock.getItem.mockReturnValue(JSON.stringify({
+      phase: MATCH_PHASE.PREMATCH,
+      roomCode: null,
+      role: null,
+      myManagerId: null,
+    }));
+
+    renderHook(() => useSessionPersistence());
+
+    // Fixture is available — PREMATCH should restore as-is
+    expect(useMatchStore.getState().phase).toBe(MATCH_PHASE.PREMATCH);
   });
 });
 
