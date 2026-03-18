@@ -709,7 +709,7 @@ export default function DuelScreen(): JSX.Element {
 
     <div
       data-testid="duel-screen"
-      className="min-h-screen bg-[#1A1A1A] text-[#F5F0E8] flex flex-col items-center px-4 py-6 gap-6"
+      className="min-h-screen bg-[#1A1A1A] text-[#F5F0E8] flex flex-col items-center px-4 py-6 gap-6 max-w-lg mx-auto"
     >
       {/* Top-left controls: help ? + quit */}
       <div className="fixed top-3 left-3 z-40 flex items-center gap-2">
@@ -744,7 +744,7 @@ export default function DuelScreen(): JSX.Element {
       {(attackerSlot || defenderSlot) && (
         <div
           data-testid="active-players-row"
-          className="flex gap-3 w-full max-w-sm"
+          className="flex gap-3 w-full"
         >
           <div
             data-testid="attacker-player-card-wrapper"
@@ -791,7 +791,7 @@ export default function DuelScreen(): JSX.Element {
 
       {/* ─── Two-player: Attacker picks ─── */}
       {uiPhase === 'attacker_pick' && (
-        <div className="flex flex-col items-center gap-4 w-full max-w-sm">
+        <div className="flex flex-col items-center gap-4 w-full">
           <p
             data-testid="attacker-pick-prompt"
             className="text-lg font-bold text-[#F5F0E8]"
@@ -820,7 +820,7 @@ export default function DuelScreen(): JSX.Element {
 
       {/* ─── Two-player: Cover screen ─── */}
       {uiPhase === 'cover' && (
-        <div className="flex flex-col items-center gap-6 text-center max-w-sm">
+        <div className="flex flex-col items-center gap-6 text-center">
           <p className="text-base font-bold text-[#F5F0E8]/70">
             {t('duel.pass_device')} {defenderName}
           </p>
@@ -836,7 +836,7 @@ export default function DuelScreen(): JSX.Element {
 
       {/* ─── Two-player: Defender picks ─── */}
       {uiPhase === 'defender_pick' && (
-        <div className="flex flex-col items-center gap-4 w-full max-w-sm">
+        <div className="flex flex-col items-center gap-4 w-full">
           <p
             data-testid="defender-pick-prompt"
             className="text-lg font-bold text-[#F5F0E8]"
@@ -865,7 +865,7 @@ export default function DuelScreen(): JSX.Element {
 
       {/* ─── AI mode: Human picks (attacker or defender) ─── */}
       {uiPhase === 'human_pick' && (
-        <div className="flex flex-col items-center gap-4 w-full max-w-sm">
+        <div className="flex flex-col items-center gap-4 w-full">
           <p
             data-testid="attacker-pick-prompt"
             className="text-lg font-bold text-[#F5F0E8]"
@@ -904,7 +904,7 @@ export default function DuelScreen(): JSX.Element {
       {uiPhase === 'reactive_check' && reactiveInfo && (
         <div
           data-testid="reactive-check-panel"
-          className="flex flex-col items-center gap-6 text-center max-w-sm w-full"
+          className="flex flex-col items-center gap-6 text-center w-full"
         >
           {/* Opponent card reveal */}
           <div className="text-xs uppercase tracking-widest text-[#F5F0E8]/40">
@@ -951,7 +951,7 @@ export default function DuelScreen(): JSX.Element {
       {uiPhase === 'show_result' && duelResult && (
         <div
           data-testid="duel-result-panel"
-          className="flex flex-col items-center gap-4 text-center max-w-sm"
+          className="flex flex-col items-center gap-4 text-center"
         >
           {/* Goal attempt banner — shown before the goal/save result */}
           {duelResult.goalAttempt && (
