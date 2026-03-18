@@ -67,6 +67,7 @@ import CardButton from '../ui/CardButton';
 import ScoreBoard from '../ui/ScoreBoard';
 import HelpModal from '../ui/HelpModal';
 import QuitMatchButton from '../ui/QuitMatchButton';
+import PlayerCard from '../ui/PlayerCard';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -110,6 +111,10 @@ interface DuelResult {
   triviaBoostUsed: boolean;
   /** All ability notifications to display in the result panel */
   triggeredAbilities: AbilityNotification[];
+  /** Player name of the goal scorer (null if no goal) */
+  scorerName: string | null;
+  /** Goalkeeper name when a save was made (null if no save or goal scored) */
+  keeperName: string | null;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -478,11 +483,14 @@ export default function DuelScreen(): JSX.Element {
 
     const finalGoalAttempt = autoGoal || normalGoalAttempt || ninjaGoal;
     let goalScored = false;
+    let scorerName: string | null = null;
+    let keeperName: string | null = null;
     const notifications: AbilityNotification[] = [];
 
     if (autoGoal) {
       // Matigol: skip goalkeeper entirely
       goalScored = true;
+      scorerName = winnerPlayerName;
       scoreGoal(winnerSide!);
       notifications.push({
         playerName: winnerPlayerName,
@@ -494,6 +502,13 @@ export default function DuelScreen(): JSX.Element {
       const shooterStats = isNinjaAttempt ? defenderStats : attackerStats;
       const targetKeeperStats = isNinjaAttempt ? attackerKeeperStats : keeperStats;
       const scoringSide: Side = isNinjaAttempt ? defenderSide : attackerSide;
+
+      const potentialScorerName = isNinjaAttempt
+        ? (defenderSlot?.player.name ?? '')
+        : (attackerSlot?.player.name ?? '');
+      const targetKeeperName = isNinjaAttempt
+        ? (attackerGoalkeeperSlot?.player.name ?? '')
+        : (goalkeeperSlot?.player.name ?? '');
 
       if (isNinjaAttempt) {
         notifications.push({
@@ -513,8 +528,10 @@ export default function DuelScreen(): JSX.Element {
         if (keeperHasBrickWall) {
           setBrickWall({ usedThisHalf: true });
         }
+        keeperName = targetKeeperName;
       } else {
         goalScored = true;
+        scorerName = potentialScorerName;
         scoreGoal(scoringSide);
       }
     }
@@ -535,6 +552,8 @@ export default function DuelScreen(): JSX.Element {
       goalScored,
       triviaBoostUsed,
       triggeredAbilities: notifications,
+      scorerName,
+      keeperName,
     });
     setUiPhase('show_result');
   }
@@ -721,6 +740,45 @@ export default function DuelScreen(): JSX.Element {
         {attackerSide === 'home' ? t('possession.home_attack') : t('possession.away_attack')}
       </div>
 
+      {/* Active player cards — always visible */}
+      {(attackerSlot || defenderSlot) && (
+        <div
+          data-testid="active-players-row"
+          className="flex gap-3 w-full max-w-sm"
+        >
+          <div
+            data-testid="attacker-player-card-wrapper"
+            className="flex-1 flex flex-col gap-1"
+          >
+            <span className="text-xs font-black text-[#FFE600] text-center uppercase tracking-widest">
+              {t('duel.attacker_badge')}
+            </span>
+            {attackerSlot && (
+              <PlayerCard
+                player={attackerSlot.player}
+                statModifier={attackerSlot.statModifier}
+                showAbility
+              />
+            )}
+          </div>
+          <div
+            data-testid="defender-player-card-wrapper"
+            className="flex-1 flex flex-col gap-1"
+          >
+            <span className="text-xs font-black text-[#F5F0E8]/40 text-center uppercase tracking-widest">
+              {t('duel.defender_badge')}
+            </span>
+            {defenderSlot && (
+              <PlayerCard
+                player={defenderSlot.player}
+                statModifier={defenderSlot.statModifier}
+                showAbility
+              />
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Trivia boost banner */}
       {triviaBoostActive && (
         <div
@@ -895,13 +953,52 @@ export default function DuelScreen(): JSX.Element {
           data-testid="duel-result-panel"
           className="flex flex-col items-center gap-4 text-center max-w-sm"
         >
-          {duelResult.goalAttempt ? (
+          {/* Goal attempt banner — shown before the goal/save result */}
+          {duelResult.goalAttempt && (
             <div
-              data-testid={duelResult.goalScored ? 'goal-result' : 'saved-result'}
-              className={`text-4xl font-black ${duelResult.goalScored ? 'text-[#FFE600]' : 'text-[#F5F0E8]/60'}`}
+              data-testid="goal-attempt-banner"
+              className="text-2xl font-black text-[#FFE600] tracking-widest"
             >
-              {duelResult.goalScored ? t('duel.goal_scored') : t('duel.shot_saved')}
+              {t('duel.goal_attempt')}
             </div>
+          )}
+
+          {duelResult.goalAttempt ? (
+            duelResult.goalScored ? (
+              <div
+                data-testid="goal-result"
+                className="flex flex-col items-center gap-1"
+              >
+                <span className="text-4xl font-black text-[#FFE600]">
+                  {t('duel.goal_scored_by')}
+                </span>
+                {duelResult.scorerName && (
+                  <span
+                    data-testid="goal-scorer-name"
+                    className="text-lg font-bold text-[#FFE600]/80"
+                  >
+                    {duelResult.scorerName}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div
+                data-testid="saved-result"
+                className="flex flex-col items-center gap-1"
+              >
+                <span className="text-3xl font-black text-[#F5F0E8]/60">
+                  {t('duel.shot_saved_by')}
+                </span>
+                {duelResult.keeperName && (
+                  <span
+                    data-testid="saved-keeper-name"
+                    className="text-base font-bold text-[#A0A0A0]"
+                  >
+                    {duelResult.keeperName}
+                  </span>
+                )}
+              </div>
+            )
           ) : (
             <div
               data-testid="duel-outcome-text"
@@ -910,9 +1007,9 @@ export default function DuelScreen(): JSX.Element {
               {duelResult.triviaBoostUsed
                 ? t('duel.trivia_boost_active')
                 : duelResult.winner === 'attacker'
-                  ? t('duel.attacker_wins')
+                  ? t('duel.got_ball')
                   : duelResult.winner === 'defender'
-                    ? t('duel.defender_wins')
+                    ? t('duel.defended_ball')
                     : t('duel.draw_result')}
             </div>
           )}

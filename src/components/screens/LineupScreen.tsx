@@ -154,6 +154,14 @@ export default function LineupScreen(): JSX.Element {
         </h1>
       </div>
 
+      {/* Composite counter */}
+      <div
+        data-testid="lineup-counter"
+        className="text-center text-sm font-bold text-[#FFE600]"
+      >
+        {t('lineup.counter', { outfield: outfield.length, gk: gk ? 1 : 0 })}
+      </div>
+
       {/* Trivia wrong penalty notice (home only) */}
       {homeNeedsPenalty && (
         <div
@@ -164,6 +172,28 @@ export default function LineupScreen(): JSX.Element {
         </div>
       )}
 
+      {/* Goalkeeper section */}
+      <section>
+        <div className="text-sm font-bold uppercase tracking-widest text-[#F5F0E8]/60 mb-3">
+          {t('lineup.goalkeeper')} ({gk ? '1' : '0'}/1)
+        </div>
+        <div data-testid="goalkeeper-grid" className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {GOALKEEPERS.map((player) => (
+            <div
+              key={player.id}
+              className={gkComplete && gk?.id !== player.id ? 'opacity-50' : ''}
+            >
+              <PlayerCard
+                player={player}
+                selected={gk?.id === player.id}
+                onSelect={() => toggleGk(player)}
+                showAbility={false}
+              />
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Outfield section */}
       <section>
         <div className="text-sm font-bold uppercase tracking-widest text-[#F5F0E8]/60 mb-3">
@@ -171,14 +201,17 @@ export default function LineupScreen(): JSX.Element {
         </div>
         <div
           data-testid="outfield-grid"
-          className="grid grid-cols-2 gap-3"
+          className="grid grid-cols-2 sm:grid-cols-3 gap-3"
         >
           {OUTFIELD.map((player) => {
             const isSelected = outfield.some((p) => p.id === player.id);
             const isPenaltyTarget = homeNeedsPenalty && homePenaltyPlayer?.id === player.id;
 
             return (
-              <div key={player.id} className="relative">
+              <div
+                key={player.id}
+                className={`relative ${outfieldComplete && !isSelected ? 'opacity-50' : ''}`}
+              >
                 <PlayerCard
                   player={player}
                   selected={isSelected}
@@ -205,24 +238,6 @@ export default function LineupScreen(): JSX.Element {
               </div>
             );
           })}
-        </div>
-      </section>
-
-      {/* Goalkeeper section */}
-      <section>
-        <div className="text-sm font-bold uppercase tracking-widest text-[#F5F0E8]/60 mb-3">
-          {t('lineup.goalkeeper')} ({gk ? '1' : '0'}/1)
-        </div>
-        <div data-testid="goalkeeper-grid" className="grid grid-cols-2 gap-3">
-          {GOALKEEPERS.map((player) => (
-            <PlayerCard
-              key={player.id}
-              player={player}
-              selected={gk?.id === player.id}
-              onSelect={() => toggleGk(player)}
-              showAbility={false}
-            />
-          ))}
         </div>
       </section>
 

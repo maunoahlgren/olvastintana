@@ -119,7 +119,8 @@
     "goalkeeper": "Maalivahti",
     "apply_penalty": "Sovella -1 rangaistus:",
     "penalty_info": "Vastauksesi oli väärin — valitse pelaaja joka menettää tilastoja.",
-    "positions": "Pelipaikat"
+    "positions": "Pelipaikat",
+    "counter": "{{outfield}}/6 kenttäpelaajaa • {{gk}}/1 maalivahti"
   },
   "duel": {
     "duel_label": "Dueli",
@@ -139,7 +140,14 @@
     "possession_label": "Hallinta",
     "home_team": "Koti",
     "away_team": "Vieras",
-    "continue": "Jatka"
+    "continue": "Jatka",
+    "got_ball": "Sait pallon ⚽",
+    "defended_ball": "Puolustit pallon 🛡️",
+    "goal_attempt": "MAALIYRITYS! 🎯",
+    "goal_scored_by": "MAALI! 🟡",
+    "shot_saved_by": "TORJUTTU! 🧤",
+    "attacker_badge": "Hyökkää ⚽",
+    "defender_badge": "Puolustaa 🛡️"
   },
   "halftime": {
     "title": "Puoliaika",
@@ -275,7 +283,9 @@
     "home_team": "Koti",
     "away_team": "Vieras",
     "p1_label": "Koti",
-    "p2_label": "Vieras"
+    "p2_label": "Vieras",
+    "rules_title": "Pelisäännöt",
+    "match_info_title": "Ottelutiedot"
   },
   "quit": {
     "btn": "← Etusivu",

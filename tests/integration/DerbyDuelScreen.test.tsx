@@ -167,3 +167,63 @@ describe('DerbyDuelScreen — result view (duel_result phase)', () => {
     expect(screen.getByTestId('score-badge')).toBeInTheDocument();
   });
 });
+
+// ─── Big screen — player cards ────────────────────────────────────────────────
+
+describe('DerbyDuelScreen — big screen player cards', () => {
+  beforeEach(() => {
+    useRoomStore.getState().setRoom('TEST', 'spectator', '');
+  });
+
+  it('renders bigscreen-player-cards when lineups are set', () => {
+    renderWithProviders(<DerbyDuelScreen />);
+    expect(screen.getByTestId('bigscreen-player-cards')).toBeInTheDocument();
+  });
+
+  it('shows p1 player name on big screen', () => {
+    renderWithProviders(<DerbyDuelScreen />);
+    // p1Lineup[0] is 'olli_mehtonen' — player name "Olli Mehtonen"
+    const cards = screen.getByTestId('bigscreen-player-cards');
+    expect(cards.querySelector('[data-testid="player-name-olli_mehtonen"]')).toBeInTheDocument();
+  });
+});
+
+// ─── Big screen — instruction sidebar ─────────────────────────────────────────
+
+describe('DerbyDuelScreen — instruction sidebar', () => {
+  beforeEach(() => {
+    useRoomStore.getState().setRoom('TEST', 'spectator', '');
+  });
+
+  it('renders instruction sidebar on big screen', () => {
+    renderWithProviders(<DerbyDuelScreen />);
+    expect(screen.getByTestId('instruction-sidebar')).toBeInTheDocument();
+  });
+
+  it('sidebar contains card triangle rules', () => {
+    renderWithProviders(<DerbyDuelScreen />);
+    const sidebar = screen.getByTestId('instruction-sidebar');
+    expect(sidebar).toHaveTextContent('Press beats Feint');
+    expect(sidebar).toHaveTextContent('Feint beats Shot');
+    expect(sidebar).toHaveTextContent('Shot beats Press');
+  });
+
+  it('sidebar shows current possession', () => {
+    renderWithProviders(<DerbyDuelScreen />);
+    const sidebar = screen.getByTestId('instruction-sidebar');
+    // p1 has possession in duelSnap (setup above)
+    expect(sidebar).toHaveTextContent('Home');
+  });
+
+  it('sidebar shows current score', () => {
+    renderWithProviders(<DerbyDuelScreen />);
+    const sidebar = screen.getByTestId('instruction-sidebar');
+    expect(sidebar).toHaveTextContent('0 – 0');
+  });
+
+  it('sidebar shows current half', () => {
+    renderWithProviders(<DerbyDuelScreen />);
+    const sidebar = screen.getByTestId('instruction-sidebar');
+    expect(sidebar).toHaveTextContent('Half 1');
+  });
+});

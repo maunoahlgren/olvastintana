@@ -119,7 +119,8 @@
     "goalkeeper": "Goalkeeper",
     "apply_penalty": "Apply -1 penalty to:",
     "penalty_info": "You answered wrong — pick one player to lose -1 to all stats.",
-    "positions": "Positions"
+    "positions": "Positions",
+    "counter": "{{outfield}}/6 field players • {{gk}}/1 goalkeeper"
   },
   "duel": {
     "duel_label": "Duel",
@@ -139,7 +140,14 @@
     "possession_label": "Possession",
     "home_team": "Home",
     "away_team": "Away",
-    "continue": "Continue"
+    "continue": "Continue",
+    "got_ball": "Won the ball ⚽",
+    "defended_ball": "Ball defended 🛡️",
+    "goal_attempt": "GOAL ATTEMPT! 🎯",
+    "goal_scored_by": "GOAL! 🟡",
+    "shot_saved_by": "SAVED! 🧤",
+    "attacker_badge": "Attacking ⚽",
+    "defender_badge": "Defending 🛡️"
   },
   "halftime": {
     "title": "Half Time",
@@ -275,7 +283,9 @@
     "home_team": "Home",
     "away_team": "Away",
     "p1_label": "Home",
-    "p2_label": "Away"
+    "p2_label": "Away",
+    "rules_title": "Rules",
+    "match_info_title": "Match Info"
   },
   "quit": {
     "btn": "← Home",

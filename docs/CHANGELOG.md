@@ -5,6 +5,19 @@ Format: `## [version] — date` with Added / Changed / Fixed sections.
 
 ---
 
+## [1.2.0] — 2026-03-18
+
+### Added
+- **LineupScreen redesign** — Goalkeeper section now appears above outfield. Composite counter (`X/6 kenttäpelaajaa • Y/1 maalivahti`) replaces separate section labels. Both grids are responsive (`grid-cols-2 sm:grid-cols-3`). Unselected cards dim (`opacity-50`) once a slot is full.
+- **Duel outcome panel** — Result panel now shows a dedicated `MAALIYRITYS! 🎯` banner on any goal attempt, followed by `MAALI! 🟡` + scorer's name on goals or `TORJUTTU! 🧤` + keeper's name on saves. Possession wins show `Sait pallon ⚽` / `Puolustit pallon 🛡️` instead of generic win/lose text. `DuelResult` interface extended with `scorerName` and `keeperName` fields.
+- **Active player cards in solo DuelScreen** — A persistent side-by-side row of `PlayerCard` components (with `Hyökkää ⚽` / `Puolustaa 🛡️` badges) is always visible during a duel, showing the active outfield player for each side including stats and ability.
+- **BigScreen Derby player cards** — `BigScreenDuelView` now shows both managers' active player cards side by side, cycling by duel index via new `getActivePlayerByIndex()` helper. Attacker/defender badges reflect current possession.
+- **Permanent instruction sidebar on big screen** — `InstructionSidebar` component added to `DerbyDuelScreen`. Always visible on the right side of `BigScreenDuelView`: shows the card triangle rules (⚔️/💨/🎯), current possession, current score, and current half. Never a modal.
+- `i18n` — 10 new keys across `lineup`, `duel`, and `derby_match` namespaces (both `fi.json` and `en.json`).
+- **Total: 603 tests, all passing** (18 new tests across `DuelScreen`, `LineupScreen`, `DerbyDuelScreen` integration suites)
+
+---
+
 ## [1.1.1] — 2026-03-18
 
 ### Fixed

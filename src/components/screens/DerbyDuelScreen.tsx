@@ -29,8 +29,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import HelpModal from '../ui/HelpModal';
+import PlayerCard from '../ui/PlayerCard';
 import { useRoomStore } from '../../store/roomStore';
 import { useDerbyStore } from '../../store/derbyStore';
+import type { Player as SquadPlayer } from '../../store/squadStore';
 import {
   submitCard,
   writeDuelResult,
@@ -59,6 +61,8 @@ interface Player {
   number: number;
   position: string[];
   stats: PlayerStats;
+  tier?: string;
+  ability?: { description_fi: string; description_en?: string | null };
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -121,6 +125,24 @@ function getGoalkeeper(lineup: string[]): Player {
     return p?.position.includes('GK');
   });
   return getPlayer(gkId ?? '');
+}
+
+/**
+ * Get the active outfield player cycling by duel index (matches solo DuelScreen behaviour).
+ *
+ * @param lineup   - Array of player IDs
+ * @param duelIndex - Current duel index for cycling
+ * @returns The active outfield player for this duel slot
+ */
+function getActivePlayerByIndex(lineup: string[], duelIndex: number): Player {
+  const all = playersData as Player[];
+  const outfield = lineup.filter((id) => {
+    const p = all.find((pl) => pl.id === id);
+    return p && !p.position.includes('GK');
+  });
+  if (outfield.length === 0) return getPlayer(lineup[0] ?? '');
+  const slot = duelIndex % outfield.length;
+  return getPlayer(outfield[slot] ?? '');
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -421,6 +443,8 @@ function BigScreenDuelView(): JSX.Element {
   const half = useDerbyStore((s) => s.half);
   const scoreHome = useDerbyStore((s) => s.scoreHome);
   const scoreAway = useDerbyStore((s) => s.scoreAway);
+  const p1Lineup = useDerbyStore((s) => s.p1Lineup);
+  const p2Lineup = useDerbyStore((s) => s.p2Lineup);
 
   const [countdown, setCountdown] = useState<number | null>(null);
 
@@ -438,47 +462,139 @@ function BigScreenDuelView(): JSX.Element {
   }, [p1CardReady, p2CardReady]);
 
   return (
-    <div className="min-h-screen bg-[#1A1A1A] text-[#F5F0E8] flex flex-col items-center justify-center p-8 gap-8" data-testid="derby-duel-bigscreen">
-      {/* Score */}
-      <div className="text-xl font-bold">
-        <ScoreBadge home={scoreHome} away={scoreAway} large />
-      </div>
-
-      {/* Duel info */}
-      <p className="text-[#A0A0A0]">
-        {t('derby_match.duel_half', { half })} · {t('derby_match.duel_title', { number: duelIndex + 1, total: DUELS_PER_HALF })}
-      </p>
-
-      {/* Possession */}
-      <div className="text-sm text-[#FFE600]">
-        ⚽ {t('derby_match.duel_possession_label')}: {possession === 'p1' ? t('derby_match.p1_label') : t('derby_match.p2_label')}
-      </div>
-
-      {/* Manager status */}
-      <div className="flex gap-12">
-        <ManagerStatus
-          label={t('derby_match.duel_p1_ready')}
-          waitingLabel={t('derby_match.duel_p1_choosing')}
-          ready={p1CardReady}
-        />
-        <ManagerStatus
-          label={t('derby_match.duel_p2_ready')}
-          waitingLabel={t('derby_match.duel_p2_choosing')}
-          ready={p2CardReady}
-        />
-      </div>
-
-      {/* Countdown */}
-      {countdown !== null && (
-        <div
-          data-testid="countdown-display"
-          className="text-8xl font-black text-[#FFE600] animate-ping"
-          style={{ animationDuration: `${COUNTDOWN_STEP_MS}ms` }}
-        >
-          {countdown}
+    <div className="min-h-screen bg-[#1A1A1A] text-[#F5F0E8] flex flex-row" data-testid="derby-duel-bigscreen">
+      {/* Main content */}
+      <div className="flex-1 flex flex-col items-center justify-center p-8 gap-8">
+        {/* Score */}
+        <div className="text-xl font-bold">
+          <ScoreBadge home={scoreHome} away={scoreAway} large />
         </div>
-      )}
+
+        {/* Duel info */}
+        <p className="text-[#A0A0A0]">
+          {t('derby_match.duel_half', { half })} · {t('derby_match.duel_title', { number: duelIndex + 1, total: DUELS_PER_HALF })}
+        </p>
+
+        {/* Possession */}
+        <div className="text-sm text-[#FFE600]">
+          ⚽ {t('derby_match.duel_possession_label')}: {possession === 'p1' ? t('derby_match.p1_label') : t('derby_match.p2_label')}
+        </div>
+
+        {/* Manager status */}
+        <div className="flex gap-12">
+          <ManagerStatus
+            label={t('derby_match.duel_p1_ready')}
+            waitingLabel={t('derby_match.duel_p1_choosing')}
+            ready={p1CardReady}
+          />
+          <ManagerStatus
+            label={t('derby_match.duel_p2_ready')}
+            waitingLabel={t('derby_match.duel_p2_choosing')}
+            ready={p2CardReady}
+          />
+        </div>
+
+        {/* Active player cards side by side */}
+        {p1Lineup.length > 0 && p2Lineup.length > 0 && (
+          <div
+            data-testid="bigscreen-player-cards"
+            className="flex gap-8 w-full max-w-2xl"
+          >
+            <div className="flex-1 flex flex-col gap-2">
+              <span className={`text-xs font-black text-center uppercase tracking-widest ${
+                possession === 'p1' ? 'text-[#FFE600]' : 'text-[#F5F0E8]/40'
+              }`}>
+                {possession === 'p1' ? t('duel.attacker_badge') : t('duel.defender_badge')}
+              </span>
+              <PlayerCard
+                player={getActivePlayerByIndex(p1Lineup, duelIndex) as unknown as SquadPlayer}
+                showAbility
+              />
+            </div>
+            <div className="flex-1 flex flex-col gap-2">
+              <span className={`text-xs font-black text-center uppercase tracking-widest ${
+                possession === 'p2' ? 'text-[#FFE600]' : 'text-[#F5F0E8]/40'
+              }`}>
+                {possession === 'p2' ? t('duel.attacker_badge') : t('duel.defender_badge')}
+              </span>
+              <PlayerCard
+                player={getActivePlayerByIndex(p2Lineup, duelIndex) as unknown as SquadPlayer}
+                showAbility
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Countdown */}
+        {countdown !== null && (
+          <div
+            data-testid="countdown-display"
+            className="text-8xl font-black text-[#FFE600] animate-ping"
+            style={{ animationDuration: `${COUNTDOWN_STEP_MS}ms` }}
+          >
+            {countdown}
+          </div>
+        )}
+      </div>
+      <InstructionSidebar />
     </div>
+  );
+}
+
+// ─── Instruction Sidebar ──────────────────────────────────────────────────────
+
+/**
+ * InstructionSidebar — always-visible panel on the big screen.
+ * Shows the card triangle rules, current possession, score, and half.
+ *
+ * @returns Sidebar element
+ */
+function InstructionSidebar(): JSX.Element {
+  const { t } = useTranslation();
+  const possession = useDerbyStore((s) => s.possession);
+  const scoreHome = useDerbyStore((s) => s.scoreHome);
+  const scoreAway = useDerbyStore((s) => s.scoreAway);
+  const half = useDerbyStore((s) => s.half);
+
+  return (
+    <aside
+      data-testid="instruction-sidebar"
+      className="w-72 shrink-0 border-l border-[#333] bg-[#0F0F0F] p-6 flex flex-col gap-6 overflow-y-auto self-stretch"
+    >
+      {/* Card triangle */}
+      <section>
+        <h3 className="text-xs font-bold uppercase tracking-widest text-[#F5F0E8]/40 mb-3">
+          {t('derby_match.rules_title')}
+        </h3>
+        <ul className="flex flex-col gap-2 text-sm text-[#F5F0E8]">
+          <li>⚔️ {t('help.press_beats_feint')}</li>
+          <li>💨 {t('help.feint_beats_shot')}</li>
+          <li>🎯 {t('help.shot_beats_press')}</li>
+        </ul>
+      </section>
+
+      {/* Match info */}
+      <section>
+        <h3 className="text-xs font-bold uppercase tracking-widest text-[#F5F0E8]/40 mb-3">
+          {t('derby_match.match_info_title')}
+        </h3>
+        <div className="flex flex-col gap-2 text-sm">
+          <div>
+            <span className="text-[#F5F0E8]/50">{t('derby_match.duel_possession_label')}: </span>
+            <span className="text-[#FFE600] font-bold">
+              ⚽ {possession === 'p1' ? t('derby_match.p1_label') : t('derby_match.p2_label')}
+            </span>
+          </div>
+          <div>
+            <span className="text-[#F5F0E8]/50">{t('derby_match.duel_score')}: </span>
+            <span className="text-[#FFE600] font-bold">{scoreHome} – {scoreAway}</span>
+          </div>
+          <div className="text-[#F5F0E8]/70">
+            {t('derby_match.duel_half', { half })}
+          </div>
+        </div>
+      </section>
+    </aside>
   );
 }
 

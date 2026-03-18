@@ -108,3 +108,56 @@ describe('LineupScreen', () => {
     expect(screen.queryByTestId('trivia-penalty-notice')).not.toBeInTheDocument();
   });
 });
+
+describe('LineupScreen — redesign features', () => {
+  beforeEach(() => {
+    useMatchStore.getState().reset();
+    useMatchStore.getState().beginSoloMatch();
+    useSquadStore.getState().reset();
+    useSessionStore.getState().setAiDifficulty(null);
+  });
+
+  it('shows composite counter with initial 0/6 and 0/1', () => {
+    renderWithProviders(<LineupScreen />);
+    const counter = screen.getByTestId('lineup-counter');
+    expect(counter).toHaveTextContent('0/6');
+    expect(counter).toHaveTextContent('0/1');
+  });
+
+  it('counter updates as players are selected', () => {
+    renderWithProviders(<LineupScreen />);
+    // Click first outfield player in the outfield-grid
+    const outfieldGrid = screen.getByTestId('outfield-grid');
+    const cards = outfieldGrid.querySelectorAll('[data-testid^="player-card-"]');
+    fireEvent.click(cards[0]);
+    const counter = screen.getByTestId('lineup-counter');
+    expect(counter).toHaveTextContent('1/6');
+  });
+
+  it('goalkeeper-grid appears in DOM before outfield-grid', () => {
+    renderWithProviders(<LineupScreen />);
+    const gkGrid = screen.getByTestId('goalkeeper-grid');
+    const outfieldGrid = screen.getByTestId('outfield-grid');
+    // compareDocumentPosition: if GK is before outfield, position should include DOCUMENT_POSITION_FOLLOWING
+    const position = gkGrid.compareDocumentPosition(outfieldGrid);
+    // DOCUMENT_POSITION_FOLLOWING = 4, meaning outfield comes AFTER gkGrid
+    expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('unselected outfield cards have opacity-50 class when outfield is full', () => {
+    renderWithProviders(<LineupScreen />);
+    const outfieldGrid = screen.getByTestId('outfield-grid');
+    const cards = outfieldGrid.querySelectorAll('[data-testid^="player-card-"]');
+    // Select 6 outfield players
+    for (let i = 0; i < 6; i++) {
+      fireEvent.click(cards[i]);
+    }
+    // The 7th+ outfield card wrappers should be dimmed
+    // The wrapper divs around player cards have opacity-50 when slot full and not selected
+    const allCardWrappers = outfieldGrid.querySelectorAll('div.relative');
+    const dimmedWrappers = Array.from(allCardWrappers).filter(
+      (el) => el.className.includes('opacity-50')
+    );
+    expect(dimmedWrappers.length).toBeGreaterThan(0);
+  });
+});
