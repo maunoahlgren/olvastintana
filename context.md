@@ -108,13 +108,13 @@ Two modes:
 ### Possession
 - Only the player with possession can attempt a goal
 - Win duel without ball → gain possession (no goal)
-- Win duel with ball + Shot card → goal attempt → keeper save check
-- Win duel with ball + Press or Feint → keep possession (no shot)
+- Win duel with ball (any card) → goal attempt → keeper save check (SQ-GOAL-01)
+- All three cards are available to both attacker and defender at all times
 
 ### Goalkeeper
 - Does not participate in duels
-- Gets one save attempt when Shot wins a duel
-- Save = stat check (keeper stats vs shooter Power)
+- Gets one save attempt whenever the possessing player wins a duel (any card)
+- Save = stat check: keeper torjunta >= max(shooter laukaus, shooter harhautus) → saved; otherwise → goal
 
 ### Match Structure
 1. Trivia question → correct = first card auto-wins; wrong = opponent picks a player to get -1 all stats

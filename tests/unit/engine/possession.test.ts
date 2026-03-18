@@ -26,26 +26,34 @@ describe('resolvePossession()', () => {
   });
 
   it('attacker wins without ball → gains possession, no goal attempt', () => {
+    // currentPossession is 'away', attacker is 'home' — home wins but didn't have ball
     const result = resolvePossession('away', 'attacker', 'home', CARD.PRESS);
     expect(result.possession).toBe('home');
     expect(result.goalAttempt).toBe(false);
   });
 
-  it('defender wins → possession goes to defender side', () => {
+  it('defender wins → possession goes to defender side, no goal attempt', () => {
     const result = resolvePossession('home', 'defender', 'home', CARD.PRESS);
     expect(result.possession).toBe('away');
     expect(result.goalAttempt).toBe(false);
   });
 
-  it('attacker wins WITH ball AND Shot card → goal attempt', () => {
+  // SQ-GOAL-01: any card win in possession = goal attempt
+  it('attacker wins WITH ball using Shot → goal attempt', () => {
     const result = resolvePossession('home', 'attacker', 'home', CARD.SHOT);
     expect(result.possession).toBe('home');
     expect(result.goalAttempt).toBe(true);
   });
 
-  it('attacker wins WITH ball but NOT Shot card → no goal attempt', () => {
+  it('attacker wins WITH ball using Press → goal attempt', () => {
     const result = resolvePossession('home', 'attacker', 'home', CARD.PRESS);
     expect(result.possession).toBe('home');
-    expect(result.goalAttempt).toBe(false);
+    expect(result.goalAttempt).toBe(true);
+  });
+
+  it('attacker wins WITH ball using Feint → goal attempt', () => {
+    const result = resolvePossession('home', 'attacker', 'home', CARD.FEINT);
+    expect(result.possession).toBe('home');
+    expect(result.goalAttempt).toBe(true);
   });
 });

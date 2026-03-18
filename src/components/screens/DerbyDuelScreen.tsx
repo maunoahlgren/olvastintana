@@ -217,19 +217,17 @@ export default function DerbyDuelScreen(): JSX.Element {
     let newPossession: PlayerKey = snap.possession;
 
     if (winner === 'attacker') {
-      if (atkCard === CARD.SHOT) {
-        // Goal attempt
-        const defGk = defKey === 'p1' ? p1Gk : p2Gk;
-        const save = resolveGoalkeeping(defGk.stats, atkStatsFinal);
-        if (save === 'goal') {
-          scored = true;
-          if (atkKey === 'p1') newScoreHome++;
-          else newScoreAway++;
-        }
-        // After shot (goal or saved), possession resets to the other team (they kick off)
-        newPossession = scored ? defKey : defKey;
+      // Any attacker win triggers a goal attempt — SQ-GOAL-01
+      const defGk = defKey === 'p1' ? p1Gk : p2Gk;
+      const save = resolveGoalkeeping(defGk.stats, atkStatsFinal);
+      if (save === 'goal') {
+        scored = true;
+        if (atkKey === 'p1') newScoreHome++;
+        else newScoreAway++;
+        // After goal, other team kicks off
+        newPossession = defKey;
       } else {
-        // Press/Feint win → attacker keeps possession
+        // Save → attacker wins the duel, keeps possession
         newPossession = atkKey;
       }
     } else if (winner === 'defender') {
@@ -400,26 +398,17 @@ function PhoneDuelView({ playerKey, roomCode }: PhoneDuelViewProps): JSX.Element
 
       {/* Card buttons */}
       <div className="flex flex-col gap-3" data-testid="card-buttons">
-        {cards.map(({ card, label, emoji, testId }) => {
-          const isShot = card === CARD.SHOT;
-          const shotDisabled = isShot && !isAttacker;
-          return (
-            <button
-              key={card}
-              data-testid={testId}
-              onClick={() => !shotDisabled && handleCard(card)}
-              disabled={submitting || shotDisabled}
-              className={`py-4 rounded-lg font-bold text-lg transition-all ${
-                shotDisabled
-                  ? 'bg-[#2A2A2A] text-[#444] cursor-not-allowed border border-[#333]'
-                  : 'bg-[#2A2A2A] border border-[#555] text-[#F5F0E8] hover:border-[#FFE600] hover:bg-[#FFE600]/10 active:scale-95'
-              }`}
-            >
-              {emoji} {label}
-              {shotDisabled && <span className="text-xs ml-2 text-[#666]">(only when attacking)</span>}
-            </button>
-          );
-        })}
+        {cards.map(({ card, label, emoji, testId }) => (
+          <button
+            key={card}
+            data-testid={testId}
+            onClick={() => handleCard(card)}
+            disabled={submitting}
+            className="py-4 rounded-lg font-bold text-lg transition-all bg-[#2A2A2A] border border-[#555] text-[#F5F0E8] hover:border-[#FFE600] hover:bg-[#FFE600]/10 active:scale-95"
+          >
+            {emoji} {label}
+          </button>
+        ))}
       </div>
     </div>
     </>
@@ -661,7 +650,7 @@ function DuelResultView(): JSX.Element {
           {t('derby_match.duel_goal')}
         </div>
       )}
-      {resultWinner === 'attacker' && resultAtkCard === CARD.SHOT && !resultScored && (
+      {resultWinner === 'attacker' && !resultScored && (
         <div className="text-2xl text-[#A0A0A0]">
           {t('derby_match.duel_saved')}
         </div>

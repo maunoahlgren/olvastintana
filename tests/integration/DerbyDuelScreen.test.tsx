@@ -107,11 +107,12 @@ describe('DerbyDuelScreen — phone view (p2 defending)', () => {
     useRoomStore.getState().setRoom('TEST', 'player', 'mauno_ahlgren');
   });
 
-  it('shot button visible but disabled when defending', () => {
+  it('all three card buttons are enabled when defending — SQ-GOAL-01', () => {
+    // Shot is no longer restricted to attackers; all cards available to both sides
     renderWithProviders(<DerbyDuelScreen />);
-    const shotBtn = screen.getByTestId('card-shot');
-    // Shot is disabled when not attacking
-    expect(shotBtn).toBeDisabled();
+    expect(screen.getByTestId('card-press')).not.toBeDisabled();
+    expect(screen.getByTestId('card-feint')).not.toBeDisabled();
+    expect(screen.getByTestId('card-shot')).not.toBeDisabled();
   });
 
   it('calls submitCard with p2 key for press card', async () => {

@@ -3,13 +3,13 @@
  * Possession state transitions — pure functions, no side effects.
  *
  * Rules:
- * - Only the player with possession can play Shot to score
- * - Winning a duel without the ball → gain possession
- * - Winning a duel with the ball + Shot card → goal attempt
+ * - Only the player with possession can trigger a goal attempt
+ * - Winning a duel without the ball → gain possession only (no goal attempt)
+ * - Winning a duel WITH the ball → always triggers a goal attempt (any card)
  * - Null duel result → possession unchanged
  */
 
-import { CARD, type Card } from './duel';
+import { type Card } from './duel';
 
 export type Side = 'home' | 'away';
 
@@ -22,18 +22,25 @@ export interface PossessionOutcome {
 /**
  * Resolve possession after a duel.
  *
+ * Any win by the possessing player (attacker) triggers a goal attempt,
+ * regardless of which card was played. The card type only matters for
+ * the duel triangle resolution — goal attempts follow from possession, not card choice.
+ *
  * @param currentPossession - Which side currently has the ball
  * @param duelWinner - 'attacker' | 'defender' | null (null = no change)
  * @param attackerSide - Which match side played as attacker
- * @param attackerCard - Card the attacker played
+ * @param _attackerCard - Card played by attacker (unused; retained for API compatibility)
  * @returns Updated possession and whether a goal attempt should be resolved
  *
  * @example
- * // Attacker wins without ball → gains possession, no shot
+ * // Attacker wins without ball → gains possession, no goal attempt
  * resolvePossession('away', 'attacker', 'home', CARD.PRESS)
  * // → { possession: 'home', goalAttempt: false }
  *
- * // Attacker wins with ball + Shot → goal attempt
+ * // Attacker wins with ball (any card) → goal attempt
+ * resolvePossession('home', 'attacker', 'home', CARD.PRESS)
+ * // → { possession: 'home', goalAttempt: true }
+ *
  * resolvePossession('home', 'attacker', 'home', CARD.SHOT)
  * // → { possession: 'home', goalAttempt: true }
  */
@@ -41,7 +48,7 @@ export function resolvePossession(
   currentPossession: Side,
   duelWinner: 'attacker' | 'defender' | null,
   attackerSide: Side,
-  attackerCard: Card,
+  _attackerCard: Card,
 ): PossessionOutcome {
   // Null result — nothing changes
   if (duelWinner === null) {
@@ -51,12 +58,9 @@ export function resolvePossession(
   const defenderSide: Side = attackerSide === 'home' ? 'away' : 'home';
   const winningSide = duelWinner === 'attacker' ? attackerSide : defenderSide;
   const winnerHadBall = currentPossession === winningSide;
-  const winnerPlayedShot =
-    (duelWinner === 'attacker' && attackerCard === CARD.SHOT) ||
-    (duelWinner === 'defender' && attackerCard !== CARD.SHOT); // defender doesn't play a "card" type here
 
-  // Winner with ball + Shot card → goal attempt
-  const goalAttempt = winnerHadBall && winnerPlayedShot;
+  // Any win by the possessing player → goal attempt (SQ-GOAL-01)
+  const goalAttempt = winnerHadBall;
 
   return { possession: winningSide, goalAttempt };
 }

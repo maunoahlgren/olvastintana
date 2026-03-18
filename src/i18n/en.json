@@ -301,7 +301,7 @@
     "feint_beats_shot": "Feint beats Shot",
     "shot_beats_press": "Shot beats Press",
     "possession": "Possession",
-    "possession_rule": "Only the ball-holder can attempt a goal",
+    "possession_rule": "Winning a duel in possession always triggers a goal attempt — with any card",
     "tactic": "Tactic",
     "tactic_aggressive": "Aggressive — +1 to Shot",
     "tactic_defensive": "Defensive — +1 to Press",

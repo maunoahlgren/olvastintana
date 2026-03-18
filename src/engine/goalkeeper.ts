@@ -3,8 +3,12 @@
  * Goalkeeper save attempt logic — pure functions, no side effects.
  *
  * The goalkeeper does not participate in duels.
- * A save attempt is triggered when Shot wins a duel.
- * Save succeeds if keeper Torjunta >= shooter Laukaus, or if Kivimuuri (auto-save) is active.
+ * A save attempt is triggered whenever the possessing player wins a duel.
+ * Save succeeds if keeper Torjunta >= max(shooter Laukaus, shooter Harhautus),
+ * or if Kivimuuri (auto-save) is active.
+ *
+ * Using max(Laukaus, Harhautus) reflects that all three cards can produce a
+ * goal attempt — the shooter uses their best applicable scoring stat.
  */
 
 import type { PlayerStats } from './duel';
@@ -15,23 +19,29 @@ export type SaveResult = 'saved' | 'goal';
 /**
  * Resolve a goalkeeper save attempt.
  *
- * @param keeperStats - Goalkeeper stat block (uses torjunta for save ability)
- * @param shooterStats - Shooting player stat block (uses laukaus for shot power)
- * @param autosave - True when Kivimuuri (brick_wall) ability triggers (SQ-08)
+ * Shot power is calculated as max(shooter.laukaus, shooter.harhautus),
+ * reflecting that any card win by the possessing player can produce a goal
+ * and the shooter exploits whichever stat is stronger.
+ *
+ * @param keeperStats  - Goalkeeper stat block (uses torjunta for save ability)
+ * @param shooterStats - Shooting player stat block (uses laukaus and harhautus)
+ * @param autosave     - True when Kivimuuri (brick_wall) ability triggers (SQ-08)
  * @returns 'saved' if the keeper stops the shot, 'goal' if it goes in
  *
  * @example
- * resolveGoalkeeping({ torjunta: 4 }, { laukaus: 3 }) // → 'saved'
- * resolveGoalkeeping({ torjunta: 3 }, { laukaus: 5 }) // → 'goal'
- * resolveGoalkeeping({ torjunta: 1 }, { laukaus: 10 }, true) // → 'saved' (Kivimuuri)
+ * resolveGoalkeeping({ torjunta: 4 }, { laukaus: 3, harhautus: 2 }) // → 'saved'
+ * resolveGoalkeeping({ torjunta: 3 }, { laukaus: 5, harhautus: 2 }) // → 'goal'
+ * resolveGoalkeeping({ torjunta: 3 }, { laukaus: 2, harhautus: 5 }) // → 'goal' (harhautus wins)
+ * resolveGoalkeeping({ torjunta: 1 }, { laukaus: 10, harhautus: 5 }, true) // → 'saved' (Kivimuuri)
  */
 export function resolveGoalkeeping(
   keeperStats: Pick<PlayerStats, 'torjunta'>,
-  shooterStats: Pick<PlayerStats, 'laukaus'>,
+  shooterStats: Pick<PlayerStats, 'laukaus' | 'harhautus'>,
   autosave = false,
 ): SaveResult {
   if (autosave) return 'saved';
-  return keeperStats.torjunta >= shooterStats.laukaus ? 'saved' : 'goal';
+  const shotPower = Math.max(shooterStats.laukaus, shooterStats.harhautus);
+  return keeperStats.torjunta >= shotPower ? 'saved' : 'goal';
 }
 
 /**

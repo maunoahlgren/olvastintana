@@ -96,18 +96,21 @@ describe('DuelScreen', () => {
     expect(screen.getByTestId('duel-result-panel')).toBeInTheDocument();
   });
 
-  it('attacker wins when press beats feint', () => {
+  it('attacker wins when press beats feint — triggers goal attempt (SQ-GOAL-01)', () => {
     renderWithProviders(<DuelScreen />);
     playDuel('press', 'feint');
-    expect(screen.getByTestId('duel-outcome-text')).toHaveTextContent('Won the ball');
+    // Attacker has possession and wins → always triggers goal attempt
+    const goalResult = document.querySelector('[data-testid="goal-result"],[data-testid="saved-result"]');
+    expect(goalResult).toBeInTheDocument();
   });
 
-  it('defender wins when feint beats shot', () => {
+  it('attacker wins when feint beats shot — triggers goal attempt (SQ-GOAL-01)', () => {
     setupMatch('away'); // away attacks
     renderWithProviders(<DuelScreen />);
     playDuel('feint', 'shot'); // away plays feint, home plays shot → feint > shot → attacker wins
-    // Attacker (away) played feint, defender (home) played shot → feint beats shot → attacker wins
-    expect(screen.getByTestId('duel-outcome-text')).toHaveTextContent('Won the ball');
+    // Attacker (away) has possession and wins → always triggers goal attempt
+    const goalResult = document.querySelector('[data-testid="goal-result"],[data-testid="saved-result"]');
+    expect(goalResult).toBeInTheDocument();
   });
 
   it('shows draw result when same cards tie on equal stats', () => {
@@ -398,32 +401,34 @@ describe('DuelScreen — outcome panel', () => {
     setupMatch();
   });
 
-  it('shows GOAL ATTEMPT banner when shot attempt occurs', () => {
-    // Play a shot duel where home (attacker) plays Shot against Press → Shot beats Press → goal attempt
+  it('shows GOAL ATTEMPT banner when attacker wins with Shot (in possession)', () => {
     renderWithProviders(<DuelScreen />);
-    playDuel('shot', 'press'); // shot beats press → attacker wins with shot → goal attempt
-    // Should show goal attempt banner
+    playDuel('shot', 'press'); // shot beats press → attacker wins while in possession → goal attempt
     expect(screen.getByTestId('goal-attempt-banner')).toBeInTheDocument();
   });
 
-  it('shows scorer name when goal is scored', () => {
-    // We need to force a goal. The goalkeeper torjunta vs attacker laukaus determines it.
-    // Use a player with very high laukaus to guarantee goal.
-    // Actually just play shot vs press and check — may or may not score depending on keeper stats.
-    // Instead, set up a minimal match where we know the outcome.
-    // The safest test: when goal-result is shown, scorer name testid is present.
+  it('shows GOAL ATTEMPT banner when attacker wins with Press (in possession)', () => {
+    // SQ-GOAL-01: any card win in possession triggers goal attempt
     renderWithProviders(<DuelScreen />);
-    playDuel('shot', 'press'); // may score or save
-    // Either goal-result or saved-result should show
+    playDuel('press', 'feint'); // press > feint → attacker wins while in possession → goal attempt
+    expect(screen.getByTestId('goal-attempt-banner')).toBeInTheDocument();
+  });
+
+  it('shows GOAL ATTEMPT banner when attacker wins with Feint (in possession)', () => {
+    renderWithProviders(<DuelScreen />);
+    playDuel('feint', 'shot'); // feint > shot → attacker wins while in possession → goal attempt
+    expect(screen.getByTestId('goal-attempt-banner')).toBeInTheDocument();
+  });
+
+  it('shows scorer name or saved result after any attacker win in possession', () => {
+    renderWithProviders(<DuelScreen />);
+    playDuel('press', 'feint'); // attacker wins → goal attempt → either score or save
     const hasGoal = screen.queryByTestId('goal-result');
     const hasSave = screen.queryByTestId('saved-result');
     expect(hasGoal || hasSave).toBeTruthy();
   });
 
-  it('shows SAVED text when shot is saved', () => {
-    // We can check that the saved-result testid appears when appropriate
-    // This is tricky to guarantee. Instead, check that when goal attempt happens,
-    // either goal-result or saved-result contains the right text.
+  it('shows SAVED text when goal attempt is saved', () => {
     renderWithProviders(<DuelScreen />);
     playDuel('shot', 'press');
     const savedEl = screen.queryByTestId('saved-result');
@@ -435,18 +440,11 @@ describe('DuelScreen — outcome panel', () => {
     }
   });
 
-  it('shows got_ball text when attacker wins without shot', () => {
-    renderWithProviders(<DuelScreen />);
-    playDuel('press', 'feint'); // press > feint → attacker wins, no goal attempt
-    expect(screen.getByTestId('duel-outcome-text')).toHaveTextContent('Won the ball');
-  });
-
   it('shows defended_ball text when defender wins', () => {
     setupMatch('away'); // away attacks
     renderWithProviders(<DuelScreen />);
-    // Away (attacker) plays press, home (defender) plays shot → shot beats press → home wins
-    // But wait, home is defender, so home winning means defender wins
-    playDuel('press', 'shot'); // shot beats press → home (defender) wins
+    // Away (attacker) plays press, home (defender) plays shot → shot beats press → defender wins
+    playDuel('press', 'shot'); // shot beats press → home (defender) wins → no goal attempt
     expect(screen.getByTestId('duel-outcome-text')).toHaveTextContent('Ball defended');
   });
 });

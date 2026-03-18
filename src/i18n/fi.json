@@ -301,7 +301,7 @@
     "feint_beats_shot": "Harhautus voittaa Laukauksen",
     "shot_beats_press": "Laukaus voittaa Riiton",
     "possession": "Pallonhallinta",
-    "possession_rule": "Vain pallollinen pelaaja voi yrittää maalia",
+    "possession_rule": "Pallollinen pelaaja yrittää aina maalia voittaessaan duelin — millä kortilla tahansa",
     "tactic": "Taktiikka",
     "tactic_aggressive": "Aggressiivinen — +1 Laukaukseen",
     "tactic_defensive": "Puolustava — +1 Riistoon",

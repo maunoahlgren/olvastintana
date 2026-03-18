@@ -5,6 +5,19 @@ Format: `## [version] — date` with Added / Changed / Fixed sections.
 
 ---
 
+## [1.2.2] — 2026-03-18
+
+### Fixed
+- **Goal attempt on any card win** — `resolvePossession()` now triggers a goal attempt whenever the possessing player wins a duel, regardless of which card was played. Previously only a `CARD.SHOT` win triggered a goal attempt. Logic now: `goalAttempt = winnerHadBall` (SQ-GOAL-01).
+- **Goalkeeper stat check widened** — `resolveGoalkeeping()` now compares keeper `torjunta` against `max(shooter.laukaus, shooter.harhautus)`, reflecting that any card win can produce a goal and the shooter exploits their strongest scoring stat.
+- **Derby goal resolution fixed** — `DerbyDuelScreen` inline goal logic aligned with the new rule: any attacker win triggers a goalkeeper check. On save, attacker retains possession (they won the duel); on goal, opponent gets possession (kick-off). Previously, both save and goal incorrectly gave possession to the defender.
+- **Shot (Laukaus) restriction removed** — Defenders could previously not select `CARD.SHOT`. All three cards (Press/Riisto, Feint/Harhautus, Shot/Laukaus) are now always available to both sides. The rock-paper-scissors triangle is fully intact at all times.
+- **Help modal possession rule** — `help.possession_rule` i18n key updated in both `en.json` and `fi.json` to reflect the new "any card win triggers goal attempt" rule.
+- **DuelScreen big-screen centering** — Outer container now has `max-w-lg mx-auto` so content is centred on wide monitors (≥1024 px) instead of left-aligned.
+- **Total: 614 tests, all passing** (updated/added tests in `possession.test.ts`, `goalkeeper.test.ts`, `DuelScreen.test.tsx`, `DerbyDuelScreen.test.tsx`)
+
+---
+
 ## [1.2.1] — 2026-03-18
 
 ### Fixed
