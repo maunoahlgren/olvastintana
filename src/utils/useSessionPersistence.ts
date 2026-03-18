@@ -14,6 +14,9 @@
  *   and `matchStore.setDerbyPhase()` advances the UI to the saved screen.
  *   `useDerbyMatchSync` (App.tsx) then auto-subscribes to Firebase and
  *   re-downloads all live match state.
+ *   Derby sessions older than `DERBY_SESSION_MAX_AGE_MS` (6 hours) are
+ *   discarded — the Firebase room will have expired and restoring it would
+ *   leave the app stuck on a loading screen forever.
  * - If the persisted phase is a solo phase (non-TITLE, non-Derby) → the
  *   UI is restored to that phase.  Match-state (scores, lineup etc.) is
  *   reset because it lives only in memory; the player may tap Back to start
@@ -39,6 +42,15 @@ import type { RoomRole } from '../store/roomStore';
 const STORAGE_KEY = 'ot_session';
 
 /**
+ * Derby Night Firebase rooms expire quickly after a match ends.
+ * If a persisted Derby session is older than this value we discard it
+ * rather than restoring it — otherwise the app gets stuck on a loading
+ * screen waiting for a room that no longer exists.
+ * 6 hours covers any realistic match duration with plenty of headroom.
+ */
+const DERBY_SESSION_MAX_AGE_MS = 6 * 60 * 60 * 1000; // 6 hours
+
+/**
  * Derby match phases that can be fully restored via Firebase on reload.
  * DERBY_LOBBY is intentionally excluded — it has no Firebase match state
  * and the user should re-enter the room code / create a new room.
@@ -61,6 +73,8 @@ interface PersistedSession {
   roomCode: string | null;
   role: string | null;
   myManagerId: string | null;
+  /** Unix timestamp (ms) when the session was saved — used for expiry checks. */
+  savedAt?: number;
 }
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
@@ -93,6 +107,14 @@ export function useSessionPersistence(): void {
       if (!session?.phase) return;
 
       if (DERBY_RESTORABLE_PHASES.has(session.phase)) {
+        // Discard stale Derby sessions — the Firebase room will have expired
+        // and attempting to restore it leaves the app stuck on a loading screen.
+        const age = Date.now() - (session.savedAt ?? 0);
+        if (age > DERBY_SESSION_MAX_AGE_MS) {
+          localStorage.removeItem(STORAGE_KEY);
+          return;
+        }
+
         // Restore Derby Night — reconnect to room then set phase.
         // useDerbyMatchSync (App.tsx) will auto-subscribe to Firebase once
         // phase is in DERBY_MATCH_PHASES and roomCode is populated.
@@ -133,6 +155,7 @@ export function useSessionPersistence(): void {
       roomCode: roomCode ?? null,
       role: role ?? null,
       myManagerId: myManagerId ?? null,
+      savedAt: Date.now(),
     };
 
     try {

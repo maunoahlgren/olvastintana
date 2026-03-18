@@ -12,6 +12,8 @@
  *   - Restores solo phase on mount
  *   - Does NOT restore TITLE from localStorage (redundant)
  *   - Silently clears malformed localStorage data on mount
+ *   - Discards stale Derby sessions (> 6 hours) instead of restoring them
+ *   - Restores fresh Derby sessions (< 6 hours) normally
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -84,6 +86,7 @@ describe('useSessionPersistence — restore Derby session', () => {
       roomCode: 'G7KP',
       role: 'host',
       myManagerId: 'olli_mehtonen',
+      savedAt: Date.now(),
     }));
 
     renderHook(() => useSessionPersistence());
@@ -110,6 +113,7 @@ describe('useSessionPersistence — restore Derby session', () => {
         roomCode: 'ABCD',
         role: 'player',
         myManagerId: 'mauno_ahlgren',
+        savedAt: Date.now(),
       }));
 
       renderHook(() => useSessionPersistence());
@@ -126,6 +130,7 @@ describe('useSessionPersistence — restore Derby session', () => {
       roomCode: null,
       role: 'host',
       myManagerId: 'olli_mehtonen',
+      savedAt: Date.now(),
     }));
 
     renderHook(() => useSessionPersistence());
@@ -164,6 +169,60 @@ describe('useSessionPersistence — restore solo phase', () => {
     renderHook(() => useSessionPersistence());
 
     expect(useMatchStore.getState().phase).toBe(MATCH_PHASE.LINEUP);
+  });
+});
+
+// ─── Stale Derby session expiry ────────────────────────────────────────────────
+
+describe('useSessionPersistence — Derby session expiry', () => {
+  it('discards a Derby session older than 6 hours and stays on TITLE', () => {
+    const staleAge = 7 * 60 * 60 * 1000; // 7 hours ago
+    localStorageMock.getItem.mockReturnValue(JSON.stringify({
+      phase: MATCH_PHASE.DERBY_DUEL,
+      roomCode: 'OLD1',
+      role: 'host',
+      myManagerId: 'olli_mehtonen',
+      savedAt: Date.now() - staleAge,
+    }));
+
+    renderHook(() => useSessionPersistence());
+
+    expect(useMatchStore.getState().phase).toBe(MATCH_PHASE.TITLE);
+    expect(useRoomStore.getState().roomCode).toBeNull();
+    expect(localStorageMock.removeItem).toHaveBeenCalledWith(STORAGE_KEY);
+  });
+
+  it('restores a Derby session younger than 6 hours normally', () => {
+    const freshAge = 2 * 60 * 60 * 1000; // 2 hours ago
+    localStorageMock.getItem.mockReturnValue(JSON.stringify({
+      phase: MATCH_PHASE.DERBY_DUEL,
+      roomCode: 'LIVE',
+      role: 'host',
+      myManagerId: 'olli_mehtonen',
+      savedAt: Date.now() - freshAge,
+    }));
+
+    renderHook(() => useSessionPersistence());
+
+    expect(useMatchStore.getState().phase).toBe(MATCH_PHASE.DERBY_DUEL);
+    expect(useRoomStore.getState().roomCode).toBe('LIVE');
+  });
+
+  it('discards a Derby session with no savedAt timestamp (legacy data) — treats as stale', () => {
+    // Sessions saved before this fix had no savedAt field; treat as expired
+    // so old stale sessions don't block users on existing deployments.
+    localStorageMock.getItem.mockReturnValue(JSON.stringify({
+      phase: MATCH_PHASE.DERBY_DUEL,
+      roomCode: 'NOTS',
+      role: 'player',
+      myManagerId: 'mauno_ahlgren',
+      // no savedAt field
+    }));
+
+    renderHook(() => useSessionPersistence());
+
+    expect(useMatchStore.getState().phase).toBe(MATCH_PHASE.TITLE);
+    expect(localStorageMock.removeItem).toHaveBeenCalledWith(STORAGE_KEY);
   });
 });
 

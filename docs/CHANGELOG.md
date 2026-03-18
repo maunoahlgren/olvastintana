@@ -5,6 +5,14 @@ Format: `## [version] — date` with Added / Changed / Fixed sections.
 
 ---
 
+## [1.1.1] — 2026-03-18
+
+### Fixed
+- **Stuck loading screen on reload** — `useSessionPersistence` now records a `savedAt` Unix timestamp whenever a session is written to localStorage. On restore, Derby Night sessions older than 6 hours are silently discarded (the Firebase room will have expired). Sessions with no `savedAt` field (legacy data saved before this fix) are also discarded. Solo match sessions are unaffected — they have no Firebase dependency and are still restored regardless of age. This prevents the app rendering a Derby screen that spins forever waiting for a dead Firebase room.
+- **Total: 583 tests, all passing**
+
+---
+
 ## [1.1.0] — 2026-03-18
 
 ### Added
