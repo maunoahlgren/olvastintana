@@ -277,6 +277,13 @@
     "p1_label": "Koti",
     "p2_label": "Vieras"
   },
+  "quit": {
+    "btn": "← Etusivu",
+    "title": "Lopeta ottelu?",
+    "message": "Haluatko varmasti lopettaa ottelun? Edistyminen menetetään.",
+    "confirm": "Lopeta",
+    "cancel": "Peruuta"
+  },
   "help": {
     "title": "Peliopas",
     "card_triangle": "Korttitriangeli",

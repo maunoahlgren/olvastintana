@@ -277,6 +277,13 @@
     "p1_label": "Home",
     "p2_label": "Away"
   },
+  "quit": {
+    "btn": "← Home",
+    "title": "Quit Match?",
+    "message": "Are you sure you want to quit the match? Progress will be lost.",
+    "confirm": "Quit",
+    "cancel": "Cancel"
+  },
   "help": {
     "title": "Game Guide",
     "card_triangle": "Card Triangle",

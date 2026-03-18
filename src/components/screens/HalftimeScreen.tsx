@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { useMatchStore } from '../../store/matchStore';
 import { useSquadStore, type Player } from '../../store/squadStore';
 import { TACTIC, type Tactic } from '../../engine/match';
+import QuitMatchButton from '../ui/QuitMatchButton';
 import playersData from '../../data/players.json';
 
 const ALL_PLAYERS = playersData as Player[];
@@ -75,7 +76,10 @@ export default function HalftimeScreen(): JSX.Element {
   return (
     <div className="min-h-screen bg-[#1A1A1A] text-[#F5F0E8] flex flex-col items-center px-4 py-8 gap-6 max-w-lg mx-auto">
       {/* Header */}
-      <div className="text-center">
+      <div className="relative text-center w-full">
+        <div className="absolute left-0 top-0">
+          <QuitMatchButton />
+        </div>
         <div className="text-xs font-bold uppercase tracking-widest text-[#F5F0E8]/40">
           {t('halftime.title')}
         </div>

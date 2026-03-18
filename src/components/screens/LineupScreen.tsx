@@ -25,6 +25,7 @@ import { useSquadStore, type Player } from '../../store/squadStore';
 import { useSessionStore } from '../../store/sessionStore';
 import { pickAiLineup } from '../../engine/ai';
 import PlayerCard from '../ui/PlayerCard';
+import QuitMatchButton from '../ui/QuitMatchButton';
 import playersData from '../../data/players.json';
 
 const ALL_PLAYERS = playersData as Player[];
@@ -138,7 +139,10 @@ export default function LineupScreen(): JSX.Element {
   return (
     <div className="min-h-screen bg-[#1A1A1A] text-[#F5F0E8] px-4 py-6 flex flex-col gap-6 max-w-2xl mx-auto">
       {/* Header */}
-      <div className="text-center">
+      <div className="relative text-center">
+        <div className="absolute left-0 top-0">
+          <QuitMatchButton />
+        </div>
         <div className="text-xs font-bold uppercase tracking-widest text-[#F5F0E8]/40">
           {t('screens.lineup')}
         </div>

@@ -66,6 +66,7 @@ import type { ActiveEffect } from '../../store/matchStore';
 import CardButton from '../ui/CardButton';
 import ScoreBoard from '../ui/ScoreBoard';
 import HelpModal from '../ui/HelpModal';
+import QuitMatchButton from '../ui/QuitMatchButton';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -691,15 +692,18 @@ export default function DuelScreen(): JSX.Element {
       data-testid="duel-screen"
       className="min-h-screen bg-[#1A1A1A] text-[#F5F0E8] flex flex-col items-center px-4 py-6 gap-6"
     >
-      {/* Help button — always visible */}
-      <button
-        data-testid="help-btn"
-        onClick={() => setShowHelp(true)}
-        className="fixed top-4 left-4 z-40 w-9 h-9 rounded-full border-2 border-[#555] text-[#A0A0A0] font-black text-base hover:border-[#FFE600] hover:text-[#FFE600] transition-colors bg-[#1A1A1A]"
-        aria-label="Help"
-      >
-        ?
-      </button>
+      {/* Top-left controls: help ? + quit */}
+      <div className="fixed top-3 left-3 z-40 flex items-center gap-2">
+        <button
+          data-testid="help-btn"
+          onClick={() => setShowHelp(true)}
+          className="w-9 h-9 rounded-full border-2 border-[#555] text-[#A0A0A0] font-black text-base hover:border-[#FFE600] hover:text-[#FFE600] transition-colors bg-[#1A1A1A]"
+          aria-label="Help"
+        >
+          ?
+        </button>
+        <QuitMatchButton />
+      </div>
 
       {/* ScoreBoard */}
       <ScoreBoard

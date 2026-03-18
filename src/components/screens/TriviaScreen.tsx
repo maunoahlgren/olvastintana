@@ -17,6 +17,7 @@ import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMatchStore } from '../../store/matchStore';
 import triviaRaw from '../../data/trivia.json';
+import QuitMatchButton from '../ui/QuitMatchButton';
 
 /** Shape of a single trivia question as stored in trivia.json */
 interface TriviaQuestion {
@@ -64,6 +65,11 @@ export default function TriviaScreen(): JSX.Element {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#1A1A1A] text-[#F5F0E8] px-6 gap-8">
+      {/* Top-left quit button */}
+      <div className="absolute top-4 left-4">
+        <QuitMatchButton />
+      </div>
+
       {/* Screen header */}
       <div className="text-xs font-bold uppercase tracking-widest text-[#F5F0E8]/40">
         {t('screens.trivia')}

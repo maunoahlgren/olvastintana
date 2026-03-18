@@ -5,6 +5,16 @@ Format: `## [version] — date` with Added / Changed / Fixed sections.
 
 ---
 
+## [1.1.0] — 2026-03-18
+
+### Added
+- **Quit match button** — `src/components/ui/QuitMatchButton.tsx` adds a small "← Etusivu / ← Home" button to every solo match screen except ResultScreen (TriviaScreen, LineupScreen, DuelScreen, HalftimeScreen). Tapping opens a confirmation dialog ("Haluatko varmasti lopettaa ottelun? Edistyminen menetetään."). Confirming clears the `ot_session` localStorage key and calls `matchStore.reset()`, returning the player to the title screen. Cancelling or tapping the backdrop dismisses the dialog without any side effects.
+- `i18n/fi.json` and `i18n/en.json` — 5 new keys under `quit.*` namespace (`btn`, `title`, `message`, `confirm`, `cancel`).
+- Tests: `tests/unit/ui/QuitMatchButton.test.tsx` (9 tests covering render, dialog open/close, cancel safety, backdrop close, confirm reset, and localStorage removal).
+- **Total: 580 tests, all passing**
+
+---
+
 ## [1.0.0] — 2026-03-16
 
 ### Added
