@@ -107,6 +107,28 @@ describe('LineupScreen', () => {
     renderWithProviders(<LineupScreen />);
     expect(screen.queryByTestId('trivia-penalty-notice')).not.toBeInTheDocument();
   });
+
+  it('confirm button is enabled with just 6 outfield + 1 GK (no penalty selection required)', () => {
+    useMatchStore.getState().triviaWrong();
+    renderWithProviders(<LineupScreen />);
+    selectFullLineup();
+    expect(screen.getByTestId('confirm-lineup-btn')).not.toBeDisabled();
+  });
+
+  it('applies trivia penalty to the player stored in matchStore on lineup confirm', () => {
+    const penaltyPlayerId = outfieldPlayers[0].id;
+    useMatchStore.getState().triviaWrong();
+    useMatchStore.getState().triviaPenaltySelected(penaltyPlayerId);
+    renderWithProviders(<LineupScreen />);
+    selectFullLineup();
+    fireEvent.click(screen.getByTestId('confirm-lineup-btn'));
+
+    const homeLineup = useSquadStore.getState().homeLineup;
+    const penaltySlot = homeLineup.find((s) => s.player.id === penaltyPlayerId);
+    expect(penaltySlot).toBeDefined();
+    expect(penaltySlot?.statModifier.riisto).toBe(-1);
+    expect(penaltySlot?.statModifier.laukaus).toBe(-1);
+  });
 });
 
 describe('LineupScreen — redesign features', () => {

@@ -46,6 +46,11 @@ interface MatchState {
   /** True when the home side's first card of the match auto-wins (trivia correct) */
   triviaBoostActive: boolean;
   /**
+   * ID of the player chosen to receive the trivia wrong-answer -1 stat penalty.
+   * Set during TriviaScreen penalty picker; consumed by LineupScreen on confirm.
+   */
+  triviaPenaltyPlayerId: string | null;
+  /**
    * Rolling history of the last 3 cards played by the human player (home side).
    * Used by the Hard AI to identify and counter the player's tendencies.
    */
@@ -96,6 +101,13 @@ interface MatchActions {
   triviaCorrect: () => void;
   /** Trivia answered incorrectly: skip boost, advance to LINEUP */
   triviaWrong: () => void;
+  /**
+   * Store the player ID chosen during TriviaScreen penalty picking.
+   * The -1 stat penalty is applied by LineupScreen once the lineup is confirmed.
+   *
+   * @param id - Player ID to receive the penalty
+   */
+  triviaPenaltySelected: (id: string) => void;
   /** LINEUP → FIRST_HALF */
   startFirstHalf: () => void;
   /** Legacy: kept for backward compat — goes straight to LINEUP with a coin flip */
@@ -131,6 +143,7 @@ const initialState: MatchState = {
   effects: { home: [], away: [] },
   triviaResult: null,
   triviaBoostActive: false,
+  triviaPenaltyPlayerId: null,
   playerCardHistory: [],
 };
 
@@ -181,6 +194,10 @@ export const useMatchStore = create<MatchState & MatchActions>((set, get) => ({
 
   triviaWrong() {
     set({ triviaResult: 'wrong', triviaBoostActive: false, phase: MATCH_PHASE.LINEUP });
+  },
+
+  triviaPenaltySelected(id) {
+    set({ triviaPenaltyPlayerId: id });
   },
 
   startFirstHalf() {

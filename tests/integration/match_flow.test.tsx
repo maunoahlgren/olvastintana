@@ -166,11 +166,18 @@ describe('Full solo match flow (App routing)', () => {
     expect(screen.getByTestId('lineup-side-header')).toBeInTheDocument();
   });
 
-  it('answering trivia wrong also advances to LineupScreen', () => {
+  it('answering trivia wrong shows penalty picker then advances to LineupScreen after confirm', () => {
     useMatchStore.getState().beginSoloMatch();
     renderWithProviders(<App />);
     fireEvent.click(screen.getByTestId('reveal-answer-btn'));
     fireEvent.click(screen.getByTestId('trivia-wrong-btn'));
+    // Penalty picker appears — phase not advanced yet
+    expect(screen.getByTestId('trivia-penalty-picker')).toBeInTheDocument();
+    // Pick first available player
+    const firstPenaltyBtn = document.querySelector('[data-testid^="penalty-pick-"]') as HTMLElement;
+    fireEvent.click(firstPenaltyBtn);
+    fireEvent.click(screen.getByTestId('penalty-confirm-btn'));
+    // Now on lineup screen
     expect(screen.getByTestId('lineup-side-header')).toBeInTheDocument();
   });
 

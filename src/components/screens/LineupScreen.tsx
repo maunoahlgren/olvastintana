@@ -6,7 +6,8 @@
  * Rules:
  * - Select exactly 6 outfield players (MF / FW)
  * - Select exactly 1 goalkeeper (GK)
- * - If triviaResult === 'wrong', additionally pick one home player to receive -1 stats
+ * - If triviaResult === 'wrong', the penalty player is stored in matchStore.triviaPenaltyPlayerId
+ *   and the -1 stat modifier is applied here on confirm (if the player is in the lineup)
  * - Once home confirms, AI selects away lineup (AI mode) or away picks manually (two-player)
  * - startFirstHalf() moves to FIRST_HALF
  *
@@ -45,6 +46,7 @@ export default function LineupScreen(): JSX.Element {
 
   // Individual selectors to avoid infinite re-render from object identity changes
   const triviaResult = useMatchStore((s) => s.triviaResult);
+  const triviaPenaltyPlayerId = useMatchStore((s) => s.triviaPenaltyPlayerId);
   const homeTactic = useMatchStore((s) => s.homeTactic);
   const startFirstHalf = useMatchStore((s) => s.startFirstHalf);
   const setLineup = useSquadStore((s) => s.setLineup);
@@ -58,7 +60,6 @@ export default function LineupScreen(): JSX.Element {
   // --- Home lineup state ---
   const [homeOutfield, setHomeOutfield] = useState<Player[]>([]);
   const [homeGk, setHomeGk] = useState<Player | null>(null);
-  const [homePenaltyPlayer, setHomePenaltyPlayer] = useState<Player | null>(null);
 
   // --- Away lineup state (two-player only) ---
   const [awayOutfield, setAwayOutfield] = useState<Player[]>([]);
@@ -87,17 +88,15 @@ export default function LineupScreen(): JSX.Element {
 
   const outfieldComplete = outfield.length === 6;
   const gkComplete = gk !== null;
-  const homeNeedsPenalty = isHome && triviaResult === 'wrong';
-  const penaltyComplete = !homeNeedsPenalty || homePenaltyPlayer !== null;
-  const canConfirm = outfieldComplete && gkComplete && penaltyComplete;
+  const canConfirm = outfieldComplete && gkComplete;
 
   function confirmStep() {
     if (!gk) return;
     const side = isHome ? 'home' : 'away';
     setLineup(side, [...outfield, gk]);
 
-    // Apply trivia -1 penalty to the chosen home player
-    if (isHome && homePenaltyPlayer) {
+    // Apply trivia -1 penalty to the player chosen during TriviaScreen (home only)
+    if (isHome && triviaPenaltyPlayerId) {
       const penaltyMod = {
         riisto: -1 as const,
         laukaus: -1 as const,
@@ -105,7 +104,7 @@ export default function LineupScreen(): JSX.Element {
         torjunta: -1 as const,
         stamina: -1 as const,
       };
-      applyStatModifier('home', homePenaltyPlayer.id, penaltyMod);
+      applyStatModifier('home', triviaPenaltyPlayerId, penaltyMod);
     }
 
     if (isHome) {
@@ -162,8 +161,8 @@ export default function LineupScreen(): JSX.Element {
         {t('lineup.counter', { outfield: outfield.length, gk: gk ? 1 : 0 })}
       </div>
 
-      {/* Trivia wrong penalty notice (home only) */}
-      {homeNeedsPenalty && (
+      {/* Trivia wrong penalty notice (home only) — informational, penalty already chosen */}
+      {isHome && triviaResult === 'wrong' && (
         <div
           data-testid="trivia-penalty-notice"
           className="rounded-xl border border-red-500/40 bg-red-900/20 p-4 text-sm text-red-400"
@@ -205,8 +204,6 @@ export default function LineupScreen(): JSX.Element {
         >
           {OUTFIELD.map((player) => {
             const isSelected = outfield.some((p) => p.id === player.id);
-            const isPenaltyTarget = homeNeedsPenalty && homePenaltyPlayer?.id === player.id;
-
             return (
               <div
                 key={player.id}
@@ -218,23 +215,6 @@ export default function LineupScreen(): JSX.Element {
                   onSelect={() => toggleOutfield(player)}
                   showAbility={false}
                 />
-                {/* Penalty picker overlay */}
-                {homeNeedsPenalty && isSelected && (
-                  <button
-                    data-testid={`penalty-btn-${player.id}`}
-                    onClick={() =>
-                      setHomePenaltyPlayer(isPenaltyTarget ? null : player)
-                    }
-                    className={[
-                      'absolute top-1 right-1 text-xs px-2 py-0.5 rounded-full font-bold border',
-                      isPenaltyTarget
-                        ? 'bg-red-600 border-red-600 text-white'
-                        : 'border-red-500/50 text-red-400 bg-transparent',
-                    ].join(' ')}
-                  >
-                    -1
-                  </button>
-                )}
               </div>
             );
           })}

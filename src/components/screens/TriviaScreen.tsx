@@ -8,15 +8,19 @@
  * 3. "Reveal Answer" button shows the correct answer
  * 4. "Correct ✓" or "Wrong ✗" buttons self-report the result
  *    - Correct → triviaCorrect() → triviaBoostActive, advance to LINEUP
- *    - Wrong   → triviaWrong() → advance to LINEUP
+ *    - Wrong   → show penalty picker → player selects ONE player for -1 penalty
+ *                → confirm → triviaPenaltySelected() + triviaWrong() → advance to LINEUP
  *
  * In Phase 1, trivia boost always applies to the home side.
+ * The trivia penalty always applies to the home side (home manager answers).
  */
 
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMatchStore } from '../../store/matchStore';
 import triviaRaw from '../../data/trivia.json';
+import playersData from '../../data/players.json';
+import type { Player } from '../../store/squadStore';
 import QuitMatchButton from '../ui/QuitMatchButton';
 
 /** Shape of a single trivia question as stored in trivia.json */
@@ -31,6 +35,12 @@ interface TriviaQuestion {
 
 const questions = triviaRaw as TriviaQuestion[];
 
+/** All outfield players (MF / FW) — penalty picker candidates */
+const ALL_PLAYERS = playersData as Player[];
+const OUTFIELD_PLAYERS = ALL_PLAYERS.filter((p) =>
+  p.position.some((pos) => pos === 'MF' || pos === 'FW'),
+);
+
 /**
  * TriviaScreen — pre-match trivia question.
  *
@@ -40,8 +50,13 @@ export default function TriviaScreen(): JSX.Element {
   const { t } = useTranslation();
   const triviaCorrect = useMatchStore((s) => s.triviaCorrect);
   const triviaWrong = useMatchStore((s) => s.triviaWrong);
+  const triviaPenaltySelected = useMatchStore((s) => s.triviaPenaltySelected);
 
   const [revealed, setRevealed] = useState(false);
+  /** When true, the correct/wrong buttons are replaced by the penalty picker */
+  const [showPenaltyPicker, setShowPenaltyPicker] = useState(false);
+  /** ID of the player the home manager has chosen to receive the -1 penalty */
+  const [penaltyPlayerId, setPenaltyPlayerId] = useState<string | null>(null);
 
   /**
    * Language shown on the question card.
@@ -62,6 +77,15 @@ export default function TriviaScreen(): JSX.Element {
     showLang === 'fi'
       ? question.answers.fi[question.correctIndex]
       : question.answers.en[question.correctIndex];
+
+  /**
+   * Confirm the penalty selection: store the chosen player ID then advance to LINEUP.
+   */
+  function confirmPenalty() {
+    if (!penaltyPlayerId) return;
+    triviaPenaltySelected(penaltyPlayerId);
+    triviaWrong();
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#1A1A1A] text-[#F5F0E8] px-6 gap-8">
@@ -110,7 +134,64 @@ export default function TriviaScreen(): JSX.Element {
         >
           {t('trivia.reveal_answer')}
         </button>
+      ) : showPenaltyPicker ? (
+        /* ── Penalty picker (wrong answer) ─────────────────────────────── */
+        <div
+          data-testid="trivia-penalty-picker"
+          className="w-full max-w-lg flex flex-col gap-5"
+        >
+          <div className="rounded-xl border border-red-500/40 bg-red-900/20 p-4 text-sm text-red-400">
+            {t('lineup.penalty_info')}
+          </div>
+
+          <div className="text-xs font-bold uppercase tracking-widest text-[#F5F0E8]/50">
+            {t('lineup.apply_penalty')}
+          </div>
+
+          {/* Player selection grid — single-select only */}
+          <div
+            data-testid="penalty-player-grid"
+            className="grid grid-cols-2 sm:grid-cols-3 gap-3"
+          >
+            {OUTFIELD_PLAYERS.map((player) => {
+              const isSelected = penaltyPlayerId === player.id;
+              const isDisabled = penaltyPlayerId !== null && !isSelected;
+              return (
+                <button
+                  key={player.id}
+                  data-testid={`penalty-pick-${player.id}`}
+                  onClick={() =>
+                    setPenaltyPlayerId(isSelected ? null : player.id)
+                  }
+                  disabled={isDisabled}
+                  className={[
+                    'py-3 px-2 rounded-lg font-bold text-sm border transition-all text-left',
+                    isSelected
+                      ? 'bg-red-700 border-red-600 text-white'
+                      : isDisabled
+                        ? 'opacity-30 border-[#555] text-[#F5F0E8]/30 bg-[#2A2A2A] cursor-not-allowed'
+                        : 'bg-[#2A2A2A] border-[#555] text-[#F5F0E8] hover:border-red-400 hover:text-red-300',
+                  ].join(' ')}
+                >
+                  {player.name}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Confirm button — appears only once a player is chosen */}
+          {penaltyPlayerId && (
+            <button
+              data-testid="penalty-confirm-btn"
+              onClick={confirmPenalty}
+              className="w-full py-4 bg-[#FFE600] text-[#1A1A1A] font-black uppercase tracking-widest rounded-xl hover:bg-[#FFE600]/90 active:scale-95 transition-all"
+            >
+              {t('trivia.continue_to_lineup')}
+            </button>
+          )}
+        </div>
       ) : (
+        /* ── Correct / Wrong buttons ───────────────────────────────────── */
         <div className="flex flex-col items-center gap-6 w-full max-w-lg">
           {/* The answer */}
           <div className="text-center">
@@ -136,7 +217,7 @@ export default function TriviaScreen(): JSX.Element {
             </button>
             <button
               data-testid="trivia-wrong-btn"
-              onClick={triviaWrong}
+              onClick={() => setShowPenaltyPicker(true)}
               className="px-6 py-3 bg-red-700 hover:bg-red-600 text-white font-black uppercase tracking-widest rounded-xl active:scale-95 transition-all"
             >
               {t('trivia.wrong_button')} ✗

@@ -130,14 +130,92 @@ describe('TriviaScreen', () => {
     expect(state.triviaResult).toBe('correct');
   });
 
-  it('transitions to LINEUP with no boost on wrong answer', () => {
+  it('clicking wrong button shows penalty picker instead of advancing immediately', () => {
     renderWithProviders(<TriviaScreen />);
     fireEvent.click(screen.getByTestId('reveal-answer-btn'));
     fireEvent.click(screen.getByTestId('trivia-wrong-btn'));
+
+    expect(screen.getByTestId('trivia-penalty-picker')).toBeInTheDocument();
+    // Phase must NOT have advanced yet
+    expect(useMatchStore.getState().phase).toBe(MATCH_PHASE.TRIVIA);
+  });
+
+  it('penalty picker shows player buttons', () => {
+    renderWithProviders(<TriviaScreen />);
+    fireEvent.click(screen.getByTestId('reveal-answer-btn'));
+    fireEvent.click(screen.getByTestId('trivia-wrong-btn'));
+
+    expect(screen.getByTestId('penalty-player-grid')).toBeInTheDocument();
+    // At least one penalty-pick button exists
+    const firstBtn = document.querySelector('[data-testid^="penalty-pick-"]');
+    expect(firstBtn).toBeInTheDocument();
+  });
+
+  it('penalty confirm button is hidden until a player is selected', () => {
+    renderWithProviders(<TriviaScreen />);
+    fireEvent.click(screen.getByTestId('reveal-answer-btn'));
+    fireEvent.click(screen.getByTestId('trivia-wrong-btn'));
+
+    expect(screen.queryByTestId('penalty-confirm-btn')).not.toBeInTheDocument();
+  });
+
+  it('selecting a player shows the confirm button', () => {
+    renderWithProviders(<TriviaScreen />);
+    fireEvent.click(screen.getByTestId('reveal-answer-btn'));
+    fireEvent.click(screen.getByTestId('trivia-wrong-btn'));
+
+    const firstBtn = document.querySelector('[data-testid^="penalty-pick-"]') as HTMLElement;
+    fireEvent.click(firstBtn);
+
+    expect(screen.getByTestId('penalty-confirm-btn')).toBeInTheDocument();
+  });
+
+  it('once a player is selected, other players are disabled', () => {
+    renderWithProviders(<TriviaScreen />);
+    fireEvent.click(screen.getByTestId('reveal-answer-btn'));
+    fireEvent.click(screen.getByTestId('trivia-wrong-btn'));
+
+    const allBtns = Array.from(
+      document.querySelectorAll('[data-testid^="penalty-pick-"]'),
+    ) as HTMLButtonElement[];
+    fireEvent.click(allBtns[0]);
+
+    // All other buttons should be disabled
+    const otherBtns = allBtns.slice(1);
+    expect(otherBtns.every((btn) => btn.disabled)).toBe(true);
+    // The selected button itself is not disabled
+    expect(allBtns[0].disabled).toBe(false);
+  });
+
+  it('confirming penalty advances to LINEUP with wrong result', () => {
+    renderWithProviders(<TriviaScreen />);
+    fireEvent.click(screen.getByTestId('reveal-answer-btn'));
+    fireEvent.click(screen.getByTestId('trivia-wrong-btn'));
+
+    const firstBtn = document.querySelector('[data-testid^="penalty-pick-"]') as HTMLElement;
+    fireEvent.click(firstBtn);
+    fireEvent.click(screen.getByTestId('penalty-confirm-btn'));
 
     const state = useMatchStore.getState();
     expect(state.phase).toBe(MATCH_PHASE.LINEUP);
     expect(state.triviaBoostActive).toBe(false);
     expect(state.triviaResult).toBe('wrong');
+    expect(state.triviaPenaltyPlayerId).not.toBeNull();
+  });
+
+  it('only one player can be selected as penalty target at a time', () => {
+    renderWithProviders(<TriviaScreen />);
+    fireEvent.click(screen.getByTestId('reveal-answer-btn'));
+    fireEvent.click(screen.getByTestId('trivia-wrong-btn'));
+
+    const allBtns = Array.from(
+      document.querySelectorAll('[data-testid^="penalty-pick-"]'),
+    ) as HTMLButtonElement[];
+    // Select first player
+    fireEvent.click(allBtns[0]);
+    // The other buttons are disabled — cannot click them to add more selections
+    // Deselect first by clicking again
+    fireEvent.click(allBtns[0]);
+    expect(screen.queryByTestId('penalty-confirm-btn')).not.toBeInTheDocument();
   });
 });

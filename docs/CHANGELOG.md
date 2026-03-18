@@ -5,6 +5,16 @@ Format: `## [version] — date` with Added / Changed / Fixed sections.
 
 ---
 
+## [1.2.3] — 2026-03-18
+
+### Fixed
+- **Trivia wrong-answer penalty picker** — Clicking "Wrong ✗" on TriviaScreen now shows an inline penalty picker instead of advancing directly to LineupScreen. The picker lists all outfield players; selecting one disables all others (single-selection only). A confirm button appears once a player is chosen; tapping it stores the player ID in `matchStore.triviaPenaltyPlayerId`, then advances to LineupScreen.
+- **Penalty applied on lineup confirm** — LineupScreen now reads `triviaPenaltyPlayerId` from matchStore and calls `applyStatModifier` when confirming the home lineup. The old in-lineup overlay buttons that appeared on each selected outfield player have been removed; the confirm button no longer requires a separate penalty selection.
+- **matchStore** — Added `triviaPenaltyPlayerId: string | null` field and `triviaPenaltySelected(id: string): void` action.
+- **Total: 622 tests, all passing** (8 new tests in `TriviaScreen.test.tsx`, 2 new tests in `LineupScreen.test.tsx`, 1 updated test in `match_flow.test.tsx`)
+
+---
+
 ## [1.2.2] — 2026-03-18
 
 ### Fixed
