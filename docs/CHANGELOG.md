@@ -5,6 +5,23 @@ Format: `## [version] — date` with Added / Changed / Fixed sections.
 
 ---
 
+## [1.2.5] — 2026-03-18
+
+### Added
+- **Character pick per duel** — Before picking a card, the attacker first chooses any outfield player from their lineup. The defender then does the same. The chosen character's stats are used for the duel and goal attempt resolution. The same player can be chosen every duel.
+- **No dedicated GK — torjunta-based goal block** — Goal attempts are now blocked by the defender's chosen outfield character's `torjunta` stat. `resolveGoalkeeping` is called with `{ torjunta: defenderChar.stats.torjunta }` — no separate goalkeeper slot needed.
+- **Stamina penalty notification** — At the start of the second half, if any player has `stamina === 1`, a `stamina-warning-panel` is shown listing all affected players. Each affected player receives -1 to all stats for the second half (minimum 1 per stat). Clicking Continue dismisses the panel and starts the first duel.
+- **`pickAiCharacter()` in `src/engine/ai.ts`** — New exported function for AI character selection: Easy = random, Normal = highest relevant stat (attack: `max(laukaus, harhautus)`, defend: `torjunta`), Hard = same but factors in stamina penalty for second half.
+- **Updated `help.possession_rule`** — i18n key updated in `en.json` and `fi.json` to describe the defender's chosen player blocking with torjunta.
+- **Total: 641 tests, all passing** (DuelScreen rewritten, DerbyDuelScreen updated, all integration/functional/unit tests updated)
+
+### Changed
+- **DuelScreen** — Complete rewrite to support 6-step duel flow: attacker char pick → attacker card pick → cover screen → defender char pick → defender card pick → result. New `TwoPlayerUiPhase` and `AiUiPhase` state machines. Removed `brickWall` state (Kivimuuri ability no longer applicable without dedicated GK slot). `active-players-row` always visible using preview default (`attackerChar ?? attackerOutfield[0]`).
+- **DerbyDuelScreen** — Updated goal resolution to use `getActivePlayerByIndex` cycling through lineup by duelIndex for both attacker and defender stats. Removed `getGoalkeeper()` and `getActivePlayer()` helpers.
+- **`computeCharStats(slot, kapteeniBoost)`** — New helper in DuelScreen that applies slot `statModifier`, stamina penalty (half 2, stamina=1 → -1 all stats), and Kapteeni boost.
+
+---
+
 ## [1.2.4] — 2026-03-18
 
 ### Changed

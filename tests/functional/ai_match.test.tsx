@@ -67,14 +67,24 @@ function setupAiMatch(
 }
 
 /**
- * Play one duel in AI mode: human picks a card, AI resolves instantly.
+ * Play one duel in AI mode: human picks a character, then a card, AI resolves instantly.
  * Clicks continue after the result panel appears.
  *
  * @param card - Card the human plays (default 'press')
  */
 function playAiDuel(card: 'press' | 'feint' | 'shot' = 'press'): void {
+  // Human picks a character first
+  expect(screen.getByTestId('attacker-char-pick-prompt')).toBeInTheDocument();
+  const charBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+  fireEvent.click(charBtns[0]);
+  // Human picks card — result appears immediately (no cover screen in AI mode)
   expect(screen.getByTestId('attacker-pick-prompt')).toBeInTheDocument();
   fireEvent.click(screen.getByTestId(`card-btn-${card}`));
+  // A reactive ability (e.g. Estola's Estis) may fire — dismiss it before continuing
+  const reactivePanel = screen.queryByTestId('reactive-check-panel');
+  if (reactivePanel) {
+    fireEvent.click(screen.getByTestId('reactive-keep-btn'));
+  }
   expect(screen.getByTestId('duel-result-panel')).toBeInTheDocument();
   fireEvent.click(screen.getByTestId('duel-continue-btn'));
 }
@@ -88,27 +98,40 @@ describe('DuelScreen — AI mode UI', () => {
     setupAiMatch('normal', 'home');
   });
 
-  it('shows attacker-pick-prompt on first render', () => {
+  it('shows attacker-char-pick-prompt on first render', () => {
     renderWithProviders(<DuelScreen />);
+    expect(screen.getByTestId('attacker-char-pick-prompt')).toBeInTheDocument();
+  });
+
+  it('shows attacker-pick-prompt (card pick) after char is chosen', () => {
+    renderWithProviders(<DuelScreen />);
+    const charBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(charBtns[0]);
     expect(screen.getByTestId('attacker-pick-prompt')).toBeInTheDocument();
   });
 
-  it('does NOT show cover-continue-btn after human picks', () => {
+  it('does NOT show cover-continue-btn after human picks char + card', () => {
     renderWithProviders(<DuelScreen />);
+    const charBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(charBtns[0]);
     fireEvent.click(screen.getByTestId('card-btn-press'));
     // In AI mode there is no cover screen — result appears immediately
     expect(screen.queryByTestId('cover-continue-btn')).not.toBeInTheDocument();
     expect(screen.getByTestId('duel-result-panel')).toBeInTheDocument();
   });
 
-  it('shows duel-result-panel immediately after human picks any card', () => {
+  it('shows duel-result-panel immediately after human picks char + card', () => {
     renderWithProviders(<DuelScreen />);
+    const charBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(charBtns[0]);
     fireEvent.click(screen.getByTestId('card-btn-feint'));
     expect(screen.getByTestId('duel-result-panel')).toBeInTheDocument();
   });
 
   it('shows duel-continue-btn after result', () => {
     renderWithProviders(<DuelScreen />);
+    const charBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(charBtns[0]);
     fireEvent.click(screen.getByTestId('card-btn-feint'));
     expect(screen.getByTestId('duel-continue-btn')).toBeInTheDocument();
   });
@@ -140,20 +163,24 @@ describe('DuelScreen — away possession (AI is attacker)', () => {
     setupAiMatch('normal', 'away');
   });
 
-  it('still shows attacker-pick-prompt when AI is attacking', () => {
+  it('still shows attacker-char-pick-prompt when AI is attacking', () => {
     renderWithProviders(<DuelScreen />);
-    // In AI mode the human always sees the pick prompt (for defender card selection)
-    expect(screen.getByTestId('attacker-pick-prompt')).toBeInTheDocument();
+    // In AI mode the human always sees the char pick prompt first
+    expect(screen.getByTestId('attacker-char-pick-prompt')).toBeInTheDocument();
   });
 
-  it('resolves and shows result when human picks defender card', () => {
+  it('resolves and shows result when human picks char + defender card', () => {
     renderWithProviders(<DuelScreen />);
+    const charBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(charBtns[0]);
     fireEvent.click(screen.getByTestId('card-btn-feint'));
     expect(screen.getByTestId('duel-result-panel')).toBeInTheDocument();
   });
 
   it('no cover-continue-btn when AI is attacker', () => {
     renderWithProviders(<DuelScreen />);
+    const charBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(charBtns[0]);
     fireEvent.click(screen.getByTestId('card-btn-press'));
     expect(screen.queryByTestId('cover-continue-btn')).not.toBeInTheDocument();
   });
@@ -226,6 +253,8 @@ describe('playerCardHistory tracking in AI mode', () => {
 
   it('records human card after first pick', () => {
     renderWithProviders(<DuelScreen />);
+    const charBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(charBtns[0]);
     fireEvent.click(screen.getByTestId('card-btn-press'));
     fireEvent.click(screen.getByTestId('duel-continue-btn'));
     expect(useMatchStore.getState().playerCardHistory).toContain('press');

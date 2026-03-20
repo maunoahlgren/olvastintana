@@ -56,10 +56,12 @@ function pickFullLineup(): void {
 
 /**
  * Play a single duel through the DuelScreen UI:
- * 1. Attacker picks a card
- * 2. Cover screen → continue
- * 3. Defender picks a card
- * 4. Result panel → continue
+ * 1. Attacker picks a character
+ * 2. Attacker picks a card
+ * 3. Cover screen → continue
+ * 4. Defender picks a character
+ * 5. Defender picks a card
+ * 6. Result panel → continue
  *
  * @param attackerCard - Card choice for the attacker
  * @param defenderCard - Card choice for the defender
@@ -68,11 +70,20 @@ function playOneDuel(
   attackerCard: 'press' | 'feint' | 'shot' = 'press',
   defenderCard: 'press' | 'feint' | 'shot' = 'feint',
 ): void {
+  expect(screen.getByTestId('attacker-char-pick-prompt')).toBeInTheDocument();
+  // Pick first available character
+  const atkCharBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+  fireEvent.click(atkCharBtns[0]);
+
   expect(screen.getByTestId('attacker-pick-prompt')).toBeInTheDocument();
   fireEvent.click(screen.getByTestId(`card-btn-${attackerCard}`));
 
   expect(screen.getByTestId('cover-continue-btn')).toBeInTheDocument();
   fireEvent.click(screen.getByTestId('cover-continue-btn'));
+
+  expect(screen.getByTestId('defender-char-pick-prompt')).toBeInTheDocument();
+  const defCharBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+  fireEvent.click(defCharBtns[0]);
 
   expect(screen.getByTestId('defender-pick-prompt')).toBeInTheDocument();
   fireEvent.click(screen.getByTestId(`card-btn-${defenderCard}`));
@@ -83,8 +94,13 @@ function playOneDuel(
 
 /**
  * Play all 5 duels of a half.
+ * Dismisses the stamina warning panel if it is shown at the start of a half.
  */
 function playFullHalf(): void {
+  const staminaBtn = screen.queryByTestId('stamina-warning-continue-btn');
+  if (staminaBtn) {
+    fireEvent.click(staminaBtn);
+  }
   for (let i = 0; i < 5; i++) {
     playOneDuel();
   }
@@ -194,7 +210,7 @@ describe('Full solo match flow (App routing)', () => {
     fireEvent.click(screen.getByTestId('confirm-lineup-btn'));
 
     expect(useMatchStore.getState().phase).toBe(MATCH_PHASE.FIRST_HALF);
-    expect(screen.getByTestId('attacker-pick-prompt')).toBeInTheDocument();
+    expect(screen.getByTestId('attacker-char-pick-prompt')).toBeInTheDocument();
   });
 
   // ── FIRST HALF → HALFTIME ─────────────────────────────────────────────────
@@ -203,6 +219,9 @@ describe('Full solo match flow (App routing)', () => {
     useMatchStore.getState().beginSoloMatch();
     useMatchStore.getState().triviaCorrect();
     useMatchStore.getState().startFirstHalf();
+    // Set lineups so char pick buttons are available in playOneDuel()
+    useSquadStore.getState().setLineup('home', [...outfieldPlayers.slice(0, 6), gkPlayer]);
+    useSquadStore.getState().setLineup('away', [...outfieldPlayers.slice(0, 6), gkPlayer]);
 
     renderWithProviders(<App />);
 
@@ -228,7 +247,10 @@ describe('Full solo match flow (App routing)', () => {
     fireEvent.click(screen.getByTestId('start-second-half-btn'));
 
     expect(useMatchStore.getState().phase).toBe(MATCH_PHASE.SECOND_HALF);
-    expect(screen.getByTestId('attacker-pick-prompt')).toBeInTheDocument();
+    // Second half starts — may show stamina_warning or char pick prompt
+    const hasCharPick = screen.queryByTestId('attacker-char-pick-prompt');
+    const hasStaminaWarning = screen.queryByTestId('stamina-warning-panel');
+    expect(hasCharPick || hasStaminaWarning).toBeTruthy();
   });
 
   // ── SECOND HALF → RESULT ──────────────────────────────────────────────────
@@ -241,6 +263,9 @@ describe('Full solo match flow (App routing)', () => {
       useMatchStore.getState().advanceDuel();
     }
     useMatchStore.getState().startSecondHalf();
+    // Set lineups so char pick buttons are available in playOneDuel()
+    useSquadStore.getState().setLineup('home', [...outfieldPlayers.slice(0, 6), gkPlayer]);
+    useSquadStore.getState().setLineup('away', [...outfieldPlayers.slice(0, 6), gkPlayer]);
 
     renderWithProviders(<App />);
 

@@ -2,8 +2,9 @@
  * @file DuelScreen.test.tsx
  * Integration tests for DuelScreen.
  *
- * Tests: card flow, possession, trivia boost, halftime transition,
- * ability notifications, card restrictions, reactive ability panel, Kapteeni boost.
+ * Tests: character pick flow, card flow, possession, trivia boost, halftime transition,
+ * ability notifications, card restrictions, reactive ability panel, Kapteeni boost,
+ * stamina warning panel.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -47,10 +48,25 @@ function setupMatch(possession: 'home' | 'away' = 'home') {
   useSquadStore.getState().setLineup('away', [...outfield.slice(0, 6), gk]);
 }
 
-/** Play through one duel: attacker picks atkCard, defender picks defCard */
+/**
+ * Play through one duel with char picks:
+ *   attacker picks first char → attacker picks card → cover → defender picks first char → defender picks card
+ *
+ * @param atkCard - Card for the attacker to play
+ * @param defCard - Card for the defender to play
+ */
 function playDuel(atkCard: 'press' | 'feint' | 'shot', defCard: 'press' | 'feint' | 'shot') {
+  // Attacker picks first available character
+  const atkCharBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+  fireEvent.click(atkCharBtns[0]);
+  // Attacker picks card
   fireEvent.click(screen.getByTestId(`card-btn-${atkCard}`));
+  // Cover screen
   fireEvent.click(screen.getByTestId('cover-continue-btn'));
+  // Defender picks first available character
+  const defCharBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+  fireEvent.click(defCharBtns[0]);
+  // Defender picks card
   fireEvent.click(screen.getByTestId(`card-btn-${defCard}`));
 }
 
@@ -65,32 +81,56 @@ describe('DuelScreen', () => {
     expect(screen.getByTestId('scoreboard')).toBeInTheDocument();
   });
 
-  it('shows attacker pick prompt when match starts', () => {
+  it('shows attacker char pick prompt when match starts', () => {
     renderWithProviders(<DuelScreen />);
-    expect(screen.getByTestId('attacker-pick-prompt')).toBeInTheDocument();
+    expect(screen.getByTestId('attacker-char-pick-prompt')).toBeInTheDocument();
   });
 
-  it('shows 3 card buttons for attacker', () => {
+  it('shows char pick buttons for all outfield players at start', () => {
     renderWithProviders(<DuelScreen />);
+    const charBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    expect(charBtns.length).toBeGreaterThanOrEqual(6);
+  });
+
+  it('shows 3 card buttons for attacker after char is picked', () => {
+    renderWithProviders(<DuelScreen />);
+    // Pick a character first
+    const charBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(charBtns[0]);
     expect(screen.getByTestId('card-btn-press')).toBeInTheDocument();
     expect(screen.getByTestId('card-btn-feint')).toBeInTheDocument();
     expect(screen.getByTestId('card-btn-shot')).toBeInTheDocument();
   });
 
-  it('shows cover screen after attacker picks a card', () => {
+  it('shows cover screen after attacker picks a character and card', () => {
     renderWithProviders(<DuelScreen />);
+    const charBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(charBtns[0]);
     fireEvent.click(screen.getByTestId('card-btn-press'));
     expect(screen.getByTestId('cover-continue-btn')).toBeInTheDocument();
   });
 
-  it('shows defender pick prompt after cover screen', () => {
+  it('shows defender char pick prompt after cover screen', () => {
     renderWithProviders(<DuelScreen />);
+    const atkCharBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(atkCharBtns[0]);
     fireEvent.click(screen.getByTestId('card-btn-press'));
     fireEvent.click(screen.getByTestId('cover-continue-btn'));
+    expect(screen.getByTestId('defender-char-pick-prompt')).toBeInTheDocument();
+  });
+
+  it('shows defender pick prompt after defender picks char', () => {
+    renderWithProviders(<DuelScreen />);
+    const atkCharBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(atkCharBtns[0]);
+    fireEvent.click(screen.getByTestId('card-btn-press'));
+    fireEvent.click(screen.getByTestId('cover-continue-btn'));
+    const defCharBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(defCharBtns[0]);
     expect(screen.getByTestId('defender-pick-prompt')).toBeInTheDocument();
   });
 
-  it('shows result panel after defender picks a card', () => {
+  it('shows result panel after full duel flow', () => {
     renderWithProviders(<DuelScreen />);
     playDuel('press', 'feint'); // press > feint → attacker wins
     expect(screen.getByTestId('duel-result-panel')).toBeInTheDocument();
@@ -108,18 +148,12 @@ describe('DuelScreen', () => {
     setupMatch('away'); // away attacks
     renderWithProviders(<DuelScreen />);
     playDuel('feint', 'shot'); // away plays feint, home plays shot → feint > shot → attacker wins
-    // Attacker (away) has possession and wins → always triggers goal attempt
     const goalResult = document.querySelector('[data-testid="goal-result"],[data-testid="saved-result"]');
     expect(goalResult).toBeInTheDocument();
   });
 
   it('shows draw result when same cards tie on equal stats', () => {
-    // Tie on equal stats → null
-    // We need players with equal riisto for press tie
-    // Use two identical lineup players and hope they tie on riisto
-    // Let's just pick PRESS vs PRESS and see what happens (outcome depends on stats)
     renderWithProviders(<DuelScreen />);
-    // At least the result panel appears
     playDuel('press', 'feint');
     expect(screen.getByTestId('duel-result-panel')).toBeInTheDocument();
   });
@@ -158,6 +192,48 @@ describe('DuelScreen', () => {
   });
 });
 
+// ─── Stamina warning tests ─────────────────────────────────────────────────────
+
+describe('DuelScreen — stamina warning', () => {
+  beforeEach(() => {
+    useSquadStore.getState().reset();
+    setupMatch();
+  });
+
+  it('does not show stamina warning in first half', () => {
+    renderWithProviders(<DuelScreen />);
+    expect(screen.queryByTestId('stamina-warning-panel')).not.toBeInTheDocument();
+  });
+
+  it('shows stamina warning at start of second half when stamina-1 player present', () => {
+    // Find a player with stamina === 1 in the data
+    const staminaOnePlayers = allPlayers.filter((p) => p.stats.stamina === 1 && !p.position.includes('GK'));
+    if (staminaOnePlayers.length === 0) {
+      // Skip if no such player exists in the data
+      return;
+    }
+    useMatchStore.setState({ half: 2 as const, duelIndex: 0 });
+    // Put a stamina-1 player in the lineup
+    const lineupWithLowStamina = [staminaOnePlayers[0], ...outfield.slice(0, 5), gk];
+    useSquadStore.getState().setLineup('home', lineupWithLowStamina);
+    renderWithProviders(<DuelScreen />);
+    expect(screen.getByTestId('stamina-warning-panel')).toBeInTheDocument();
+  });
+
+  it('stamina warning shows continue button that dismisses the panel', () => {
+    const staminaOnePlayers = allPlayers.filter((p) => p.stats.stamina === 1 && !p.position.includes('GK'));
+    if (staminaOnePlayers.length === 0) return;
+    useMatchStore.setState({ half: 2 as const, duelIndex: 0 });
+    const lineupWithLowStamina = [staminaOnePlayers[0], ...outfield.slice(0, 5), gk];
+    useSquadStore.getState().setLineup('home', lineupWithLowStamina);
+    renderWithProviders(<DuelScreen />);
+    fireEvent.click(screen.getByTestId('stamina-warning-continue-btn'));
+    expect(screen.queryByTestId('stamina-warning-panel')).not.toBeInTheDocument();
+    // Should now be at char pick
+    expect(screen.getByTestId('attacker-char-pick-prompt')).toBeInTheDocument();
+  });
+});
+
 // ─── Ability notification tests ────────────────────────────────────────────────
 
 describe('DuelScreen — ability notifications', () => {
@@ -167,32 +243,46 @@ describe('DuelScreen — ability notifications', () => {
   });
 
   it('shows ability notification list when an ability triggers', () => {
-    // Put Mehtonen (Kapteeni) in slot 0 for home (attacker), ensure he wins
-    // Mehtonen plays Press; away slot plays Feint → Press beats Feint → Mehtonen wins
-    const homeLineup = [mehtonen, ...outfield.slice(0, 5), gk];
+    // Put Mehtonen (Kapteeni) first; exclude him from the rest of the lineup to avoid duplicate IDs
+    const homeLineup = [mehtonen, ...outfield.filter((p) => p.id !== 'olli_mehtonen').slice(0, 5), gk];
     useSquadStore.getState().setLineup('home', homeLineup);
     renderWithProviders(<DuelScreen />);
-    playDuel('press', 'feint'); // Mehtonen wins → Kapteeni triggers
+    // Pick Mehtonen as attacker char (unique button now)
+    fireEvent.click(screen.getByTestId('char-btn-olli_mehtonen'));
+    fireEvent.click(screen.getByTestId('card-btn-press'));
+    fireEvent.click(screen.getByTestId('cover-continue-btn'));
+    const defCharBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(defCharBtns[0]);
+    fireEvent.click(screen.getByTestId('card-btn-feint'));
     expect(screen.getByTestId('ability-notifications')).toBeInTheDocument();
   });
 
   it('Kapteeni ability notification shows player name when Mehtonen wins', () => {
-    const homeLineup = [mehtonen, ...outfield.slice(0, 5), gk];
+    const homeLineup = [mehtonen, ...outfield.filter((p) => p.id !== 'olli_mehtonen').slice(0, 5), gk];
     useSquadStore.getState().setLineup('home', homeLineup);
     renderWithProviders(<DuelScreen />);
-    playDuel('press', 'feint');
+    fireEvent.click(screen.getByTestId('char-btn-olli_mehtonen'));
+    fireEvent.click(screen.getByTestId('card-btn-press'));
+    fireEvent.click(screen.getByTestId('cover-continue-btn'));
+    const defCharBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(defCharBtns[0]);
+    fireEvent.click(screen.getByTestId('card-btn-feint'));
     const notifs = screen.getAllByTestId('ability-notification');
     const kapteeniNotif = notifs.find((n) => n.textContent?.includes('Olli Mehtonen'));
     expect(kapteeniNotif).toBeTruthy();
   });
 
   it('Tuplablokki (Nieminen) adds restrict_shot effect to loser side', () => {
-    // Nieminen at home slot 0, wins with press > feint
-    const homeLineup = [nieminen, ...outfield.slice(0, 5), gk];
+    // Nieminen at home first; exclude from rest to avoid duplicate IDs
+    const homeLineup = [nieminen, ...outfield.filter((p) => p.id !== 'ossi_nieminen').slice(0, 5), gk];
     useSquadStore.getState().setLineup('home', homeLineup);
     renderWithProviders(<DuelScreen />);
-    playDuel('press', 'feint'); // Nieminen wins → tuplablokki triggers
-    // After result, away side should have restrict_shot
+    fireEvent.click(screen.getByTestId('char-btn-ossi_nieminen'));
+    fireEvent.click(screen.getByTestId('card-btn-press'));
+    fireEvent.click(screen.getByTestId('cover-continue-btn'));
+    const defCharBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(defCharBtns[0]);
+    fireEvent.click(screen.getByTestId('card-btn-feint'));
     const awayEffects = useMatchStore.getState().effects.away;
     expect(awayEffects.some((e) => e.id === 'restrict_shot' && !e.expired)).toBe(true);
   });
@@ -224,7 +314,6 @@ describe('DuelScreen — card restrictions', () => {
   });
 
   it('Feint button is disabled when restrict_feint effect is active on attacker side', () => {
-    // Add restrict_feint effect to home (attacker) side
     useMatchStore.getState().addEffect('home', {
       id: 'restrict_feint',
       source: 'jyrki_orjasniemi',
@@ -232,6 +321,9 @@ describe('DuelScreen — card restrictions', () => {
       expired: false,
     });
     renderWithProviders(<DuelScreen />);
+    // Pick char first to reach card pick phase
+    const charBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(charBtns[0]);
     const feintBtn = screen.getByTestId('card-btn-feint');
     expect(feintBtn).toBeDisabled();
   });
@@ -244,6 +336,8 @@ describe('DuelScreen — card restrictions', () => {
       expired: false,
     });
     renderWithProviders(<DuelScreen />);
+    const charBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(charBtns[0]);
     const shotBtn = screen.getByTestId('card-btn-shot');
     expect(shotBtn).toBeDisabled();
   });
@@ -256,6 +350,8 @@ describe('DuelScreen — card restrictions', () => {
       expired: false,
     });
     renderWithProviders(<DuelScreen />);
+    const charBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(charBtns[0]);
     const pressBtn = screen.getByTestId('card-btn-press');
     expect(pressBtn).toBeDisabled();
   });
@@ -268,13 +364,16 @@ describe('DuelScreen — card restrictions', () => {
       expiresAfterDuel: 0,
       expired: false,
     });
-    // Set duelIndex to 0 (the restriction expires at duel 0)
     useMatchStore.setState({ duelIndex: 0 });
     renderWithProviders(<DuelScreen />);
 
-    // Play a duel (press only, feint is restricted)
+    // Pick char, then play a duel (press only since feint is restricted)
+    const atkCharBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(atkCharBtns[0]);
     fireEvent.click(screen.getByTestId('card-btn-press'));
     fireEvent.click(screen.getByTestId('cover-continue-btn'));
+    const defCharBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(defCharBtns[0]);
     fireEvent.click(screen.getByTestId('card-btn-press'));
     // Continue past the duel — should expire the effect
     fireEvent.click(screen.getByTestId('duel-continue-btn'));
@@ -294,19 +393,23 @@ describe('DuelScreen — reactive ability panel', () => {
     setupMatch();
   });
 
-  it('shows reactive-check panel when Estola (slot 0 on attacker) plays Press', () => {
-    // Estola in home slot 0 (attacker)
+  it('shows reactive-check panel when Estola (chosen as attacker) plays Press', () => {
+    // Estola in home lineup
     const homeLineup = [estola, ...outfield.slice(0, 5), gk];
     useSquadStore.getState().setLineup('home', homeLineup);
     renderWithProviders(<DuelScreen />);
 
+    // Attacker picks Estola specifically
+    fireEvent.click(screen.getByTestId('char-btn-jukka_estola'));
     // Attacker picks Press (Estola's reactive trigger)
     fireEvent.click(screen.getByTestId('card-btn-press'));
     fireEvent.click(screen.getByTestId('cover-continue-btn'));
+    // Defender picks any char
+    const defCharBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(defCharBtns[0]);
     // Defender picks any card
     fireEvent.click(screen.getByTestId('card-btn-feint'));
 
-    // Reactive check panel should appear (not show_result yet)
     expect(screen.getByTestId('reactive-check-panel')).toBeInTheDocument();
   });
 
@@ -315,13 +418,15 @@ describe('DuelScreen — reactive ability panel', () => {
     useSquadStore.getState().setLineup('home', homeLineup);
     renderWithProviders(<DuelScreen />);
 
+    fireEvent.click(screen.getByTestId('char-btn-jukka_estola'));
     fireEvent.click(screen.getByTestId('card-btn-press'));
     fireEvent.click(screen.getByTestId('cover-continue-btn'));
+    const defCharBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(defCharBtns[0]);
     fireEvent.click(screen.getByTestId('card-btn-feint'));
     // Keep original Press
     fireEvent.click(screen.getByTestId('reactive-keep-btn'));
 
-    // Should now show result panel
     expect(screen.getByTestId('duel-result-panel')).toBeInTheDocument();
   });
 
@@ -330,31 +435,32 @@ describe('DuelScreen — reactive ability panel', () => {
     useSquadStore.getState().setLineup('home', homeLineup);
     renderWithProviders(<DuelScreen />);
 
-    // Estola plays Press, defender plays Shot
-    // Normally Press vs Shot → Shot beats Press → defender wins
-    // But if Estola switches to Shot: Shot vs Shot → tiebreak
+    fireEvent.click(screen.getByTestId('char-btn-jukka_estola'));
     fireEvent.click(screen.getByTestId('card-btn-press'));
     fireEvent.click(screen.getByTestId('cover-continue-btn'));
+    const defCharBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(defCharBtns[0]);
     fireEvent.click(screen.getByTestId('card-btn-shot'));
     // Switch to Shot
     fireEvent.click(screen.getByTestId('reactive-switch-btn'));
 
-    // Should show result panel after switching
     expect(screen.getByTestId('duel-result-panel')).toBeInTheDocument();
   });
 
   it('no reactive panel when non-reactive player plays Press', () => {
-    // Use a generic player (not Estola) in slot 0
     const genericPlayers = outfield.filter((p) => p.id !== 'jukka_estola');
     const homeLineup = [genericPlayers[0], ...genericPlayers.slice(1, 6), gk];
     useSquadStore.getState().setLineup('home', homeLineup);
     renderWithProviders(<DuelScreen />);
 
+    const atkCharBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(atkCharBtns[0]);
     fireEvent.click(screen.getByTestId('card-btn-press'));
     fireEvent.click(screen.getByTestId('cover-continue-btn'));
+    const defCharBtns = document.querySelectorAll('[data-testid^="char-btn-"]');
+    fireEvent.click(defCharBtns[0]);
     fireEvent.click(screen.getByTestId('card-btn-feint'));
 
-    // Should go directly to result panel
     expect(screen.getByTestId('duel-result-panel')).toBeInTheDocument();
     expect(screen.queryByTestId('reactive-check-panel')).not.toBeInTheDocument();
   });
@@ -387,7 +493,6 @@ describe('DuelScreen — active player cards', () => {
 
   it('shows attacker player name in attacker wrapper', () => {
     renderWithProviders(<DuelScreen />);
-    // Attacker is home slot 0 (outfield[0])
     const wrapper = screen.getByTestId('attacker-player-card-wrapper');
     expect(wrapper.querySelector('[data-testid^="player-name-"]')).toBeInTheDocument();
   });
@@ -408,7 +513,6 @@ describe('DuelScreen — outcome panel', () => {
   });
 
   it('shows GOAL ATTEMPT banner when attacker wins with Press (in possession)', () => {
-    // SQ-GOAL-01: any card win in possession triggers goal attempt
     renderWithProviders(<DuelScreen />);
     playDuel('press', 'feint'); // press > feint → attacker wins while in possession → goal attempt
     expect(screen.getByTestId('goal-attempt-banner')).toBeInTheDocument();
@@ -444,7 +548,7 @@ describe('DuelScreen — outcome panel', () => {
     setupMatch('away'); // away attacks
     renderWithProviders(<DuelScreen />);
     // Away (attacker) plays press, home (defender) plays shot → shot beats press → defender wins
-    playDuel('press', 'shot'); // shot beats press → home (defender) wins → no goal attempt
+    playDuel('press', 'shot');
     expect(screen.getByTestId('duel-outcome-text')).toHaveTextContent('Ball defended');
   });
 });

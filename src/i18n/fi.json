@@ -147,7 +147,12 @@
     "goal_scored_by": "MAALI! 🟡",
     "shot_saved_by": "TORJUTTU! 🧤",
     "attacker_badge": "Hyökkää ⚽",
-    "defender_badge": "Puolustaa 🛡️"
+    "defender_badge": "Puolustaa 🛡️",
+    "attacker_pick_char": "valitse pelaajasi:",
+    "defender_pick_char": "valitse pelaajasi:",
+    "human_pick_char": "Valitse pelaajasi:",
+    "stamina_warning_title": "Toinen jakso — Kestävyysvaroitus",
+    "stamina_penalty_applied": "Nämä pelaajat ovat väsyneitä ja saavat -1 kaikkiin tilastoihin:"
   },
   "halftime": {
     "title": "Puoliaika",
@@ -302,7 +307,7 @@
     "feint_beats_shot": "Harhautus voittaa Laukauksen",
     "shot_beats_press": "Laukaus voittaa Riiton",
     "possession": "Pallonhallinta",
-    "possession_rule": "Pallollinen pelaaja yrittää aina maalia voittaessaan duelin — millä kortilla tahansa",
+    "possession_rule": "Pallollinen pelaaja yrittää maalia voittaessaan duelin — puolustajan valitsema pelaaja torjuu kestävyydellään",
     "tactic": "Taktiikka",
     "tactic_aggressive": "Aggressiivinen — +1 Laukaukseen",
     "tactic_defensive": "Puolustava — +1 Riistoon",

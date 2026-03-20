@@ -22,8 +22,8 @@
  *   Both card_ready → host resolves duel (resolveDuel + goalkeeper) → writeDuelResult
  *   After result display → host calls resetForNextDuel or advances to halftime/result
  *
- * Player stats used: first outfield player from each team's lineup.
- * GK stats used only for goalkeeper save check on Shot duels.
+ * Player stats used: cycling outfield player from each team's lineup (duelIndex % outfield.length).
+ * The defender's cycling player's torjunta is used for the save check — no dedicated GK.
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -98,36 +98,6 @@ function getPlayer(id: string): Player {
 }
 
 /**
- * Get the active outfield player (first non-GK) from a lineup array.
- *
- * @param lineup - Array of player IDs
- * @returns The first outfield player, or fallback
- */
-function getActivePlayer(lineup: string[]): Player {
-  const all = playersData as Player[];
-  const outfield = lineup.find((id) => {
-    const p = all.find((pl) => pl.id === id);
-    return p && !p.position.includes('GK');
-  });
-  return getPlayer(outfield ?? lineup[0] ?? '');
-}
-
-/**
- * Get the goalkeeper (first GK) from a lineup array.
- *
- * @param lineup - Array of player IDs
- * @returns The GK player, or fallback
- */
-function getGoalkeeper(lineup: string[]): Player {
-  const all = playersData as Player[];
-  const gkId = lineup.find((id) => {
-    const p = all.find((pl) => pl.id === id);
-    return p?.position.includes('GK');
-  });
-  return getPlayer(gkId ?? '');
-}
-
-/**
  * Get the active outfield player cycling by duel index (matches solo DuelScreen behaviour).
  *
  * @param lineup   - Array of player IDs
@@ -184,10 +154,8 @@ export default function DerbyDuelScreen(): JSX.Element {
     resolvedRef.current = true;
 
     const snap = useDerbyStore.getState();
-    const p1Player = getActivePlayer(snap.p1Lineup);
-    const p2Player = getActivePlayer(snap.p2Lineup);
-    const p1Gk = getGoalkeeper(snap.p1Lineup);
-    const p2Gk = getGoalkeeper(snap.p2Lineup);
+    const p1Player = getActivePlayerByIndex(snap.p1Lineup, snap.duelIndex);
+    const p2Player = getActivePlayerByIndex(snap.p2Lineup, snap.duelIndex);
 
     const atkKey = snap.possession;
     const defKey: PlayerKey = atkKey === 'p1' ? 'p2' : 'p1';
@@ -218,8 +186,9 @@ export default function DerbyDuelScreen(): JSX.Element {
 
     if (winner === 'attacker') {
       // Any attacker win triggers a goal attempt — SQ-GOAL-01
-      const defGk = defKey === 'p1' ? p1Gk : p2Gk;
-      const save = resolveGoalkeeping(defGk.stats, atkStatsFinal);
+      // Defender's cycling player uses torjunta to block (no dedicated GK)
+      const defPlayer = defKey === 'p1' ? p1Player : p2Player;
+      const save = resolveGoalkeeping({ torjunta: defPlayer.stats.torjunta }, atkStatsFinal);
       if (save === 'goal') {
         scored = true;
         if (atkKey === 'p1') newScoreHome++;

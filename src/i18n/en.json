@@ -147,7 +147,12 @@
     "goal_scored_by": "GOAL! 🟡",
     "shot_saved_by": "SAVED! 🧤",
     "attacker_badge": "Attacking ⚽",
-    "defender_badge": "Defending 🛡️"
+    "defender_badge": "Defending 🛡️",
+    "attacker_pick_char": "pick your player:",
+    "defender_pick_char": "pick your player:",
+    "human_pick_char": "Pick your player:",
+    "stamina_warning_title": "Second Half — Stamina Warning",
+    "stamina_penalty_applied": "These players are tired and receive -1 to all stats:"
   },
   "halftime": {
     "title": "Half Time",
@@ -302,7 +307,7 @@
     "feint_beats_shot": "Feint beats Shot",
     "shot_beats_press": "Shot beats Press",
     "possession": "Possession",
-    "possession_rule": "Winning a duel in possession always triggers a goal attempt — with any card",
+    "possession_rule": "Winning a duel in possession triggers a goal attempt — the defender's chosen player blocks with torjunta",
     "tactic": "Tactic",
     "tactic_aggressive": "Aggressive — +1 to Shot",
     "tactic_defensive": "Defensive — +1 to Press",

@@ -20,6 +20,7 @@ import {
   pickAiCard,
   pickAiLineup,
   pickAiTactics,
+  pickAiCharacter,
   type AiGameState,
 } from '../../../src/engine/ai';
 import type { Player } from '../../../src/store/squadStore';
@@ -497,5 +498,81 @@ describe('pickAiTactics', () => {
     expect(pickAiTactics('hard', BASE_STATE, 'aggressive')).toBe('creative');
     expect(pickAiTactics('hard', BASE_STATE, 'defensive')).toBe('aggressive');
     expect(pickAiTactics('hard', BASE_STATE, 'creative')).toBe('defensive');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// pickAiCharacter
+// ---------------------------------------------------------------------------
+
+/**
+ * Outfield-only subset of TEST_SQUAD used for character-pick tests.
+ * Excludes the GK so all players are valid char picks.
+ */
+const OUTFIELD_SQUAD = TEST_SQUAD.filter((p) => !p.position.includes('GK'));
+
+describe('pickAiCharacter — easy', () => {
+  it('returns a player from the outfield lineup', () => {
+    const picked = pickAiCharacter('easy', OUTFIELD_SQUAD, true, 1);
+    expect(OUTFIELD_SQUAD.map((p) => p.id)).toContain(picked.id);
+  });
+
+  it('eventually returns different players (random)', () => {
+    const seen = new Set<string>();
+    for (let i = 0; i < 200; i++) {
+      seen.add(pickAiCharacter('easy', OUTFIELD_SQUAD, true, 1).id);
+    }
+    expect(seen.size).toBeGreaterThan(1);
+  });
+});
+
+describe('pickAiCharacter — normal', () => {
+  it('when attacking, picks player with highest max(laukaus, harhautus)', () => {
+    // p6: laukaus=1, harhautus=6 → max = 6; p1: max = 5 → p6 wins
+    const picked = pickAiCharacter('normal', OUTFIELD_SQUAD, true, 1);
+    expect(picked.id).toBe('p6');
+  });
+
+  it('when defending, picks player with highest torjunta', () => {
+    // p1: torjunta=5 → highest
+    const picked = pickAiCharacter('normal', OUTFIELD_SQUAD, false, 1);
+    expect(picked.id).toBe('p1');
+  });
+
+  it('works identically in second half (no stamina awareness)', () => {
+    // Normal does not penalise stamina-1 players; p6 still wins attacking
+    const picked = pickAiCharacter('normal', OUTFIELD_SQUAD, true, 2);
+    expect(picked.id).toBe('p6');
+  });
+});
+
+describe('pickAiCharacter — hard', () => {
+  it('when attacking in first half, picks highest effective attack stat', () => {
+    // Same as Normal in first half — p6 has harhautus 6
+    const picked = pickAiCharacter('hard', OUTFIELD_SQUAD, true, 1);
+    expect(picked.id).toBe('p6');
+  });
+
+  it('when defending in second half, avoids stamina-1 players when a better option exists', () => {
+    // p5 and p6 both have stamina=1 → torjunta-1=0 → clamped to 1
+    // p1 has torjunta=5 and stamina=5 → no penalty → p1 wins
+    const picked = pickAiCharacter('hard', OUTFIELD_SQUAD, false, 2);
+    expect(picked.id).toBe('p1');
+  });
+
+  it('when attacking in second half, factors in stamina penalty', () => {
+    // p6: harhautus=6, stamina=1 → penalty → eff=max(1,5)=5
+    // p1: laukaus=5, stamina=5 → no penalty → eff=5 (tie → p6 comes first if sorted stably, p1 wins if sort is stable)
+    // Actually after penalty, p6 effective = max(1, 6-1)=5; p1 = max(5,5)=5 → tie → sort order (first in list wins)
+    // p1 is index 0 so after sort [p1, ...others, p6] → p1 or p6 depending on sort stability
+    // The result should be p1 or p6 — just verify it's one of them
+    const picked = pickAiCharacter('hard', OUTFIELD_SQUAD, true, 2);
+    expect(['p1', 'p6']).toContain(picked.id);
+  });
+
+  it('picks from a single-player lineup without error', () => {
+    const single = [makePlayer('solo', ['MF'], { laukaus: 4, harhautus: 4, torjunta: 4, stamina: 2, riisto: 3 })];
+    expect(() => pickAiCharacter('hard', single, true, 1)).not.toThrow();
+    expect(pickAiCharacter('hard', single, true, 1).id).toBe('solo');
   });
 });

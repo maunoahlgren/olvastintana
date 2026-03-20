@@ -4,24 +4,39 @@
  *
  * ── Two-player mode (aiDifficulty === null) ──────────────────────────────────
  * UI state machine:
- *   attacker_pick → cover → defender_pick → [reactive_check?] → show_result
+ *   [stamina_warning?]
+ *   → attacker_char_pick → attacker_card_pick
+ *   → cover
+ *   → defender_char_pick → defender_card_pick
+ *   → [reactive_check?] → show_result
  *
  * ── AI mode (aiDifficulty !== null) ─────────────────────────────────────────
  * Human always controls the Home (left) side. Away side is the AI.
  * UI state machine:
- *   human_pick → [reactive_check?] → show_result
+ *   [stamina_warning?] → human_char_pick → human_card_pick → [reactive_check?] → show_result
  *
  *   If home has possession (human is attacker):
- *     1. Human picks attacker card
- *     2. AI auto-picks defender card
+ *     1. Human picks char, then card
+ *     2. AI picks char + card simultaneously
  *     3. [reactive_check if applicable]
  *     4. Resolve → show result
  *
  *   If away has possession (AI is attacker):
- *     1. Human sees "AI is attacking" prompt and picks their defender card
- *     2. AI attacker card is auto-generated simultaneously
+ *     1. Human picks char, then card (as defender)
+ *     2. AI picks char + card simultaneously
  *     3. [reactive_check if applicable]
  *     4. Resolve → show result
+ *
+ * ── Goal attempt (no dedicated GK) ───────────────────────────────────────────
+ * Each side picks one outfield player (the "chosen character") before picking a card.
+ * When an attacker wins with possession:
+ *   attacker_char.max(laukaus, harhautus) vs defender_char.torjunta → goal or save
+ * The chosen characters' stats are also used for the card duel itself.
+ *
+ * ── Stamina penalty (second half) ────────────────────────────────────────────
+ * Players with stamina === 1 receive -1 to riisto, laukaus, harhautus, torjunta
+ * (min 1 each) in the second half.  A warning panel is shown at duel 0 of half 2
+ * listing the affected players.
  *
  * ── Ability system ────────────────────────────────────────────────────────────
  * After both cards are chosen, reactive abilities are checked first:
@@ -46,12 +61,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMatchStore } from '../../store/matchStore';
-import { useSquadStore } from '../../store/squadStore';
+import { useSquadStore, type SquadSlot } from '../../store/squadStore';
 import { useSessionStore } from '../../store/sessionStore';
 import { resolveDuel, CARD, type Card, type PlayerStats } from '../../engine/duel';
 import { resolvePossession, type Side } from '../../engine/possession';
-import { resolveGoalkeeping, resetBrickWall, type BrickWallState } from '../../engine/goalkeeper';
-import { pickAiCard, DUELS_PER_HALF, type CardChoice } from '../../engine/ai';
+import { resolveGoalkeeping } from '../../engine/goalkeeper';
+import { pickAiCard, pickAiCharacter, DUELS_PER_HALF, type CardChoice } from '../../engine/ai';
 import {
   kapteeni,
   kaaoksenLahettilas,
@@ -63,6 +78,7 @@ import {
   checkReactiveSwitch,
 } from '../../engine/abilities';
 import type { ActiveEffect } from '../../store/matchStore';
+import type { Player } from '../../store/squadStore';
 import CardButton from '../ui/CardButton';
 import ScoreBoard from '../ui/ScoreBoard';
 import HelpModal from '../ui/HelpModal';
@@ -72,10 +88,22 @@ import PlayerCard from '../ui/PlayerCard';
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 /** Phase names for two-player mode */
-type TwoPlayerUiPhase = 'attacker_pick' | 'cover' | 'defender_pick' | 'reactive_check' | 'show_result';
+type TwoPlayerUiPhase =
+  | 'attacker_char_pick'
+  | 'attacker_card_pick'
+  | 'cover'
+  | 'defender_char_pick'
+  | 'defender_card_pick'
+  | 'reactive_check'
+  | 'show_result';
+
 /** Phase names for AI mode */
-type AiUiPhase = 'human_pick' | 'reactive_check' | 'show_result';
-type DuelUiPhase = TwoPlayerUiPhase | AiUiPhase;
+type AiUiPhase = 'human_char_pick' | 'human_card_pick' | 'reactive_check' | 'show_result';
+
+/** Phase shown at the start of the second half when stamina-penalised players exist */
+type StaminaUiPhase = 'stamina_warning';
+
+type DuelUiPhase = TwoPlayerUiPhase | AiUiPhase | StaminaUiPhase;
 
 /**
  * A triggered ability notification shown in the result panel.
@@ -113,7 +141,7 @@ interface DuelResult {
   triggeredAbilities: AbilityNotification[];
   /** Player name of the goal scorer (null if no goal) */
   scorerName: string | null;
-  /** Goalkeeper name when a save was made (null if no save or goal scored) */
+  /** Defender name when a save was made (null if no save or goal scored) */
   keeperName: string | null;
 }
 
@@ -143,10 +171,11 @@ function applyStatMod(base: PlayerStats, mod: Partial<PlayerStats> | undefined):
 // ─── Component ────────────────────────────────────────────────────────────────
 
 /**
- * DuelScreen — handles card selection, duel resolution, possession, and ability notifications.
+ * DuelScreen — handles character pick, card selection, duel resolution, possession,
+ * and ability notifications.
  *
- * Brick Wall state uses local component state so it resets naturally when the
- * component unmounts at halftime and remounts for the second half.
+ * Second-half stamina penalty (-1 all stats for stamina=1 players) is applied
+ * dynamically via computeCharStats() — no persistent state mutation required.
  *
  * @returns The duel screen element
  */
@@ -176,41 +205,55 @@ export default function DuelScreen(): JSX.Element {
 
   const isAiMatch = aiDifficulty !== null;
 
+  // ── Derived lineup data ───────────────────────────────────────────────────
+  const attackerSide: Side = possession ?? 'home';
+  const defenderSide: Side = attackerSide === 'home' ? 'away' : 'home';
+
+  const attackerLineup = attackerSide === 'home' ? homeLineup : awayLineup;
+  const defenderLineup = defenderSide === 'home' ? homeLineup : awayLineup;
+
+  /** Outfield slots for each side (no GK) */
+  const attackerOutfield = attackerLineup.filter((s) => !s.player.position.includes('GK'));
+  const defenderOutfield = defenderLineup.filter((s) => !s.player.position.includes('GK'));
+
+  // ── Stamina-affected players (computed once on mount) ─────────────────────
+  /**
+   * Players with stamina === 1 who will be penalised in the second half.
+   * Only computed at the start of the second half (half === 2, duelIndex === 0).
+   */
+  const [staminaAffected] = useState<Player[]>(() => {
+    if (half !== 2 || duelIndex !== 0) return [];
+    const seen = new Set<string>();
+    return [...homeLineup, ...awayLineup]
+      .filter((s) => !s.player.position.includes('GK'))
+      .filter((s) => {
+        if (seen.has(s.player.id)) return false;
+        seen.add(s.player.id);
+        return true;
+      })
+      .filter((s) => s.player.stats.stamina === 1)
+      .map((s) => s.player);
+  });
+
   // ── Local UI state ─────────────────────────────────────────────────────────
-  const initialUiPhase: DuelUiPhase = isAiMatch ? 'human_pick' : 'attacker_pick';
-  const [uiPhase, setUiPhase] = useState<DuelUiPhase>(initialUiPhase);
+  const [uiPhase, setUiPhase] = useState<DuelUiPhase>(() => {
+    // Show stamina warning at the start of the second half if any players are affected
+    if (half === 2 && duelIndex === 0) {
+      const hasStaminaPenalty = [...homeLineup, ...awayLineup].some(
+        (s) => !s.player.position.includes('GK') && s.player.stats.stamina === 1,
+      );
+      if (hasStaminaPenalty) return 'stamina_warning';
+    }
+    return isAiMatch ? 'human_char_pick' : 'attacker_char_pick';
+  });
+
+  const [attackerChar, setAttackerChar] = useState<SquadSlot | null>(null);
+  const [defenderChar, setDefenderChar] = useState<SquadSlot | null>(null);
   const [attackerCard, setAttackerCard] = useState<Card | null>(null);
   const [defenderCard, setDefenderCard] = useState<Card | null>(null);
   const [reactiveInfo, setReactiveInfo] = useState<ReactiveInfo | null>(null);
   const [duelResult, setDuelResult] = useState<DuelResult | null>(null);
   const [showHelp, setShowHelp] = useState(false);
-
-  // Brick Wall resets when this component remounts (at halftime the screen unmounts)
-  const [brickWall, setBrickWall] = useState<BrickWallState>(resetBrickWall);
-
-  // ── Derived values ─────────────────────────────────────────────────────────
-  const attackerSide: Side = possession ?? 'home';
-  const defenderSide: Side = attackerSide === 'home' ? 'away' : 'home';
-
-  /** Slot index for this duel's players (outfield players cycle through positions) */
-  const outfieldSlot = duelIndex % 6;
-  const attackerLineup = attackerSide === 'home' ? homeLineup : awayLineup;
-  const defenderLineup = defenderSide === 'home' ? homeLineup : awayLineup;
-
-  const attackerSlot = attackerLineup[outfieldSlot];
-  const defenderSlot = defenderLineup[outfieldSlot];
-
-  /** Goalkeeper defending the ATTACKER's shots (on defenderSide) */
-  const goalkeeperSlot =
-    defenderSide === 'home'
-      ? homeLineup.find((s) => s.player.position.includes('GK'))
-      : awayLineup.find((s) => s.player.position.includes('GK'));
-
-  /** Goalkeeper on the ATTACKER's side (used when Ninja counter-attacks) */
-  const attackerGoalkeeperSlot =
-    attackerSide === 'home'
-      ? homeLineup.find((s) => s.player.position.includes('GK'))
-      : awayLineup.find((s) => s.player.position.includes('GK'));
 
   // ── Active effect lookups ─────────────────────────────────────────────────
 
@@ -224,7 +267,7 @@ export default function DuelScreen(): JSX.Element {
   /** Kapteeni boost on defender's side */
   const defenderKapteeniBoost = defenderActiveEffects.find((e) => e.id === 'kapteeni_boost')?.statMod;
 
-  /** Card restrictions on attacker's side (from opponent's previous abilities) */
+  /** Card restrictions on attacker's side */
   const attackerPressRestricted = attackerActiveEffects.some((e) => e.id === 'restrict_press');
   const attackerFeintRestricted = attackerActiveEffects.some((e) => e.id === 'restrict_feint');
   const attackerShotRestricted = attackerActiveEffects.some((e) => e.id === 'restrict_shot');
@@ -236,39 +279,84 @@ export default function DuelScreen(): JSX.Element {
 
   // ── Stat computation ──────────────────────────────────────────────────────
 
-  /** Base stats merged with slot modifier, then with any Kapteeni boost */
-  const attackerBaseStats = attackerSlot
-    ? { ...attackerSlot.player.stats, ...attackerSlot.statModifier }
-    : FALLBACK_STATS;
-  const attackerStats = applyStatMod(attackerBaseStats, attackerKapteeniBoost);
+  /**
+   * Compute effective stats for a chosen character slot, applying:
+   *   1. Slot stat modifier (from abilities/halftime changes)
+   *   2. Stamina penalty in second half (if stamina === 1: -1 to all stats, min 1)
+   *   3. Kapteeni boost
+   *
+   * @param slot          - The chosen SquadSlot
+   * @param kapteeniBoost - Optional Kapteeni boost modifier for this side
+   * @returns The effective PlayerStats for this duel
+   */
+  function computeCharStats(
+    slot: SquadSlot,
+    kapteeniBoost?: Partial<PlayerStats>,
+  ): PlayerStats {
+    const base: PlayerStats = {
+      riisto: slot.player.stats.riisto + (slot.statModifier.riisto ?? 0),
+      laukaus: slot.player.stats.laukaus + (slot.statModifier.laukaus ?? 0),
+      harhautus: slot.player.stats.harhautus + (slot.statModifier.harhautus ?? 0),
+      torjunta: slot.player.stats.torjunta + (slot.statModifier.torjunta ?? 0),
+      stamina: slot.player.stats.stamina + (slot.statModifier.stamina ?? 0),
+    };
 
-  const defenderBaseStats = defenderSlot
-    ? { ...defenderSlot.player.stats, ...defenderSlot.statModifier }
-    : FALLBACK_STATS;
-  const defenderStats = applyStatMod(defenderBaseStats, defenderKapteeniBoost);
+    if (half === 2 && base.stamina === 1) {
+      const penalised: PlayerStats = {
+        riisto: Math.max(1, base.riisto - 1),
+        laukaus: Math.max(1, base.laukaus - 1),
+        harhautus: Math.max(1, base.harhautus - 1),
+        torjunta: Math.max(1, base.torjunta - 1),
+        stamina: base.stamina,
+      };
+      return applyStatMod(penalised, kapteeniBoost);
+    }
 
-  const keeperStats = goalkeeperSlot
-    ? { ...goalkeeperSlot.player.stats, ...goalkeeperSlot.statModifier }
+    return applyStatMod(base, kapteeniBoost);
+  }
+
+  /** Effective stats for the chosen attacker character (or fallback) */
+  const attackerStats = attackerChar
+    ? computeCharStats(attackerChar, attackerKapteeniBoost)
     : FALLBACK_STATS;
 
-  const attackerKeeperStats = attackerGoalkeeperSlot
-    ? { ...attackerGoalkeeperSlot.player.stats, ...attackerGoalkeeperSlot.statModifier }
+  /** Effective stats for the chosen defender character (or fallback) */
+  const defenderStats = defenderChar
+    ? computeCharStats(defenderChar, defenderKapteeniBoost)
     : FALLBACK_STATS;
 
   // In AI mode, the human is always the home side
   const humanIsAttacker = isAiMatch ? attackerSide === 'home' : true;
 
-  // ── AI card picker helper ───────────────────────────────────────────────────
+  // ── Display characters (for the active-players-row preview) ──────────────
+  /** Default to first outfield player as preview before char is chosen */
+  const displayAttackerChar = attackerChar ?? attackerOutfield[0] ?? null;
+  const displayDefenderChar = defenderChar ?? defenderOutfield[0] ?? null;
+
+  // ── AI helpers ──────────────────────────────────────────────────────────────
+
+  /**
+   * Ask the AI to pick its character for this duel.
+   * The AI is always the away side.
+   *
+   * @param aiIsAttacking - True when AI has possession
+   * @returns A SquadSlot representing the AI's chosen character
+   */
+  function getAiCharacterSlot(aiIsAttacking: boolean): SquadSlot {
+    const aiOutfield = awayLineup.filter((s) => !s.player.position.includes('GK'));
+    const aiPlayers = aiOutfield.map((s) => s.player);
+    const picked = pickAiCharacter(aiDifficulty!, aiPlayers, aiIsAttacking, half);
+    return aiOutfield.find((s) => s.player.id === picked.id) ?? aiOutfield[0];
+  }
 
   /**
    * Ask the AI to pick a card given the current game state.
-   * The active AI player's Stamina is used for Hard AI mistake-rate calculations.
    *
    * @returns A Card value chosen by the AI
    */
   function getAiCard(): Card {
-    const aiSlot = awayLineup[outfieldSlot];
-    const activePlayerStamina = aiSlot?.player.stats.stamina ?? 2;
+    const aiChar = attackerSide === 'away' ? attackerChar : defenderChar;
+    const activePlayerStamina = aiChar?.player.stats.stamina ?? 2;
 
     const lastPlayerCard =
       playerCardHistory.length > 0
@@ -296,7 +384,7 @@ export default function DuelScreen(): JSX.Element {
   /**
    * Check if either player has a reactive ability that can trigger given the chosen cards.
    * Attacker is checked first; only one reactive panel is shown per duel.
-   * A player whose ability has been cancelled by Dominoiva cannot use reactive abilities.
+   * Uses the chosen character slots for ability ID lookup.
    *
    * @param atkCard - Card chosen by the attacker
    * @param defCard - Card chosen by the defender
@@ -305,13 +393,13 @@ export default function DuelScreen(): JSX.Element {
   function findReactivePlayer(atkCard: Card, defCard: Card): ReactiveInfo | null {
     // Check attacker first
     const attackerCancelled = attackerActiveEffects.some((e) => e.id === 'ability_cancelled');
-    if (!attackerCancelled && attackerSlot) {
-      const { canSwitch, switchTo } = checkReactiveSwitch(attackerSlot.player.id, atkCard);
+    if (!attackerCancelled && attackerChar) {
+      const { canSwitch, switchTo } = checkReactiveSwitch(attackerChar.player.id, atkCard);
       if (canSwitch && switchTo) {
         return {
           side: 'attacker',
           switchTo,
-          playerName: attackerSlot.player.name,
+          playerName: attackerChar.player.name,
           opponentCard: defCard,
         };
       }
@@ -319,13 +407,13 @@ export default function DuelScreen(): JSX.Element {
 
     // Then check defender
     const defenderCancelled = defenderActiveEffects.some((e) => e.id === 'ability_cancelled');
-    if (!defenderCancelled && defenderSlot) {
-      const { canSwitch, switchTo } = checkReactiveSwitch(defenderSlot.player.id, defCard);
+    if (!defenderCancelled && defenderChar) {
+      const { canSwitch, switchTo } = checkReactiveSwitch(defenderChar.player.id, defCard);
       if (canSwitch && switchTo) {
         return {
           side: 'defender',
           switchTo,
-          playerName: defenderSlot.player.name,
+          playerName: defenderChar.player.name,
           opponentCard: atkCard,
         };
       }
@@ -339,7 +427,6 @@ export default function DuelScreen(): JSX.Element {
   /**
    * Trigger all post-win abilities for the winner, add effects to the store,
    * and return a list of notifications to display.
-   * A cancelled winner has effectiveWinnerId = null, so no ability triggers.
    *
    * @param effectiveWinnerId - Winner's player ID, or null if ability is cancelled
    * @param winnerSide - The side that won (or null on draw)
@@ -371,7 +458,7 @@ export default function DuelScreen(): JSX.Element {
       notifications.push({ playerName: winnerPlayerName, effectKey: 'ability.kapteeni_triggered' });
     }
 
-    // ── Kaaoksen lähettiläs (Mauno #15) — draw Sattuma (notification only, Phase 1) ──
+    // ── Kaaoksen lähettiläs (Mauno #15) — draw Sattuma (notification only) ─
     const { drawSattuma } = kaaoksenLahettilas(effectiveWinnerId);
     if (drawSattuma) {
       notifications.push({ playerName: winnerPlayerName, effectKey: 'ability.mauno_triggered' });
@@ -431,8 +518,9 @@ export default function DuelScreen(): JSX.Element {
 
   /**
    * Resolve the duel after both cards are known (and any reactive switch applied).
-   * Handles trivia boost, Matigol auto-goal, Ninja counter-goal, possession,
-   * goalkeeper save, scoring, and post-win ability effects.
+   * Uses the chosen character stats for both the card duel and the goal attempt:
+   *   - Normal goal: attacker char's laukaus/harhautus vs defender char's torjunta
+   *   - Ninja counter: defender char's laukaus/harhautus vs attacker char's torjunta
    *
    * @param atkCard - Final card played by the attacker
    * @param defCard - Final card played by the defender
@@ -450,15 +538,15 @@ export default function DuelScreen(): JSX.Element {
       winnerSide === 'home' ? 'away' : winnerSide === 'away' ? 'home' : null;
     const winnerPlayerId: string | null =
       winner === 'attacker'
-        ? (attackerSlot?.player.id ?? null)
+        ? (attackerChar?.player.id ?? null)
         : winner === 'defender'
-          ? (defenderSlot?.player.id ?? null)
+          ? (defenderChar?.player.id ?? null)
           : null;
     const winnerPlayerName: string =
       winner === 'attacker'
-        ? (attackerSlot?.player.name ?? '')
+        ? (attackerChar?.player.name ?? '')
         : winner === 'defender'
-          ? (defenderSlot?.player.name ?? '')
+          ? (defenderChar?.player.name ?? '')
           : '';
 
     // Check if winner's own ability is cancelled by Dominoiva
@@ -488,7 +576,7 @@ export default function DuelScreen(): JSX.Element {
     const notifications: AbilityNotification[] = [];
 
     if (autoGoal) {
-      // Matigol: skip goalkeeper entirely
+      // Matigol: auto-goal, no torjunta check
       goalScored = true;
       scorerName = winnerPlayerName;
       scoreGoal(winnerSide!);
@@ -497,38 +585,33 @@ export default function DuelScreen(): JSX.Element {
         effectKey: 'ability.matigol_triggered',
       });
     } else if (finalGoalAttempt) {
-      // Normal or Ninja goal attempt — select correct shooter/keeper
       const isNinjaAttempt = ninjaGoal && !normalGoalAttempt;
+
+      // Ninja: defender counter-attacks → defender is shooter, attacker torjunta blocks
+      // Normal: attacker shoots → defender torjunta blocks
       const shooterStats = isNinjaAttempt ? defenderStats : attackerStats;
-      const targetKeeperStats = isNinjaAttempt ? attackerKeeperStats : keeperStats;
+      const targetTorjunta = isNinjaAttempt ? attackerStats.torjunta : defenderStats.torjunta;
       const scoringSide: Side = isNinjaAttempt ? defenderSide : attackerSide;
 
       const potentialScorerName = isNinjaAttempt
-        ? (defenderSlot?.player.name ?? '')
-        : (attackerSlot?.player.name ?? '');
-      const targetKeeperName = isNinjaAttempt
-        ? (attackerGoalkeeperSlot?.player.name ?? '')
-        : (goalkeeperSlot?.player.name ?? '');
+        ? (defenderChar?.player.name ?? '')
+        : (attackerChar?.player.name ?? '');
+      const targetBlockerName = isNinjaAttempt
+        ? (attackerChar?.player.name ?? '')
+        : (defenderChar?.player.name ?? '');
 
       if (isNinjaAttempt) {
         notifications.push({
-          playerName: defenderSlot?.player.name ?? '',
+          playerName: defenderChar?.player.name ?? '',
           effectKey: 'ability.ninja_triggered',
         });
       }
 
-      // Brick wall: check the keeper on the TARGET side
-      const targetGoalkeeperSlot = isNinjaAttempt ? attackerGoalkeeperSlot : goalkeeperSlot;
-      const keeperHasBrickWall =
-        targetGoalkeeperSlot?.player.id === 'tommi_helminen' && !brickWall.usedThisHalf;
-
-      const saveResult = resolveGoalkeeping(targetKeeperStats, shooterStats, keeperHasBrickWall);
+      // Goal check: chosen defender's torjunta vs chosen attacker's shooting stats
+      const saveResult = resolveGoalkeeping({ torjunta: targetTorjunta }, shooterStats);
 
       if (saveResult === 'saved') {
-        if (keeperHasBrickWall) {
-          setBrickWall({ usedThisHalf: true });
-        }
-        keeperName = targetKeeperName;
+        keeperName = targetBlockerName;
       } else {
         goalScored = true;
         scorerName = potentialScorerName;
@@ -583,15 +666,39 @@ export default function DuelScreen(): JSX.Element {
 
   // ── Two-player handlers ────────────────────────────────────────────────────
 
-  /** Attacker picks card → go to cover screen (two-player mode) */
+  /**
+   * Attacker picks their character → advance to card pick (two-player mode).
+   *
+   * @param slot - The chosen SquadSlot for the attacker
+   */
+  function handleAttackerCharPick(slot: SquadSlot) {
+    setAttackerChar(slot);
+    setUiPhase('attacker_card_pick');
+  }
+
+  /**
+   * Attacker picks card → go to cover screen (two-player mode).
+   *
+   * @param card - Card chosen by the attacker
+   */
   function handleAttackerPick(card: Card) {
     setAttackerCard(card);
     setUiPhase('cover');
   }
 
-  /** From cover screen — show defender pick (two-player mode) */
+  /** From cover screen — show defender char pick (two-player mode) */
   function handleCoverContinue() {
-    setUiPhase('defender_pick');
+    setUiPhase('defender_char_pick');
+  }
+
+  /**
+   * Defender picks their character → advance to card pick (two-player mode).
+   *
+   * @param slot - The chosen SquadSlot for the defender
+   */
+  function handleDefenderCharPick(slot: SquadSlot) {
+    setDefenderChar(slot);
+    setUiPhase('defender_card_pick');
   }
 
   /**
@@ -604,6 +711,27 @@ export default function DuelScreen(): JSX.Element {
   }
 
   // ── AI mode handler ────────────────────────────────────────────────────────
+
+  /**
+   * Human picks their character in AI mode.
+   * AI simultaneously picks its character. Both chars are stored before advancing.
+   *
+   * @param slot - Character chosen by the human player
+   */
+  function handleHumanCharPick(slot: SquadSlot) {
+    const aiIsAttacking = attackerSide === 'away';
+    const aiSlot = getAiCharacterSlot(aiIsAttacking);
+
+    if (humanIsAttacker) {
+      setAttackerChar(slot);
+      setDefenderChar(aiSlot);
+    } else {
+      setDefenderChar(slot);
+      setAttackerChar(aiSlot);
+    }
+
+    setUiPhase('human_card_pick');
+  }
 
   /**
    * Human picks their card in AI mode (as either attacker or defender).
@@ -650,7 +778,7 @@ export default function DuelScreen(): JSX.Element {
 
   /**
    * Expire any effects that were scheduled to expire at this duel index,
-   * then advance to the next duel.
+   * reset character choices, then advance to the next duel.
    */
   function handleContinue() {
     // Expire effects whose window has closed
@@ -662,11 +790,13 @@ export default function DuelScreen(): JSX.Element {
       });
     });
 
+    setAttackerChar(null);
+    setDefenderChar(null);
     setAttackerCard(null);
     setDefenderCard(null);
     setReactiveInfo(null);
     setDuelResult(null);
-    setUiPhase(isAiMatch ? 'human_pick' : 'attacker_pick');
+    setUiPhase(isAiMatch ? 'human_char_pick' : 'attacker_char_pick');
     advanceDuel();
   }
 
@@ -688,12 +818,44 @@ export default function DuelScreen(): JSX.Element {
   }
 
   // Active restrictions for the current picker's side (helps modal know what to show)
-  const currentRestrictions =
-    uiPhase === 'defender_pick'
-      ? { press: defenderPressRestricted, feint: defenderFeintRestricted, shot: defenderShotRestricted }
-      : uiPhase === 'human_pick' && !humanIsAttacker
-        ? { press: defenderPressRestricted, feint: defenderFeintRestricted, shot: defenderShotRestricted }
-        : { press: attackerPressRestricted, feint: attackerFeintRestricted, shot: attackerShotRestricted };
+  const isDefenderCardPick =
+    uiPhase === 'defender_card_pick' ||
+    (uiPhase === 'human_card_pick' && !humanIsAttacker);
+  const currentRestrictions = isDefenderCardPick
+    ? { press: defenderPressRestricted, feint: defenderFeintRestricted, shot: defenderShotRestricted }
+    : { press: attackerPressRestricted, feint: attackerFeintRestricted, shot: attackerShotRestricted };
+
+  // ── Char pick grid ─────────────────────────────────────────────────────────
+
+  /**
+   * Render a grid of character pick buttons for the given outfield slots.
+   *
+   * @param slots    - Outfield SquadSlots to render as buttons
+   * @param onPick   - Callback when a slot is selected
+   * @returns Character pick grid element
+   */
+  function renderCharPickGrid(
+    slots: SquadSlot[],
+    onPick: (slot: SquadSlot) => void,
+  ): JSX.Element {
+    return (
+      <div className="grid grid-cols-2 gap-3 w-full">
+        {slots.map((slot) => (
+          <button
+            key={slot.player.id}
+            data-testid={`char-btn-${slot.player.id}`}
+            onClick={() => onPick(slot)}
+            className="p-3 rounded-xl border-2 border-[#333] bg-[#2A2A2A] text-left hover:border-[#FFE600] hover:bg-[#FFE600]/5 active:scale-95 transition-all"
+          >
+            <div className="font-bold text-sm text-[#F5F0E8]">{slot.player.name}</div>
+            <div className="text-xs text-[#A0A0A0] mt-1">
+              ⚔{slot.player.stats.riisto} 💨{slot.player.stats.harhautus} 🎯{slot.player.stats.laukaus} 🛡{slot.player.stats.torjunta}
+            </div>
+          </button>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -740,8 +902,8 @@ export default function DuelScreen(): JSX.Element {
         {attackerSide === 'home' ? t('possession.home_attack') : t('possession.away_attack')}
       </div>
 
-      {/* Active player cards — always visible */}
-      {(attackerSlot || defenderSlot) && (
+      {/* Active player cards — show chosen chars (or first outfield as preview) */}
+      {(displayAttackerChar || displayDefenderChar) && (
         <div
           data-testid="active-players-row"
           className="flex gap-3 w-full"
@@ -753,10 +915,10 @@ export default function DuelScreen(): JSX.Element {
             <span className="text-xs font-black text-[#FFE600] text-center uppercase tracking-widest">
               {t('duel.attacker_badge')}
             </span>
-            {attackerSlot && (
+            {displayAttackerChar && (
               <PlayerCard
-                player={attackerSlot.player}
-                statModifier={attackerSlot.statModifier}
+                player={displayAttackerChar.player}
+                statModifier={displayAttackerChar.statModifier}
                 showAbility
               />
             )}
@@ -768,10 +930,10 @@ export default function DuelScreen(): JSX.Element {
             <span className="text-xs font-black text-[#F5F0E8]/40 text-center uppercase tracking-widest">
               {t('duel.defender_badge')}
             </span>
-            {defenderSlot && (
+            {displayDefenderChar && (
               <PlayerCard
-                player={defenderSlot.player}
-                statModifier={defenderSlot.statModifier}
+                player={displayDefenderChar.player}
+                statModifier={displayDefenderChar.statModifier}
                 showAbility
               />
             )}
@@ -789,8 +951,54 @@ export default function DuelScreen(): JSX.Element {
         </div>
       )}
 
-      {/* ─── Two-player: Attacker picks ─── */}
-      {uiPhase === 'attacker_pick' && (
+      {/* ─── Stamina warning (start of second half) ─── */}
+      {uiPhase === 'stamina_warning' && (
+        <div
+          data-testid="stamina-warning-panel"
+          className="flex flex-col items-center gap-4 text-center w-full"
+        >
+          <h2 className="text-xl font-black text-[#FFE600]">
+            ⚠️ {t('duel.stamina_warning_title')}
+          </h2>
+          <p className="text-sm text-[#F5F0E8]/70">
+            {t('duel.stamina_penalty_applied')}
+          </p>
+          <ul className="flex flex-col gap-2 w-full">
+            {staminaAffected.map((p) => (
+              <li
+                key={p.id}
+                data-testid={`stamina-affected-${p.id}`}
+                className="px-4 py-2 rounded border border-red-500/30 bg-red-500/5 text-sm font-bold text-red-400"
+              >
+                {p.name}
+              </li>
+            ))}
+          </ul>
+          <button
+            data-testid="stamina-warning-continue-btn"
+            onClick={() => setUiPhase(isAiMatch ? 'human_char_pick' : 'attacker_char_pick')}
+            className="px-8 py-3 bg-[#FFE600] text-[#1A1A1A] font-black uppercase tracking-widest rounded-xl hover:bg-[#FFE600]/90 active:scale-95 transition-all"
+          >
+            {t('duel.continue')}
+          </button>
+        </div>
+      )}
+
+      {/* ─── Two-player: Attacker picks character ─── */}
+      {uiPhase === 'attacker_char_pick' && (
+        <div className="flex flex-col items-center gap-4 w-full">
+          <p
+            data-testid="attacker-char-pick-prompt"
+            className="text-lg font-bold text-[#F5F0E8]"
+          >
+            {attackerName}, {t('duel.attacker_pick_char')}
+          </p>
+          {renderCharPickGrid(attackerOutfield, handleAttackerCharPick)}
+        </div>
+      )}
+
+      {/* ─── Two-player: Attacker picks card ─── */}
+      {uiPhase === 'attacker_card_pick' && (
         <div className="flex flex-col items-center gap-4 w-full">
           <p
             data-testid="attacker-pick-prompt"
@@ -834,8 +1042,21 @@ export default function DuelScreen(): JSX.Element {
         </div>
       )}
 
-      {/* ─── Two-player: Defender picks ─── */}
-      {uiPhase === 'defender_pick' && (
+      {/* ─── Two-player: Defender picks character ─── */}
+      {uiPhase === 'defender_char_pick' && (
+        <div className="flex flex-col items-center gap-4 w-full">
+          <p
+            data-testid="defender-char-pick-prompt"
+            className="text-lg font-bold text-[#F5F0E8]"
+          >
+            {defenderName}, {t('duel.defender_pick_char')}
+          </p>
+          {renderCharPickGrid(defenderOutfield, handleDefenderCharPick)}
+        </div>
+      )}
+
+      {/* ─── Two-player: Defender picks card ─── */}
+      {uiPhase === 'defender_card_pick' && (
         <div className="flex flex-col items-center gap-4 w-full">
           <p
             data-testid="defender-pick-prompt"
@@ -863,8 +1084,24 @@ export default function DuelScreen(): JSX.Element {
         </div>
       )}
 
-      {/* ─── AI mode: Human picks (attacker or defender) ─── */}
-      {uiPhase === 'human_pick' && (
+      {/* ─── AI mode: Human picks character ─── */}
+      {uiPhase === 'human_char_pick' && (
+        <div className="flex flex-col items-center gap-4 w-full">
+          <p
+            data-testid="attacker-char-pick-prompt"
+            className="text-lg font-bold text-[#F5F0E8]"
+          >
+            {t('duel.human_pick_char')}
+          </p>
+          {renderCharPickGrid(
+            humanIsAttacker ? attackerOutfield : defenderOutfield,
+            handleHumanCharPick,
+          )}
+        </div>
+      )}
+
+      {/* ─── AI mode: Human picks card ─── */}
+      {uiPhase === 'human_card_pick' && (
         <div className="flex flex-col items-center gap-4 w-full">
           <p
             data-testid="attacker-pick-prompt"

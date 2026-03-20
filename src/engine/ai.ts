@@ -453,6 +453,69 @@ export function pickAiTactics(
   }
 }
 
+// ─── Character pick per duel ───────────────────────────────────────────────────
+
+/**
+ * AI picks one outfield player to use for this duel.
+ *
+ * Difficulty rules:
+ *   Easy   — fully random from outfield lineup
+ *   Normal — highest relevant stat (attacking: max(laukaus, harhautus); defending: torjunta)
+ *   Hard   — same as Normal but factors in second-half stamina penalty (-1 all stats for
+ *             players whose stamina stat === 1), so a tired star may not be the best pick
+ *
+ * @param difficulty    - AI difficulty level
+ * @param outfieldLineup - The AI's current outfield players (no GK)
+ * @param isAttacking   - True if the AI has possession (attacker role)
+ * @param half          - Current half (1 or 2) — used to compute stamina penalty
+ * @returns The chosen Player object
+ *
+ * @example
+ * pickAiCharacter('normal', outfield, true, 1) // → player with highest max(laukaus, harhautus)
+ */
+export function pickAiCharacter(
+  difficulty: AiDifficulty,
+  outfieldLineup: Player[],
+  isAttacking: boolean,
+  half: 1 | 2,
+): Player {
+  if (outfieldLineup.length === 0) return outfieldLineup[0];
+
+  switch (difficulty) {
+    case 'easy':
+      return outfieldLineup[Math.floor(Math.random() * outfieldLineup.length)];
+
+    case 'normal': {
+      if (isAttacking) {
+        return [...outfieldLineup].sort(
+          (a, b) =>
+            Math.max(b.stats.laukaus, b.stats.harhautus) -
+            Math.max(a.stats.laukaus, a.stats.harhautus),
+        )[0];
+      }
+      return [...outfieldLineup].sort((a, b) => b.stats.torjunta - a.stats.torjunta)[0];
+    }
+
+    case 'hard': {
+      /**
+       * Effective stat in second half: if stamina === 1 the player gets -1 to all stats.
+       * We clamp the result to min 1 to match runtime behaviour.
+       */
+      const effectiveStat = (p: Player): number => {
+        const penalty = half === 2 && p.stats.stamina === 1 ? -1 : 0;
+        if (isAttacking) {
+          return Math.max(
+            1,
+            Math.max(p.stats.laukaus, p.stats.harhautus) + penalty,
+          );
+        }
+        return Math.max(1, p.stats.torjunta + penalty);
+      };
+      return [...outfieldLineup].sort((a, b) => effectiveStat(b) - effectiveStat(a))[0];
+    }
+  }
+}
+
 // Re-export Card type alias for consumers that only import from ai.ts
 export type { Card };
 export { DUELS_PER_HALF };
